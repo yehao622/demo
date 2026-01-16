@@ -6,7 +6,7 @@ describe('MatchingService', () => {
     let service: MatchingService;
 
     beforeAll(() => {
-        process.env.GEMINI_API_KEY = 'AIzaSyDPtU7i-ziRyqfLcVQiTr5cH90ijEshuiE';
+        process.env.GEMINI_API_KEY = YOUR_GEMINI_API;
         service = new MatchingService();
     });
 
