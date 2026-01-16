@@ -1,0 +1,108 @@
+# MatchingDonors AI Agent Demo Project Proposal
+
+**Project**: AI-Powered Assistant Suite for Patient/Donor Matching, Content Discovery, and Advertiser Engagement  
+**Duration**: 4–6 weeks (MVP prototype with fake data)  
+**Volunteer**: [Your Name]  
+**Date**: January 2026
+
+---
+
+## Executive Summary
+
+This project demonstrates three complementary AI agents that directly support MatchingDonors' core business goals:
+1. **Profile Agent** – Help patients and donors complete profiles faster and more effectively
+2. **Content Agent** – Auto-label news articles for topic-based subscriptions across DailyDiabetesNews, DailyTransplantNews, and IrishDailyTransplantNews
+3. **Advertiser Agent** – Provide intelligent lead capture and FAQ support for potential advertisers
+
+Using fake data and synthetic personas, we'll validate feasibility, gather user feedback, and establish a foundation for production integration.
+
+---
+
+## Problem Statement & Opportunity
+
+**Current challenges:**
+- Patient/donor profile creation is manual and slow; many incomplete submissions reduce match quality
+- News content across three websites lacks structured metadata; users cannot easily filter by topic or organ type
+- Advertiser inquiries are ad-hoc; leads are not systematically captured or qualified
+
+**Opportunity:**
+- AI agents can guide profile creation conversationally, ensuring completeness and compliance
+- Auto-labeling enables topic subscriptions, improving engagement and ad inventory value
+- Chatbot-driven lead capture reduces friction and ensures no advertiser inquiry is lost
+
+---
+
+## Scope & Deliverables (Phase 1)
+
+| Component | What's Included | What's Not (Phase 2+) |
+|-----------|-----------------|----------------------|
+| **Profile Agent** | Demo UI, LLM-based profile editor, safety filters, simple embedding-based matching | Integration with live MatchingDonors database |
+| **Content Agent** | Web crawler (4 sites), auto-labeler (LLM), topic subscription UI, sample email digest | Real user authentication, analytics dashboard |
+| **Advertiser Agent** | Chatbot UI, FAQ knowledge base, lead capture form, email summary export | CRM integration, approval workflow automation |
+
+---
+
+## Technical Architecture
+
+**Tech Stack (all open-source / free-tier available):**
+- **Frontend**: React + TypeScript (or Vue)
+- **Backend API**: FastAPI (Python) or Node.js/Express
+- **LLM Integration**: OpenAI API (paid), Hugging Face (free), or open-source models (Llama 2)
+- **Vector Database**: Chroma or Pinecone (free tier)
+- **Web Crawler**: BeautifulSoup + Requests or Scrapy
+- **Storage**: PostgreSQL (local or cloud)
+- **Hosting**: Docker + local dev or free tier (Heroku, Railway, Render for demo)
+
+**Key Design Principles:**
+- **Modular**: Each agent is an independent microservice
+- **Privacy-first**: Fake data only; no real PHI stored during prototype
+- **Extensible**: Easy to swap LLM providers or add new agents
+- **Demo-friendly**: Clear before/after examples, no complex authentication
+
+---
+
+## Success Metrics
+
+| Agent | Metric | Target |
+|-------|--------|--------|
+| **Profile** | Profile completion rate, time-to-complete, manager feedback on tone/compliance | >80% completion, <5 min avg, 0 flagged safety issues in sample set |
+| **Content** | Label accuracy (manual spot-check), user interest in topics | >85% accuracy on 20-article spot check |
+| **Advertiser** | Lead capture rate, completeness of extracted info | 100% of test inquiries → valid lead records |
+
+---
+
+## Risks & Mitigations
+
+| Risk | Mitigation |
+|------|-----------|
+| LLM hallucinations (e.g., unsafe profile suggestions) | Implement prompt engineering, safety rules, human review step |
+| Crawler blocked or changes site structure | Use robots.txt responsibly, add error handling, maintain crawler robustness |
+| Privacy concerns with fake data | Clearly label all data as synthetic; use non-realistic names and email patterns |
+| Scope creep (trying to build too much) | Strict Agile sprints; if feature doesn't fit 2-week sprint, defer to Phase 2 |
+
+---
+
+## Timeline & Milestones
+
+| Week | Milestone | Deliverable |
+|------|-----------|-------------|
+| 1–2 | Setup, fake data generation, architecture design | GitHub repo, sample data files, API spec |
+| 3–4 | Profile Agent MVP + demo UI | Working profile editor with matching suggestions |
+| 5–6 | Content Agent MVP + Advertiser Agent MVP | Crawler, auto-labels, advertiser lead form |
+| End | Demo presentation + feedback session | Video walkthrough, feedback notes for Phase 2 |
+
+---
+
+## Next Steps
+
+1. **Manager review & approval** – Confirm scope, tech stack, and success metrics align with organizational goals
+2. **Set up dev environment** – Git repo, coding standards, deployment target
+3. **Weekly sync** – Short 15-min check-ins to unblock and gather feedback
+4. **Public data only** – Confirm that fake/synthetic data is sufficient for Phase 1
+
+---
+
+**Questions for Manager:**
+- Any preference on LLM provider (OpenAI, open-source, Hugging Face)?
+- Should this eventually integrate with existing MatchingDonors tech stack, or stay standalone for now?
+- Who should review advertiser leads—you directly, or via a simple internal queue?

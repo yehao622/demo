@@ -1,0 +1,244 @@
+# Technology Stack: Open-Source & Licensing Guidance
+
+This document confirms that all recommended technologies in your architecture are **free and open-source** (or have generous free tiers) and can be used without restriction for this nonprofit volunteer project.
+
+---
+
+## Frontend Technologies
+
+### React (or Vue)
+- **License**: MIT License (permissive open-source)
+- **Freedom to Use**: ✅ **Completely free** for any project, including commercial and nonprofit
+- **Cost**: $0
+- **Notes**: MIT is one of the most permissive licenses; no restrictions on how you use it
+- **Alternative**: Vue.js (also MIT licensed, slightly lighter weight)
+
+### TypeScript
+- **License**: Apache 2.0 License (permissive open-source)
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+- **Notes**: Built-in support for better code quality and developer experience
+
+### Material-UI or Bootstrap (optional UI framework)
+- **License**: MIT License
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+
+---
+
+## Backend Technologies
+
+### FastAPI (Python)
+- **License**: MIT License
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+- **Notes**: Modern, fast, great for building APIs quickly. Ideal for integrating LLMs and AI agents
+- **Python itself**: PSF License (fully open-source, free)
+
+### Node.js / Express (alternative)
+- **License**: MIT License (Node.js) / MIT License (Express)
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+- **Notes**: If you prefer JavaScript across frontend and backend
+
+---
+
+## Database Technologies
+
+### PostgreSQL
+- **License**: PostgreSQL License (very permissive open-source)
+- **Freedom to Use**: ✅ **Completely free**, even for commercial use
+- **Cost**: $0 (self-hosted) or ~$15–50/month on cloud (e.g., Heroku, Railway, Supabase)
+- **Notes**: Enterprise-grade, no licensing restrictions, widely used by nonprofits
+
+### SQLite (alternative for local development)
+- **License**: Public Domain
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+- **Notes**: Perfect for early prototyping, no database server needed
+
+---
+
+## Vector Database / Embeddings
+
+### Chroma
+- **License**: Apache 2.0 License
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0 (self-hosted) or free tier on cloud
+- **Notes**: Open-source vector database, perfect for storing and querying embeddings for matching
+
+### Pinecone (alternative)
+- **License**: Proprietary (but free tier available)
+- **Freedom to Use**: ✅ **Free tier includes 125K vectors**, more than enough for prototype
+- **Cost**: $0 (free tier) or ~$12/month for production tier
+- **Notes**: Managed service (easier setup than self-hosting), generous free tier
+
+### FAISS (Meta/Facebook's Vector Search)
+- **License**: MIT License
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+- **Notes**: Alternative to Chroma; slightly more complex setup but highly performant
+
+---
+
+## Web Crawling
+
+### BeautifulSoup4
+- **License**: MIT License
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+
+### Requests
+- **License**: Apache 2.0 License
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+
+### Scrapy (optional, for more complex crawling)
+- **License**: BSD License
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+
+---
+
+## LLM / AI Integration Options
+
+### Option A: OpenAI API (Recommended for MVP Demo)
+- **Cost**: Paid usage (~$0.01–0.10 per request for GPT-4 mini or GPT-3.5 Turbo)
+- **Free Trial**: $5 credit included (enough for 1000s of test requests)
+- **Freedom to Use**: ✅ **Fully allowed** for nonprofit projects; no restriction on output
+- **Note**: You pay only for what you use; excellent for prototyping
+
+### Option B: Open-Source Models (Llama 2, Mistral)
+- **License**: Llama 2 Community License (allows commercial and nonprofit use)
+- **Freedom to Use**: ✅ **Completely free** to download and run locally
+- **Cost**: $0 (you host it yourself on your hardware or free cloud tier)
+- **Hosting Options**:
+  - Local machine (if you have GPU)
+  - Hugging Face Inference API (free tier available)
+  - Replicate ($.0005 per second, roughly $0.02–0.10 per request)
+
+### Option C: Hugging Face API
+- **License**: Various (most models are open-source friendly)
+- **Cost**: Free tier available for inference
+- **Freedom to Use**: ✅ **Fully allowed**
+- **Note**: Great for testing without spending money; sufficient for demo
+
+### Option D: Anthropic's Claude API
+- **Cost**: Paid usage (~$0.005–0.03 per request)
+- **Free Trial**: $5 credit
+- **Freedom to Use**: ✅ **Fully allowed** for nonprofit projects
+
+**Recommendation for MVP**: Start with OpenAI API ($5 free trial) or Hugging Face free tier. Both are fully unrestricted for nonprofit use and will keep costs near $0 during prototyping.
+
+---
+
+## Containerization & Deployment
+
+### Docker
+- **License**: Apache 2.0 License
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0 (Docker Desktop is free for personal use and nonprofits)
+
+### Docker Compose
+- **License**: Apache 2.0 License
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+
+---
+
+## Hosting & Cloud (Free Tiers)
+
+### Railway.app
+- **Free Tier**: $5/month credit (plenty for a demo)
+- **Freedom to Use**: ✅ **Fully allowed**
+- **Cost**: $0–5/month
+
+### Render
+- **Free Tier**: Static sites, limited compute
+- **Freedom to Use**: ✅ **Fully allowed**
+- **Cost**: $0 (free tier) or ~$7/month for basic service
+
+### Heroku
+- **Free Tier**: Discontinued (as of Nov 2022), but paid tier starts at $7/month
+- **Alternatives**: Railway, Render, or Fly.io are better choices
+
+### Fly.io
+- **Free Tier**: Very generous, good for small apps
+- **Freedom to Use**: ✅ **Fully allowed**
+- **Cost**: $0 (free tier) or ~$5/month for small production apps
+
+### GitHub (for code hosting)
+- **License**: GitHub Terms of Service
+- **Freedom to Use**: ✅ **Completely free** for public and private repos (with GitHub account)
+- **Cost**: $0
+
+---
+
+## Testing & Monitoring (Optional)
+
+### Jest (JavaScript testing)
+- **License**: MIT License
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+
+### Pytest (Python testing)
+- **License**: MIT License
+- **Freedom to Use**: ✅ **Completely free**
+- **Cost**: $0
+
+### ELK Stack (Elasticsearch, Logstash, Kibana)
+- **License**: Elastic License + Server Side Public License (SSPL) for newer versions
+- **Freedom to Use**: ✅ **Free for local development**; cloud tier starts ~$30/month
+- **Alternative for nonprofits**: Datadog offers free tier for nonprofits
+
+---
+
+## Summary: Your Full Stack is 100% Free to Use
+
+| Component | Technology | License | Cost | Freedom |
+|-----------|-----------|---------|------|---------|
+| Frontend | React | MIT | $0 | ✅ Unrestricted |
+| Backend | FastAPI | MIT | $0 | ✅ Unrestricted |
+| Database | PostgreSQL | PostgreSQL Lic. | $0–50 | ✅ Unrestricted |
+| Vector DB | Chroma | Apache 2.0 | $0 | ✅ Unrestricted |
+| Crawler | BeautifulSoup + Requests | MIT + Apache 2.0 | $0 | ✅ Unrestricted |
+| LLM | OpenAI or Hugging Face | (See above) | $0–10 (demo) | ✅ Nonprofit OK |
+| Hosting | Railway / Render | (Various) | $0–5 | ✅ Unrestricted |
+
+---
+
+## Legal Considerations for MatchingDonors
+
+### Data Compliance
+- ✅ Using **fake/synthetic data** = no HIPAA, GDPR, or CCPA concerns during MVP
+- ✅ All recommended tech is **open-source** = no licensing costs or restrictions
+- ✅ No proprietary dependencies = easy to switch vendors or host yourself later
+
+### Nonprofit Status
+- If MatchingDonors is a 501(c)(3) nonprofit, you may qualify for:
+  - **Google Cloud credits** ($200–1000/year)
+  - **Microsoft Azure credits** ($1000/year via TechSoup)
+  - **AWS credits** for nonprofits (via AWS Community Tech)
+- These would further reduce hosting costs to $0
+
+### Open-Source Contribution
+- All your code can be open-sourced later (using MIT or Apache 2.0 license)
+- This follows nonprofit best practices and attracts community contributions
+
+---
+
+## Recommendations for Your Project
+
+1. **Use this exact stack**—you have zero licensing concerns, zero cost barriers
+2. **Start with OpenAI API** ($5 free trial) for LLM integration; upgrade to open-source models later if needed
+3. **Host locally or on Railway** during development; push to production tier only when ready to launch
+4. **Keep all code in a private GitHub repo** until you're ready to open-source
+5. **Document your tech choices** in a `ARCHITECTURE.md` file so the manager knows everything is free and nonprofit-safe
+
+---
+
+## Questions to Confirm with Manager
+
+1. **"Can I use OpenAI API on a free trial ($5 credit) for the demo LLM features?"** (Recommended: Yes, very low cost and full freedom to use)
+2. **"Should the final code be open-sourced, or kept proprietary?"** (Impacts license choice later, but doesn't affect your prototyping freedom now)
+3. **"Does MatchingDonors have nonprofit cloud credits I should register for?"** (Could save $100s/year on hosting)
