@@ -16,9 +16,7 @@ export class MatchingService {
         this.genAI = new GoogleGenAI({ apiKey });
     }
 
-    /**
-     * Generate embedding vector for profile text
-     */
+    // Generate embedding vector for profile text
     async generateEmbedding(text: string): Promise<number[]> {
         try {
             const response = await this.genAI.models.embedContent({

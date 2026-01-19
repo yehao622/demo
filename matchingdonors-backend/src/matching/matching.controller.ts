@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { MatchingService } from "./matching.service";
-import { Profile, MatchRequest, MatchResult } from "./matching.types";
+import { Profile, MatchRequest } from "./matching.types";
 
 const matchingService = new MatchingService();
 

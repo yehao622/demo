@@ -11,7 +11,7 @@
 
 This project demonstrates three complementary AI agents that directly support MatchingDonors' core business goals:
 1. **Profile Agent** – Help patients and donors complete profiles faster and more effectively
-2. **Content Agent** – Auto-label news articles for topic-based subscriptions across DailyDiabetesNews, DailyTransplantNews, and IrishDailyTransplantNews
+2. **Content Agent** – Auto-label news articles for topic-based subscriptions across DailyDiabetesNews, DailyTransplantNews, MatchingDonors.com, and IrishDailyTransplantNews
 3. **Advertiser Agent** – Provide intelligent lead capture and FAQ support for potential advertisers
 
 Using fake data and synthetic personas, we'll validate feasibility, gather user feedback, and establish a foundation for production integration.
