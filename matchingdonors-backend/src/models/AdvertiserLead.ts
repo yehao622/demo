@@ -6,19 +6,19 @@ export interface AdvertiserLead {
     companyName: string;
     contactName: string;
     email: string;
-    phone?: string;
-    website?: string;
+    phone: string | undefined;
+    website: string | undefined;
 
     // Campaign Details
-    monthlyBudget?: string;
-    campaignGoals?: string;
-    targetAudience?: string;
-    preferredStartDate?: string;
+    monthlyBudget: string | undefined;
+    campaignGoals: string | undefined;
+    targetAudience: string | undefined;
+    preferredStartDate: string | undefined;
 
     // Additional Info
-    industry?: string;
-    previousAdvertising?: string;
-    questions?: string;
+    industry: string | undefined;
+    previousAdvertising: string | undefined;
+    questions: string | undefined;
 
     // Metadata
     conversationSummary: string;
