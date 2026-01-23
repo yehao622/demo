@@ -1,0 +1,202 @@
+.profile-matching-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 2.5rem;
+    color: #333;
+    font-weight: 700;
+}
+
+.page-description {
+    margin: 0;
+    color: #666;
+    font-size: 1.1rem;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.browse-section {
+    margin-top: 4rem;
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.browse-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.browse-title {
+    margin: 0;
+    font-size: 1.75rem;
+    color: #333;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background-color: #f0f0f0;
+    padding: 0.25rem;
+    border-radius: 8px;
+}
+
+.filter-tab {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    color: #666;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.filter-tab:hover {
+    background-color: #e0e0e0;
+}
+
+.filter-tab.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.profiles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.profile-card-wrapper {
+    height: 100%;
+}
+
+.profile-card-simple {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s;
+}
+
+.profile-card-simple:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+}
+
+.profile-header-simple {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.profile-header-simple h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #333;
+    flex: 1;
+}
+
+.badge-simple {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-simple.patient {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+.badge-simple.donor {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.description-simple {
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    flex: 1;
+}
+
+.view-btn-simple {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.view-btn-simple:hover {
+    background-color: #0056b3;
+}
+
+.no-profiles {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+.no-profiles p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+}
+
+.hint {
+    color: #999;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .profile-matching-page {
+        padding: 1rem;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+    }
+
+    .browse-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-tabs {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .profiles-grid {
+        grid-template-columns: 1fr;
+    }
+}

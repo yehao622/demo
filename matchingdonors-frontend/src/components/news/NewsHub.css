@@ -1,0 +1,110 @@
+.news-hub {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.news-hub-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.page-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 2.5rem;
+    color: #333;
+    font-weight: 700;
+}
+
+.page-description {
+    margin: 0;
+    color: #666;
+    font-size: 1.1rem;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.news-hub-empty {
+    max-width: 800px;
+    margin: 4rem auto;
+    padding: 2rem;
+}
+
+.empty-state {
+    background: white;
+    border-radius: 12px;
+    padding: 3rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.empty-icon {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.empty-state h2 {
+    margin: 0 0 1rem 0;
+    font-size: 2rem;
+    color: #333;
+}
+
+.empty-state>p {
+    margin: 0 0 2rem 0;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.empty-instructions {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: left;
+    margin-top: 2rem;
+}
+
+.empty-instructions h3 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-size: 1.25rem;
+}
+
+.empty-instructions ol {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #666;
+}
+
+.empty-instructions li {
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+}
+
+.empty-instructions code {
+    background: #e0e0e0;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: #d32f2f;
+}
+
+@media (max-width: 768px) {
+    .news-hub {
+        padding: 1rem;
+    }
+
+    .page-title {
+        font-size: 1.75rem;
+    }
+
+    .page-description {
+        font-size: 1rem;
+    }
+
+    .empty-state {
+        padding: 2rem 1.5rem;
+    }
+}
