@@ -370,7 +370,7 @@ export const ProfileAgent: React.FC = () => {
                                         <span className="info-label">Blood Type:</span>
                                         <span
                                             className={`info-value ${
-                                                !suggestion.blood_type ? "unknown" : "
+                                                !suggestion.blood_type ? "unknown" : ""
                                             }`}
                                         >
                                             {suggestion.blood_type || "Not specified"}
@@ -380,7 +380,7 @@ export const ProfileAgent: React.FC = () => {
                                         <span className="info-label">Location:</span>
                                         <span
                                             className={`info-value ${
-                                                !suggestion.location ? "unknown" : "
+                                                !suggestion.location ? "unknown" : ""
                                             }`}
                                         >
                                             {suggestion.location || "Not specified"}
