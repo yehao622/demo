@@ -26,131 +26,111 @@ export const ProfileAgent: React.FC = () => {
     const [interimText, setInterimText] = useState("");
     
     const recognitionRef = useRef<any>(null);
-    const shouldRestartRef = useRef(false);
+    const isActiveRef = useRef(false);
 
     const minCharacters = 20;
     const maxCharacters = 2000;
 
-    // Initialize speech recognition
+    // Initialize speech recognition once
     useEffect(() => {
-        if (isSpeechRecognitionSupported()) {
-            const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-            const recognition = new SpeechRecognition();
-            
-            // Configure for better continuous recognition
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-            recognition.maxAlternatives = 1;
-
-            recognition.onstart = () => {
-                console.log('Speech recognition started');
-                setRecordingError(null);
-                setIsRecording(true);
-            };
-
-            recognition.onresult = (event: any) => {
-                let interim = '';
-                let final = '';
-
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
-                    if (event.results[i].isFinal) {
-                        final += transcript + ' ';
-                    } else {
-                        interim += transcript;
-                    }
-                }
-
-                // Update interim text for display
-                setInterimText(interim);
-
-                // Add final transcript to text
-                if (final) {
-                    setText(prev => {
-                        const newText = prev ? prev + ' ' + final : final;
-                        return newText.trim();
-                    });
-                    setInterimText(''); // Clear interim after final
-                }
-            };
-
-            recognition.onerror = (event: any) => {
-                console.error('Speech recognition error:', event.error);
-                
-                // Ignore certain errors and keep trying
-                if (event.error === 'no-speech') {
-                    console.log('No speech detected, waiting for speech...');
-                    // Don't show error, just keep listening
-                    if (shouldRestartRef.current) {
-                        setTimeout(() => {
-                            if (shouldRestartRef.current) {
-                                try {
-                                    recognition.start();
-                                } catch (e) {
-                                    console.log('Recognition already started');
-                                }
-                            }
-                        }, 100);
-                    }
-                    return;
-                } else if (event.error === 'aborted') {
-                    console.log('Recognition aborted');
-                    return;
-                } else if (event.error === 'network') {
-                    console.log('Network error - may be initialization');
-                    return;
-                } else if (event.error === 'not-allowed' || event.error === 'permission-denied') {
-                    setRecordingError('Microphone access denied. Please allow microphone permissions and refresh.');
-                    setIsRecording(false);
-                } else {
-                    console.log('Other error:', event.error);
-                    // For other errors, try to restart if still recording
-                    if (shouldRestartRef.current) {
-                        setTimeout(() => {
-                            if (shouldRestartRef.current) {
-                                try {
-                                    recognition.start();
-                                } catch (e) {
-                                    console.log('Could not restart:', e);
-                                }
-                            }
-                        }, 100);
-                    }
-                }
-            };
-
-            recognition.onend = () => {
-                console.log('Speech recognition ended');
-                setInterimText('');
-                
-                // Auto-restart if still in recording mode
-                if (shouldRestartRef.current) {
-                    console.log('Auto-restarting recognition...');
-                    setTimeout(() => {
-                        if (shouldRestartRef.current) {
-                            try {
-                                recognition.start();
-                            } catch (err) {
-                                console.log('Could not restart recognition:', err);
-                            }
-                        }
-                    }, 100);
-                } else {
-                    setIsRecording(false);
-                }
-            };
-
-            recognitionRef.current = recognition;
+        if (!isSpeechRecognitionSupported()) {
+            return;
         }
 
+        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+        const recognition = new SpeechRecognition();
+        
+        // Configure for continuous recognition
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+            console.log('✅ Speech recognition started successfully');
+            setIsRecording(true);
+            setRecordingError(null);
+        };
+
+        recognition.onresult = (event: any) => {
+            console.log('📝 Got speech result');
+            let interim = '';
+            let final = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    final += transcript + ' ';
+                    console.log('Final transcript:', transcript);
+                } else {
+                    interim += transcript;
+                }
+            }
+
+            // Update interim text for live feedback
+            if (interim) {
+                setInterimText(interim);
+            }
+
+            // Add final transcript to text
+            if (final) {
+                setText(prev => {
+                    const newText = prev ? prev + ' ' + final : final;
+                    return newText.trim();
+                });
+                setInterimText(''); // Clear interim after final
+            }
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error('❌ Speech recognition error:', event.error);
+            
+            if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+                setRecordingError('Microphone access denied. Please allow microphone permissions.');
+                setIsRecording(false);
+                isActiveRef.current = false;
+            } else if (event.error === 'no-speech') {
+                // Don't show error for no-speech, it's normal during pauses
+                console.log('No speech detected, but continuing to listen...');
+            } else if (event.error === 'network') {
+                // Ignore network errors during startup
+                console.log('Network error (likely false positive)');
+            } else {
+                console.log('Other error:', event.error);
+            }
+        };
+
+        recognition.onend = () => {
+            console.log('🛑 Speech recognition ended');
+            setInterimText('');
+            
+            // Only restart if we're still supposed to be recording
+            if (isActiveRef.current) {
+                console.log('⚠️ Recognition ended unexpectedly, restarting...');
+                setTimeout(() => {
+                    if (isActiveRef.current) {
+                        try {
+                            recognition.start();
+                        } catch (err) {
+                            console.log('Could not restart:', err);
+                            setIsRecording(false);
+                        }
+                    }
+                }, 200); // Small delay before restart
+            } else {
+                setIsRecording(false);
+            }
+        };
+
+        recognitionRef.current = recognition;
+
         return () => {
-            shouldRestartRef.current = false;
+            isActiveRef.current = false;
             if (recognitionRef.current) {
                 try {
-                    recognitionRef.current.stop();
+                    recognitionRef.current.abort();
                 } catch (e) {
-                    console.log('Cleanup: could not stop recognition');
+                    console.log('Cleanup: error stopping recognition');
                 }
             }
         };
@@ -162,35 +142,37 @@ export const ProfileAgent: React.FC = () => {
             return;
         }
 
+        console.log('🎤 Starting recording...');
         setRecordingError(null);
         setInterimText('');
-        shouldRestartRef.current = true;
+        isActiveRef.current = true;
         
         try {
-            recognitionRef.current?.start();
-            setIsRecording(true);
+            recognitionRef.current.start();
+            console.log('Recognition.start() called');
         } catch (err: any) {
-            console.error('Error starting recognition:', err);
+            console.error('Error starting:', err);
             if (err.message && err.message.includes('already started')) {
-                // Already running, just update state
+                console.log('Already started, just updating state');
                 setIsRecording(true);
             } else {
                 setIsRecording(false);
-                shouldRestartRef.current = false;
-                setRecordingError('Failed to start recording. Please refresh and try again.');
+                isActiveRef.current = false;
+                setRecordingError('Failed to start recording. Please try again.');
             }
         }
     };
 
     const stopRecording = () => {
-        shouldRestartRef.current = false;
+        console.log('⏹️ Stopping recording...');
+        isActiveRef.current = false;
         setIsRecording(false);
         setInterimText('');
         
         try {
             recognitionRef.current?.stop();
         } catch (e) {
-            console.log('Error stopping recognition:', e);
+            console.log('Error stopping:', e);
         }
     };
 
@@ -302,14 +284,18 @@ export const ProfileAgent: React.FC = () => {
 
                             {isRecording && !recordingError && (
                                 <div className="success-message">
-                                    ✅ Listening... Speak clearly into your microphone. Your words will appear above.
-                                    {interimText && <div className="interim-text">Hearing: "{interimText}"</div>}
+                                    ✅ Listening... Speak clearly and naturally. The microphone indicator should stay solid (not flashing).
+                                    {interimText && (
+                                        <div className="interim-text">
+                                            Hearing: "{interimText}"
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
                             {recordingError && (
-                                <div className="info-message">
-                                    ℹ️ {recordingError}
+                                <div className="error-message">
+                                    ❌ {recordingError}
                                 </div>
                             )}
 
