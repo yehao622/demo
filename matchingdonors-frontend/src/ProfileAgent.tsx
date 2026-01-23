@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "./ProfileAgent.css";
 
 type ProfileSuggestion = {
@@ -11,14 +11,104 @@ type ProfileSuggestion = {
     safety_flags: string[];
 };
 
+// Check if browser supports Web Speech API
+const isSpeechRecognitionSupported = () => {
+    return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+};
+
 export const ProfileAgent: React.FC = () => {
     const [text, setText] = useState("");
     const [suggestion, setSuggestion] = useState<ProfileSuggestion | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingError, setRecordingError] = useState<string | null>(null);
+    
+    const recognitionRef = useRef<any>(null);
 
     const minCharacters = 20;
     const maxCharacters = 2000;
+
+    // Initialize speech recognition
+    useEffect(() => {
+        if (isSpeechRecognitionSupported()) {
+            const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+            const recognition = new SpeechRecognition();
+            
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event: any) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + ' ';
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                if (finalTranscript) {
+                    setText(prev => {
+                        const newText = prev ? prev + ' ' + finalTranscript : finalTranscript;
+                        return newText.trim();
+                    });
+                }
+            };
+
+            recognition.onerror = (event: any) => {
+                console.error('Speech recognition error:', event.error);
+                setIsRecording(false);
+                
+                if (event.error === 'no-speech') {
+                    setRecordingError('No speech detected. Please try again.');
+                } else if (event.error === 'not-allowed') {
+                    setRecordingError('Microphone access denied. Please allow microphone permissions.');
+                } else {
+                    setRecordingError(`Recognition error: ${event.error}`);
+                }
+            };
+
+            recognition.onend = () => {
+                setIsRecording(false);
+            };
+
+            recognitionRef.current = recognition;
+        }
+
+        return () => {
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
+        };
+    }, []);
+
+    const startRecording = () => {
+        if (!isSpeechRecognitionSupported()) {
+            setRecordingError('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+            return;
+        }
+
+        setRecordingError(null);
+        setIsRecording(true);
+        
+        try {
+            recognitionRef.current?.start();
+        } catch (err) {
+            console.error('Error starting recognition:', err);
+            setIsRecording(false);
+            setRecordingError('Failed to start recording. Please try again.');
+        }
+    };
+
+    const stopRecording = () => {
+        setIsRecording(false);
+        recognitionRef.current?.stop();
+    };
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -50,6 +140,7 @@ export const ProfileAgent: React.FC = () => {
         setText("");
         setSuggestion(null);
         setError(null);
+        setRecordingError(null);
     };
 
     const characterCount = text.length;
@@ -62,7 +153,7 @@ export const ProfileAgent: React.FC = () => {
                     <h2>🏥 Profile Filling Assistant</h2>
                     <p>
                         AI-powered profile generation for patients and donors.<br />
-                        Describe your situation and we'll help you create a comprehensive profile.
+                        Describe your situation by typing or speaking, and we'll help you create a comprehensive profile.
                     </p>
                 </div>
 
@@ -70,9 +161,29 @@ export const ProfileAgent: React.FC = () => {
                     {!suggestion ? (
                         <form onSubmit={handleSubmit} className="profile-form">
                             <div className="form-section">
-                                <label className="form-label" htmlFor="profile-input">
-                                    Describe Your Situation
-                                </label>
+                                <div className="form-label-with-actions">
+                                    <label className="form-label" htmlFor="profile-input">
+                                        Describe Your Situation
+                                    </label>
+                                    {isSpeechRecognitionSupported() && (
+                                        <button
+                                            type="button"
+                                            className={`audio-button ${isRecording ? 'recording' : ''}`}
+                                            onClick={isRecording ? stopRecording : startRecording}
+                                            disabled={loading}
+                                            title={isRecording ? 'Stop recording' : 'Start voice input'}
+                                        >
+                                            {isRecording ? (
+                                                <>
+                                                    <span className="recording-pulse"></span>
+                                                    🎤 Recording...
+                                                </>
+                                            ) : (
+                                                '🎤 Voice Input'
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
                                 <textarea
                                     id="profile-input"
                                     className="profile-textarea"
@@ -97,12 +208,18 @@ export const ProfileAgent: React.FC = () => {
                                 </div>
                             </div>
 
+                            {recordingError && (
+                                <div className="info-message">
+                                    ℹ️ {recordingError}
+                                </div>
+                            )}
+
                             {error && <div className="error-message">❌ {error}</div>}
 
                             <button
                                 type="submit"
                                 className="submit-button"
-                                disabled={loading || !isValid}
+                                disabled={loading || !isValid || isRecording}
                             >
                                 {loading ? "Generating Profile..." : "Generate Profile Suggestion"}
                             </button>
