@@ -27,6 +27,7 @@ export const ProfileAgent: React.FC = () => {
     
     const recognitionRef = useRef<any>(null);
     const isActiveRef = useRef(false);
+    const networkErrorCountRef = useRef(0);
 
     const minCharacters = 20;
     const maxCharacters = 2000;
@@ -50,10 +51,12 @@ export const ProfileAgent: React.FC = () => {
             console.log('✅ Speech recognition started successfully');
             setIsRecording(true);
             setRecordingError(null);
+            networkErrorCountRef.current = 0; // Reset error count on successful start
         };
 
         recognition.onresult = (event: any) => {
             console.log('📝 Got speech result');
+            networkErrorCountRef.current = 0; // Reset error count when we get results
             let interim = '';
             let final = '';
 
@@ -89,12 +92,21 @@ export const ProfileAgent: React.FC = () => {
                 setRecordingError('Microphone access denied. Please allow microphone permissions.');
                 setIsRecording(false);
                 isActiveRef.current = false;
+            } else if (event.error === 'network') {
+                networkErrorCountRef.current++;
+                console.log('Network error count:', networkErrorCountRef.current);
+                
+                // If we get multiple network errors in a row, it's a real problem
+                if (networkErrorCountRef.current >= 3) {
+                    setRecordingError('Network error: Speech recognition requires an active internet connection to Google servers. Please check your connection and try again.');
+                    setIsRecording(false);
+                    isActiveRef.current = false;
+                } else {
+                    console.log('Network error detected, will try to restart...');
+                }
             } else if (event.error === 'no-speech') {
                 // Don't show error for no-speech, it's normal during pauses
-                console.log('No speech detected, but continuing to listen...');
-            } else if (event.error === 'network') {
-                // Ignore network errors during startup
-                console.log('Network error (likely false positive)');
+                console.log('No speech detected, continuing...');
             } else {
                 console.log('Other error:', event.error);
             }
@@ -104,11 +116,11 @@ export const ProfileAgent: React.FC = () => {
             console.log('🛑 Speech recognition ended');
             setInterimText('');
             
-            // Only restart if we're still supposed to be recording
-            if (isActiveRef.current) {
+            // Only restart if we're still supposed to be recording AND haven't had too many errors
+            if (isActiveRef.current && networkErrorCountRef.current < 3) {
                 console.log('⚠️ Recognition ended unexpectedly, restarting...');
                 setTimeout(() => {
-                    if (isActiveRef.current) {
+                    if (isActiveRef.current && networkErrorCountRef.current < 3) {
                         try {
                             recognition.start();
                         } catch (err) {
@@ -116,8 +128,11 @@ export const ProfileAgent: React.FC = () => {
                             setIsRecording(false);
                         }
                     }
-                }, 200); // Small delay before restart
+                }, 300); // Slightly longer delay
             } else {
+                if (networkErrorCountRef.current >= 3) {
+                    console.log('❌ Too many network errors, stopping auto-restart');
+                }
                 setIsRecording(false);
             }
         };
@@ -146,6 +161,7 @@ export const ProfileAgent: React.FC = () => {
         setRecordingError(null);
         setInterimText('');
         isActiveRef.current = true;
+        networkErrorCountRef.current = 0;
         
         try {
             recognitionRef.current.start();
@@ -168,6 +184,7 @@ export const ProfileAgent: React.FC = () => {
         isActiveRef.current = false;
         setIsRecording(false);
         setInterimText('');
+        networkErrorCountRef.current = 0;
         
         try {
             recognitionRef.current?.stop();
@@ -284,7 +301,7 @@ export const ProfileAgent: React.FC = () => {
 
                             {isRecording && !recordingError && (
                                 <div className="success-message">
-                                    ✅ Listening... Speak clearly and naturally. The microphone indicator should stay solid (not flashing).
+                                    ✅ Listening... Speak clearly and naturally.
                                     {interimText && (
                                         <div className="interim-text">
                                             Hearing: "{interimText}"
@@ -353,7 +370,7 @@ export const ProfileAgent: React.FC = () => {
                                         <span className="info-label">Blood Type:</span>
                                         <span
                                             className={`info-value ${
-                                                !suggestion.blood_type ? "unknown" : ""
+                                                !suggestion.blood_type ? "unknown" : "
                                             }`}
                                         >
                                             {suggestion.blood_type || "Not specified"}
@@ -363,7 +380,7 @@ export const ProfileAgent: React.FC = () => {
                                         <span className="info-label">Location:</span>
                                         <span
                                             className={`info-value ${
-                                                !suggestion.location ? "unknown" : ""
+                                                !suggestion.location ? "unknown" : "
                                             }`}
                                         >
                                             {suggestion.location || "Not specified"}
