@@ -217,8 +217,12 @@ export class TopicLabeler {
         topicDistribution: Record<string, number>;
         organDistribution: Record<string, number>;
         categoryDistribution: Record<string, number>;
+        allTopics: string[],
+        allOrgans: string[],
+        allCategories: string[]
     } {
         const labeled = articles.filter(a => a.topics && a.topics.length > 0);
+        const unlabeled = articles.filter(a => !a.topics || a.topics.length === 0);
         const topicDist: Record<string, number> = {};
         const organDist: Record<string, number> = {};
         const categoryDist: Record<string, number> = {};
@@ -237,13 +241,21 @@ export class TopicLabeler {
             });
         }
 
+        // Extract unique arrays from distributions
+        const allTopics = Object.keys(topicDist).sort();
+        const allOrgans = Object.keys(organDist).sort();
+        const allCategories = Object.keys(categoryDist).sort();
+
         return {
             totalArticles: articles.length,
             labeledArticles: labeled.length,
-            unlabeledArticles: articles.length - labeled.length,
+            unlabeledArticles: unlabeled.length,
             topicDistribution: topicDist,
             organDistribution: organDist,
-            categoryDistribution: categoryDist
+            categoryDistribution: categoryDist,
+            allTopics,
+            allOrgans,
+            allCategories
         };
     }
 }

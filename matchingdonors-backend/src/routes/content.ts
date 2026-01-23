@@ -137,6 +137,79 @@ router.get('/articles', (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/content/articles/filter
+ * Filter articles by labels
+ * Query params: topic, organ, category
+ */
+router.get('/articles/filter', (req, res) => {
+    try {
+        const { topic, organ, category } = req.query;
+
+        let filtered = articles.filter(a => a.topics && a.topics.length > 0);
+
+        if (topic) {
+            filtered = filtered.filter(a =>
+                a.topics.includes(topic as string)
+            );
+        }
+
+        if (organ) {
+            filtered = filtered.filter(a =>
+                a.organTypes.includes(organ as string)
+            );
+        }
+
+        if (category) {
+            filtered = filtered.filter(a =>
+                a.categories.includes(category as string)
+            );
+        }
+
+        res.json({
+            success: true,
+            count: filtered.length,
+            articles: filtered.map(a => ({
+                id: a.id,
+                title: a.title,
+                url: a.url,
+                excerpt: a.excerpt,
+                publishDate: a.publishDate,
+                source: a.source,
+                topics: a.topics,
+                organTypes: a.organTypes,
+                categories: a.categories
+            }))
+        });
+    } catch (error) {
+        console.error('Error filtering articles:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to filter articles'
+        });
+    }
+});
+
+/**
+ * GET /api/content/statistics
+ * Get labeling statistics
+ */
+router.get('/statistics', (req, res) => {
+    try {
+        const stats = topicLabeler.getStatistics(articles);
+        res.json({
+            success: true,
+            statistics: stats
+        });
+    } catch (error) {
+        console.error('Error getting statistics:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get statistics'
+        });
+    }
+});
+
+/**
  * GET /api/content/articles/:id
  * Get full article content by ID
  */
@@ -250,79 +323,6 @@ router.post('/label/:id', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to label article'
-        });
-    }
-});
-
-/**
- * GET /api/content/statistics
- * Get labeling statistics
- */
-router.get('/statistics', (req, res) => {
-    try {
-        const stats = topicLabeler.getStatistics(articles);
-        res.json({
-            success: true,
-            statistics: stats
-        });
-    } catch (error) {
-        console.error('Error getting statistics:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get statistics'
-        });
-    }
-});
-
-/**
- * GET /api/content/articles/filter
- * Filter articles by labels
- * Query params: topic, organ, category
- */
-router.get('/articles/filter', (req, res) => {
-    try {
-        const { topic, organ, category } = req.query;
-
-        let filtered = articles.filter(a => a.topics && a.topics.length > 0);
-
-        if (topic) {
-            filtered = filtered.filter(a =>
-                a.topics.includes(topic as string)
-            );
-        }
-
-        if (organ) {
-            filtered = filtered.filter(a =>
-                a.organTypes.includes(organ as string)
-            );
-        }
-
-        if (category) {
-            filtered = filtered.filter(a =>
-                a.categories.includes(category as string)
-            );
-        }
-
-        res.json({
-            success: true,
-            count: filtered.length,
-            articles: filtered.map(a => ({
-                id: a.id,
-                title: a.title,
-                url: a.url,
-                excerpt: a.excerpt,
-                publishDate: a.publishDate,
-                source: a.source,
-                topics: a.topics,
-                organTypes: a.organTypes,
-                categories: a.categories
-            }))
-        });
-    } catch (error) {
-        console.error('Error filtering articles:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to filter articles'
         });
     }
 });
