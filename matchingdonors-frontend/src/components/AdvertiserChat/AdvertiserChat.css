@@ -40,6 +40,7 @@
     display: flex;
     margin-bottom: 16px;
     animation: fadeIn 0.3s ease-in;
+    /* Remove justify-content to allow natural left alignment */
 }
 
 @keyframes fadeIn {
@@ -55,10 +56,12 @@
 }
 
 .message.assistant {
+    /* Assistant messages stay left-aligned naturally */
     justify-content: flex-start;
 }
 
 .message.user {
+    /* User messages align to the right */
     justify-content: flex-end;
 }
 
@@ -69,6 +72,8 @@
     line-height: 1.5;
     white-space: pre-wrap;
     word-wrap: break-word;
+    /* Text alignment left for readability */
+    text-align: left;
 }
 
 .message.assistant .message-content {
