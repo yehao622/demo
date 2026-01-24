@@ -14,14 +14,14 @@ export class TranscriptionService {
 
     async transcribe(audioBuffer: Buffer, mimeType: string): Promise<string> {
         try {
-            console.log('Starting transcription with Gemini...');
+            console.log('Starting transcription with Gemini 2.5 Flash...');
             
             // Convert audio to base64
             const audioBase64 = audioBuffer.toString('base64');
 
-            // Use Gemini 2.0 Flash for audio transcription
+            // Use Gemini 2.5 Flash for audio transcription (same as other modules)
             const response = await this.ai.models.generateContent({
-                model: 'gemini-2.0-flash-exp',
+                model: 'gemini-2.5-flash',
                 contents: [
                     {
                         role: 'user',
