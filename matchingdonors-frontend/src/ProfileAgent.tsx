@@ -24,6 +24,15 @@ export const ProfileAgent: React.FC = () => {
     const [isRecording, setIsRecording] = useState(false);
     const [recordingError, setRecordingError] = useState<string | null>(null);
     const [isTranscribing, setIsTranscribing] = useState(false);
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    
+    // Editable profile fields
+    const [editableSummary, setEditableSummary] = useState("");
+    const [editableOrganType, setEditableOrganType] = useState("");
+    const [editableAge, setEditableAge] = useState("");
+    const [editableBloodType, setEditableBloodType] = useState("");
+    const [editableLocation, setEditableLocation] = useState("");
+    const [editableStory, setEditableStory] = useState("");
     
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
@@ -140,6 +149,13 @@ export const ProfileAgent: React.FC = () => {
                 setError(data.error || "Request failed");
             } else {
                 setSuggestion(data.suggestion);
+                // Populate editable fields
+                setEditableSummary(data.suggestion.summary);
+                setEditableOrganType(data.suggestion.organ_type || "");
+                setEditableAge(data.suggestion.age?.toString() || "");
+                setEditableBloodType(data.suggestion.blood_type || "");
+                setEditableLocation(data.suggestion.location || "");
+                setEditableStory(data.suggestion.personal_story);
             }
         } catch (err: any) {
             setError("Unable to connect to the server. Please check if the backend is running.");
@@ -153,6 +169,21 @@ export const ProfileAgent: React.FC = () => {
         setSuggestion(null);
         setError(null);
         setRecordingError(null);
+        // Clear editable fields
+        setEditableSummary("");
+        setEditableOrganType("");
+        setEditableAge("");
+        setEditableBloodType("");
+        setEditableLocation("");
+        setEditableStory("");
+    };
+
+    const handleSaveProfile = () => {
+        setShowSaveModal(true);
+    };
+
+    const closeSaveModal = () => {
+        setShowSaveModal(false);
     };
 
     const characterCount = text.length;
@@ -263,58 +294,77 @@ export const ProfileAgent: React.FC = () => {
                         <div className="suggestion-container">
                             <div className="suggestion-header">
                                 <span className="suggestion-icon">✨</span>
-                                <h3>Suggested Profile</h3>
+                                <h3>Edit Your Profile</h3>
+                                <p className="edit-hint">Review and modify the AI-generated profile below</p>
                             </div>
 
                             <div className="suggestion-content">
-                                <div className="info-card">
-                                    <div className="info-row">
-                                        <span className="info-label">Summary:</span>
-                                        <span className="info-value">{suggestion.summary}</span>
+                                <div className="editable-form">
+                                    <div className="form-group">
+                                        <label className="edit-label">Summary:</label>
+                                        <textarea
+                                            className="edit-input edit-textarea"
+                                            value={editableSummary}
+                                            onChange={(e) => setEditableSummary(e.target.value)}
+                                            rows={2}
+                                        />
                                     </div>
-                                    <div className="info-row">
-                                        <span className="info-label">Organ Type:</span>
-                                        <span
-                                            className={`info-value ${
-                                                !suggestion.organ_type ? "unknown" : ""
-                                            }`}
-                                        >
-                                            {suggestion.organ_type || "Not specified"}
-                                        </span>
+                                    
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="edit-label">Organ Type:</label>
+                                            <input
+                                                type="text"
+                                                className="edit-input"
+                                                value={editableOrganType}
+                                                onChange={(e) => setEditableOrganType(e.target.value)}
+                                                placeholder="e.g., kidney, liver, heart"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="edit-label">Age:</label>
+                                            <input
+                                                type="text"
+                                                className="edit-input"
+                                                value={editableAge}
+                                                onChange={(e) => setEditableAge(e.target.value)}
+                                                placeholder="e.g., 34"
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="info-row">
-                                        <span className="info-label">Age:</span>
-                                        <span
-                                            className={`info-value ${!suggestion.age ? "unknown" : ""}`}
-                                        >
-                                            {suggestion.age || "Not specified"}
-                                        </span>
-                                    </div>
-                                    <div className="info-row">
-                                        <span className="info-label">Blood Type:</span>
-                                        <span
-                                            className={`info-value ${
-                                                !suggestion.blood_type ? "unknown" : ""
-                                            }`}
-                                        >
-                                            {suggestion.blood_type || "Not specified"}
-                                        </span>
-                                    </div>
-                                    <div className="info-row">
-                                        <span className="info-label">Location:</span>
-                                        <span
-                                            className={`info-value ${
-                                                !suggestion.location ? "unknown" : ""
-                                            }`}
-                                        >
-                                            {suggestion.location || "Not specified"}
-                                        </span>
-                                    </div>
-                                </div>
 
-                                <div className="story-section">
-                                    <h4>📝 Personal Story</h4>
-                                    <p className="story-text">{suggestion.personal_story}</p>
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label className="edit-label">Blood Type:</label>
+                                            <input
+                                                type="text"
+                                                className="edit-input"
+                                                value={editableBloodType}
+                                                onChange={(e) => setEditableBloodType(e.target.value)}
+                                                placeholder="e.g., A+, O-, AB+"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="edit-label">Location:</label>
+                                            <input
+                                                type="text"
+                                                className="edit-input"
+                                                value={editableLocation}
+                                                onChange={(e) => setEditableLocation(e.target.value)}
+                                                placeholder="e.g., Boston, MA, USA"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="edit-label">📝 Personal Story:</label>
+                                        <textarea
+                                            className="edit-input edit-textarea"
+                                            value={editableStory}
+                                            onChange={(e) => setEditableStory(e.target.value)}
+                                            rows={4}
+                                        />
+                                    </div>
                                 </div>
 
                                 {suggestion.safety_flags.length > 0 && (
@@ -331,14 +381,44 @@ export const ProfileAgent: React.FC = () => {
                             </div>
 
                             <div className="action-buttons">
-                                <button className="btn btn-primary" onClick={handleNewProfile}>
-                                    Create New Profile
+                                <button className="btn btn-success" onClick={handleSaveProfile}>
+                                    💾 Save Profile
+                                </button>
+                                <button className="btn btn-secondary" onClick={handleNewProfile}>
+                                    ➕ Create New Profile
                                 </button>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Save Confirmation Modal */}
+            {showSaveModal && (
+                <div className="modal-overlay" onClick={closeSaveModal}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <span className="modal-icon">✅</span>
+                            <h3>Profile Saved!</h3>
+                        </div>
+                        <div className="modal-body">
+                            <p><strong>Demo Mode:</strong> Profile saved in memory only.</p>
+                            <p>In production, this would be stored in the database and available for matching with donors/patients.</p>
+                            <div className="saved-profile-preview">
+                                <p><strong>Summary:</strong> {editableSummary}</p>
+                                <p><strong>Type:</strong> {editableOrganType || "Not specified"}</p>
+                                <p><strong>Age:</strong> {editableAge || "Not specified"}</p>
+                                <p><strong>Blood Type:</strong> {editableBloodType || "Not specified"}</p>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-primary" onClick={closeSaveModal}>
+                                OK
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
