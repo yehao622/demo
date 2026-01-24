@@ -286,8 +286,8 @@
 
 .suggestion-header {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   margin-bottom: 24px;
 }
 
@@ -296,6 +296,16 @@
   color: #333;
   margin: 0;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.edit-hint {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  font-weight: 400;
 }
 
 .suggestion-icon {
@@ -305,6 +315,56 @@
 .suggestion-content {
   display: grid;
   gap: 20px;
+}
+
+/* Editable Form Styles */
+.editable-form {
+  background: #f7f9fc;
+  border: 2px solid #e8eef5;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.edit-label {
+  font-weight: 600;
+  color: #667eea;
+  font-size: 14px;
+}
+
+.edit-input {
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.3s;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.edit-textarea {
+  resize: vertical;
+  line-height: 1.6;
+  min-height: 60px;
 }
 
 /* Info Card */
@@ -411,10 +471,14 @@
   padding: 12px 24px;
   border: none;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
 }
 
 .btn-primary {
@@ -427,6 +491,16 @@
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.3);
 }
 
+.btn-success {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.3);
+}
+
 .btn-secondary {
   background: #e0e0e0;
   color: #555;
@@ -434,6 +508,105 @@
 
 .btn-secondary:hover {
   background: #d0d0d0;
+  transform: translateY(-1px);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  padding: 24px;
+  text-align: center;
+  border-radius: 16px 16px 0 0;
+}
+
+.modal-header h3 {
+  margin: 8px 0 0 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.modal-icon {
+  font-size: 48px;
+  display: block;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-body p {
+  margin: 0 0 12px 0;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+.saved-profile-preview {
+  background: #f7f9fc;
+  border: 2px solid #e8eef5;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.saved-profile-preview p {
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.saved-profile-preview strong {
+  color: #667eea;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+}
+
+.modal-footer .btn {
+  min-width: 120px;
 }
 
 /* Responsive Design */
@@ -463,6 +636,10 @@
     align-self: flex-end;
   }
 
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
   .info-row {
     flex-direction: column;
     gap: 4px;
@@ -478,5 +655,9 @@
 
   .btn {
     width: 100%;
+  }
+
+  .modal-content {
+    width: 95%;
   }
 }
