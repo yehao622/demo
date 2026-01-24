@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import "./ProfileAgent.css";
 
 type ProfileSuggestion = {
@@ -11,9 +11,9 @@ type ProfileSuggestion = {
     safety_flags: string[];
 };
 
-// Check if browser supports Web Speech API
-const isSpeechRecognitionSupported = () => {
-    return 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
+// Check if browser supports MediaRecorder
+const isMediaRecorderSupported = () => {
+    return typeof MediaRecorder !== 'undefined';
 };
 
 export const ProfileAgent: React.FC = () => {
@@ -23,82 +23,94 @@ export const ProfileAgent: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     const [recordingError, setRecordingError] = useState<string | null>(null);
+    const [isTranscribing, setIsTranscribing] = useState(false);
     
-    const recognitionRef = useRef<any>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
 
     const minCharacters = 20;
     const maxCharacters = 2000;
 
-    // Initialize speech recognition
-    useEffect(() => {
-        if (!isSpeechRecognitionSupported()) {
-            return;
-        }
-
-        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-        const recognition = new SpeechRecognition();
-        
-        recognition.continuous = false; // Simple mode - stop after each phrase
-        recognition.interimResults = false; // Only final results
-        recognition.lang = 'en-US';
-
-        recognition.onresult = (event: any) => {
-            const transcript = event.results[0][0].transcript;
-            console.log('Recognized:', transcript);
-            setText(prev => prev ? prev + ' ' + transcript : transcript);
-        };
-
-        recognition.onerror = (event: any) => {
-            console.error('Speech error:', event.error);
-            setIsRecording(false);
+    const startRecording = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream);
             
-            if (event.error === 'not-allowed') {
-                setRecordingError('Microphone access denied. Please allow microphone permissions.');
-            } else if (event.error === 'network') {
-                setRecordingError('Network error. Please check your internet connection.');
-            } else if (event.error === 'no-speech') {
-                setRecordingError('No speech detected. Please try again.');
-            } else {
-                setRecordingError(`Error: ${event.error}. Please try again.`);
-            }
-        };
-
-        recognition.onstart = () => {
-            console.log('Recording started');
+            audioChunksRef.current = [];
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data);
+                }
+            };
+            
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                
+                // Stop all tracks
+                stream.getTracks().forEach(track => track.stop());
+                
+                // Send to backend for transcription
+                await transcribeAudio(audioBlob);
+            };
+            
+            mediaRecorder.start();
+            mediaRecorderRef.current = mediaRecorder;
             setIsRecording(true);
             setRecordingError(null);
-        };
-
-        recognition.onend = () => {
-            console.log('Recording ended');
+            console.log('Recording started');
+        } catch (err: any) {
+            console.error('Failed to start recording:', err);
+            setRecordingError('Failed to access microphone. Please allow microphone permissions.');
+        }
+    };
+    
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
             setIsRecording(false);
-        };
-
-        recognitionRef.current = recognition;
-
-        return () => {
-            if (recognitionRef.current) {
-                recognitionRef.current.abort();
+            console.log('Recording stopped');
+        }
+    };
+    
+    const transcribeAudio = async (audioBlob: Blob) => {
+        setIsTranscribing(true);
+        setRecordingError(null);
+        
+        try {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+            
+            const response = await fetch('http://localhost:8080/api/profile/transcribe', {
+                method: 'POST',
+                body: formData,
+            });
+            
+            if (!response.ok) {
+                throw new Error('Transcription failed');
             }
-        };
-    }, []);
+            
+            const data = await response.json();
+            
+            if (data.transcript) {
+                setText(prev => prev ? prev + ' ' + data.transcript : data.transcript);
+                console.log('Transcribed:', data.transcript);
+            } else {
+                setRecordingError('No speech detected in recording.');
+            }
+        } catch (err: any) {
+            console.error('Transcription error:', err);
+            setRecordingError('Failed to transcribe audio. Please try again.');
+        } finally {
+            setIsTranscribing(false);
+        }
+    };
 
     const handleVoiceInput = () => {
-        if (!recognitionRef.current) {
-            setRecordingError('Voice input not supported in this browser.');
-            return;
-        }
-
         if (isRecording) {
-            recognitionRef.current.stop();
+            stopRecording();
         } else {
-            setRecordingError(null);
-            try {
-                recognitionRef.current.start();
-            } catch (err) {
-                console.error('Start error:', err);
-                setRecordingError('Failed to start recording. Please try again.');
-            }
+            startRecording();
         }
     };
 
@@ -157,19 +169,21 @@ export const ProfileAgent: React.FC = () => {
                                     <label className="form-label" htmlFor="profile-input">
                                         Describe Your Situation
                                     </label>
-                                    {isSpeechRecognitionSupported() && (
+                                    {isMediaRecorderSupported() && (
                                         <button
                                             type="button"
                                             className={`audio-button ${isRecording ? 'recording' : ''}`}
                                             onClick={handleVoiceInput}
-                                            disabled={loading}
-                                            title={isRecording ? 'Click to stop' : 'Click to speak'}
+                                            disabled={loading || isTranscribing}
+                                            title={isRecording ? 'Click to stop recording' : 'Click to start recording'}
                                         >
                                             {isRecording ? (
                                                 <>
                                                     <span className="recording-pulse"></span>
-                                                    🎤 Listening...
+                                                    🎤 Recording...
                                                 </>
+                                            ) : isTranscribing ? (
+                                                '🔄 Transcribing...'
                                             ) : (
                                                 '🎤 Voice Input'
                                             )}
@@ -202,7 +216,13 @@ export const ProfileAgent: React.FC = () => {
 
                             {isRecording && (
                                 <div className="success-message">
-                                    ✅ Listening... Speak now! The button will turn back when done.
+                                    ✅ Recording... Speak clearly. Click the button again when done.
+                                </div>
+                            )}
+
+                            {isTranscribing && (
+                                <div className="info-message">
+                                    🔄 Transcribing your audio with AI... Please wait.
                                 </div>
                             )}
 
@@ -217,7 +237,7 @@ export const ProfileAgent: React.FC = () => {
                             <button
                                 type="submit"
                                 className="submit-button"
-                                disabled={loading || !isValid}
+                                disabled={loading || !isValid || isTranscribing}
                             >
                                 {loading ? "Generating Profile..." : "Generate Profile Suggestion"}
                             </button>
