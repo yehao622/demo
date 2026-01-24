@@ -46,6 +46,7 @@ export const ProfileAgent: React.FC = () => {
             
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                console.log('Audio blob created:', audioBlob.size, 'bytes');
                 
                 // Stop all tracks
                 stream.getTracks().forEach(track => track.stop());
@@ -81,16 +82,23 @@ export const ProfileAgent: React.FC = () => {
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.webm');
             
+            console.log('Sending audio to backend for transcription...');
             const response = await fetch('http://localhost:8080/api/profile/transcribe', {
                 method: 'POST',
                 body: formData,
             });
             
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
             if (!response.ok) {
-                throw new Error('Transcription failed');
+                const errorText = await response.text();
+                console.error('Backend error response:', errorText);
+                throw new Error(`Transcription failed: ${response.status} ${errorText}`);
             }
             
             const data = await response.json();
+            console.log('Transcription response:', data);
             
             if (data.transcript) {
                 setText(prev => prev ? prev + ' ' + data.transcript : data.transcript);
@@ -100,7 +108,7 @@ export const ProfileAgent: React.FC = () => {
             }
         } catch (err: any) {
             console.error('Transcription error:', err);
-            setRecordingError('Failed to transcribe audio. Please try again.');
+            setRecordingError(`Failed to transcribe: ${err.message}`);
         } finally {
             setIsTranscribing(false);
         }
