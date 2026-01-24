@@ -406,9 +406,11 @@ export const ProfileAgent: React.FC = () => {
                             <p>In production, this would be stored in the database and available for matching with donors/patients.</p>
                             <div className="saved-profile-preview">
                                 <p><strong>Summary:</strong> {editableSummary}</p>
-                                <p><strong>Type:</strong> {editableOrganType || "Not specified"}</p>
+                                <p><strong>Organ Type:</strong> {editableOrganType || "Not specified"}</p>
                                 <p><strong>Age:</strong> {editableAge || "Not specified"}</p>
                                 <p><strong>Blood Type:</strong> {editableBloodType || "Not specified"}</p>
+                                <p><strong>Location:</strong> {editableLocation || "Not specified"}</p>
+                                <p><strong>Personal Story:</strong> {editableStory || "Not specified"}</p>
                             </div>
                         </div>
                         <div className="modal-footer">
