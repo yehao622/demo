@@ -1,11 +1,12 @@
 import React from 'react';
-import { Profile, MatchResult } from '../../types/profile.types';
+import { Profile } from '../../types/profile.types';
 import './ProfileCard.css';
 
 interface ProfileCardProps {
     profile: Profile;
     matchScore?: number;
     rank?: number;
+    reason?: string;
     onViewDetails: (profile: Profile) => void;
 }
 
@@ -13,6 +14,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     profile,
     matchScore,
     rank,
+    reason,
     onViewDetails
 }) => {
     const getTypeColor = (type: string) => {
@@ -24,6 +26,13 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         if (score >= 0.8) return 'score-high';
         if (score >= 0.6) return 'score-medium';
         return 'score-low';
+    };
+
+    const getMatchLabel = (score?: number) => {
+        if (!score) return '';
+        if (score >= 0.8) return 'Excellent Match';
+        if (score >= 0.6) return 'Good Match';
+        return 'Potential Match';
     };
 
     return (
@@ -38,11 +47,19 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 {matchScore !== undefined && (
                     <div className={`match-score ${getMatchScoreClass(matchScore)}`}>
                         <div className="score-value">{Math.round(matchScore * 100)}%</div>
-                        <div className="score-label">Match</div>
+                        <div className="score-label">{getMatchLabel(matchScore)}</div>
                         {rank !== undefined && <div className="rank-badge">#{rank}</div>}
                     </div>
                 )}
             </div>
+
+            {/* Match reason */}
+            {reason && (
+                <div className="match-reason-card">
+                    <span className="reason-icon">✨</span>
+                    <span className="reason-text">{reason}</span>
+                </div>
+            )}
 
             <div className="profile-card-body">
                 <div className="profile-section">

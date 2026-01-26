@@ -18,6 +18,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "multer": "^2.0.2",
     "pg": "^8.17.0"
   },
   "devDependencies": {
@@ -25,6 +26,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
+    "@types/multer": "^2.0.0",
     "@types/node": "^25.0.8",
     "jest": "^30.2.0",
     "ts-jest": "^29.4.6",

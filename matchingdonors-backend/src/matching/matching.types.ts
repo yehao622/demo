@@ -18,6 +18,7 @@ export interface MatchResult {
     profile: Profile;
     similarity: number;
     rank: number;
+    reason?: string;
 }
 
 export interface MatchRequest {
@@ -25,4 +26,5 @@ export interface MatchRequest {
     profileText?: string;
     topN: number;
     minSimilarity?: number;
+    searcherType?: 'patient' | 'donor';
 }

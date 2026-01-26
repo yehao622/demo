@@ -1,4 +1,5 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
+import { useVoiceInput } from "./hooks/useVoiceInput";
 import "./ProfileAgent.css";
 
 type ProfileSuggestion = {
@@ -21,11 +22,8 @@ export const ProfileAgent: React.FC = () => {
     const [suggestion, setSuggestion] = useState<ProfileSuggestion | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isRecording, setIsRecording] = useState(false);
-    const [recordingError, setRecordingError] = useState<string | null>(null);
-    const [isTranscribing, setIsTranscribing] = useState(false);
     const [showSaveModal, setShowSaveModal] = useState(false);
-    
+
     // Editable profile fields
     const [editableSummary, setEditableSummary] = useState("");
     const [editableOrganType, setEditableOrganType] = useState("");
@@ -33,103 +31,13 @@ export const ProfileAgent: React.FC = () => {
     const [editableBloodType, setEditableBloodType] = useState("");
     const [editableLocation, setEditableLocation] = useState("");
     const [editableStory, setEditableStory] = useState("");
-    
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-    const audioChunksRef = useRef<Blob[]>([]);
+
+    const { isRecording, isTranscribing, error: voiceError, handleVoiceInput } = useVoiceInput(
+        (transcript) => setText(prev => prev ? prev + ' ' + transcript : transcript)
+    );
 
     const minCharacters = 20;
     const maxCharacters = 2000;
-
-    const startRecording = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const mediaRecorder = new MediaRecorder(stream);
-            
-            audioChunksRef.current = [];
-            
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    audioChunksRef.current.push(event.data);
-                }
-            };
-            
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-                console.log('Audio blob created:', audioBlob.size, 'bytes');
-                
-                // Stop all tracks
-                stream.getTracks().forEach(track => track.stop());
-                
-                // Send to backend for transcription
-                await transcribeAudio(audioBlob);
-            };
-            
-            mediaRecorder.start();
-            mediaRecorderRef.current = mediaRecorder;
-            setIsRecording(true);
-            setRecordingError(null);
-            console.log('Recording started');
-        } catch (err: any) {
-            console.error('Failed to start recording:', err);
-            setRecordingError('Failed to access microphone. Please allow microphone permissions.');
-        }
-    };
-    
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
-            console.log('Recording stopped');
-        }
-    };
-    
-    const transcribeAudio = async (audioBlob: Blob) => {
-        setIsTranscribing(true);
-        setRecordingError(null);
-        
-        try {
-            const formData = new FormData();
-            formData.append('audio', audioBlob, 'recording.webm');
-            
-            console.log('Sending audio to backend for transcription...');
-            const response = await fetch('http://localhost:8080/api/profile/transcribe', {
-                method: 'POST',
-                body: formData,
-            });
-            
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Backend error response:', errorText);
-                throw new Error(`Transcription failed: ${response.status} ${errorText}`);
-            }
-            
-            const data = await response.json();
-            console.log('Transcription response:', data);
-            
-            if (data.transcript) {
-                setText(prev => prev ? prev + ' ' + data.transcript : data.transcript);
-                console.log('Transcribed:', data.transcript);
-            } else {
-                setRecordingError('No speech detected in recording.');
-            }
-        } catch (err: any) {
-            console.error('Transcription error:', err);
-            setRecordingError(`Failed to transcribe: ${err.message}`);
-        } finally {
-            setIsTranscribing(false);
-        }
-    };
-
-    const handleVoiceInput = () => {
-        if (isRecording) {
-            stopRecording();
-        } else {
-            startRecording();
-        }
-    };
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -168,7 +76,6 @@ export const ProfileAgent: React.FC = () => {
         setText("");
         setSuggestion(null);
         setError(null);
-        setRecordingError(null);
         // Clear editable fields
         setEditableSummary("");
         setEditableOrganType("");
@@ -239,13 +146,12 @@ export const ProfileAgent: React.FC = () => {
                                     disabled={loading}
                                 />
                                 <div
-                                    className={`character-count ${
-                                        characterCount > maxCharacters
-                                            ? "error"
-                                            : characterCount < minCharacters
+                                    className={`character-count ${characterCount > maxCharacters
+                                        ? "error"
+                                        : characterCount < minCharacters
                                             ? "warning"
                                             : ""
-                                    }`}
+                                        }`}
                                 >
                                     {characterCount} / {maxCharacters} characters
                                     {characterCount < minCharacters &&
@@ -265,9 +171,9 @@ export const ProfileAgent: React.FC = () => {
                                 </div>
                             )}
 
-                            {recordingError && (
+                            {voiceError && (
                                 <div className="error-message">
-                                    ❌ {recordingError}
+                                    ❌ {voiceError}
                                 </div>
                             )}
 
@@ -309,7 +215,7 @@ export const ProfileAgent: React.FC = () => {
                                             rows={2}
                                         />
                                     </div>
-                                    
+
                                     <div className="form-row">
                                         <div className="form-group">
                                             <label className="edit-label">Organ Type:</label>

@@ -177,10 +177,11 @@ export class MatchingService {
      * Find top N matching profiles
      */
     async findTopMatches(request: MatchRequest): Promise<MatchResult[]> {
-        const { profileId, profileText, topN = 5, minSimilarity = 0.5 } = request;
+        const { profileId, profileText, topN = 5, minSimilarity = 0.5, searcherType } = request;
 
         // Get query embedding
         let queryEmbedding: number[];
+        let queryText = profileText || '';
 
         if (profileText) {
             queryEmbedding = await this.generateEmbedding(profileText);
@@ -192,8 +193,26 @@ export class MatchingService {
             }
 
             queryEmbedding = embData.embedding;
+
+            // Get the profile text for reason generation
+            const profile = this.profiles.get(profileId);
+            if (profile) {
+                queryText = this.buildProfileText(profile);
+            }
         } else {
             throw new Error('Either profileId or profileText must be provided');
+        }
+
+        // Infer searcher type from query text if not provided
+        let inferredSearcherType = searcherType;
+        if (!inferredSearcherType && queryText) {
+            const lower = queryText.toLowerCase();
+            if (lower.includes('need') || lower.includes('seeking') || lower.includes('looking for') ||
+                lower.includes('require') || lower.includes('patient')) {
+                inferredSearcherType = 'patient';
+            } else if (lower.includes('donate') || lower.includes('donor') || lower.includes('willing to give')) {
+                inferredSearcherType = 'donor';
+            }
         }
 
         // Calculate similarities
@@ -206,14 +225,24 @@ export class MatchingService {
             const profile = this.profiles.get(id);
             if (!profile) continue;
 
+            // If searcher is a patient, only show donors. If searcher is a donor, only show patients.
+            if (inferredSearcherType) {
+                if (inferredSearcherType === 'patient' && profile.type !== 'donor') continue;
+                if (inferredSearcherType === 'donor' && profile.type !== 'patient') continue;
+            }
+
             const similarity = this.computeSimilarity(queryEmbedding, embData.embedding);
 
             if (similarity >= minSimilarity) {
+                // Generate match reason
+                const reason = this.generateMatchReason(profile, queryText);
+
                 matches.push({
                     profileId: id,
                     profile,
                     similarity,
-                    rank: 0 // Will be set after sorting
+                    rank: 0, // Will be set after sorting
+                    reason
                 });
             }
         }
@@ -225,6 +254,81 @@ export class MatchingService {
         });
 
         return matches.slice(0, topN);
+    }
+
+    private extractKeyInfo(text: string): {
+        bloodType: string | null;
+        organType: string | null;
+        age: number | null;
+    } {
+        const lower = text.toLowerCase();
+
+        // Blood type extraction
+        let bloodType: string | null = null;
+        const bloodMatch = text.match(/blood type\s*([ABO][+-]?|AB[+-]?)/i);
+        if (bloodMatch && bloodMatch[1]) bloodType = bloodMatch[1].toUpperCase();
+
+        // Organ type extraction
+        let organType: string | null = null;
+        if (lower.includes('kidney')) organType = 'Kidney';
+        if (lower.includes('pancreas')) organType = 'Pancreas';
+        if (lower.includes('liver')) organType = 'Liver';
+        if (lower.includes('heart')) organType = 'Heart';
+        if (lower.includes('lung')) organType = 'Lung';
+        if (lower.includes('intestine')) organType = 'Intestine';
+        if (lower.includes('marrow')) organType = 'Marrow';
+
+        // Age extraction
+        let age: number | null = null;
+        const ageMatch = text.match(/age\s*(\d+)/i);
+        if (ageMatch && ageMatch[1]) age = parseInt(ageMatch[1]);
+
+        return { bloodType, organType, age };
+    }
+
+    // Add this method to generate simple match reasons
+    private generateMatchReason(profile: Profile, queryText: string): string {
+        const reasons: string[] = [];
+        const profileInfo = this.extractKeyInfo(profile.medicalInfo + ' ' + profile.description);
+        const queryInfo = this.extractKeyInfo(queryText);
+
+        // Organ match
+        if (queryInfo.organType && profileInfo.organType === queryInfo.organType) {
+            reasons.push(`${profileInfo.organType} match`);
+        }
+
+        // Blood type match
+        if (queryInfo.bloodType && profileInfo.bloodType === queryInfo.bloodType) {
+            reasons.push(`Blood type ${profileInfo.bloodType} compatible`);
+        }
+
+        // Age compatibility (within 20 years)
+        if (queryInfo.age && profileInfo.age) {
+            const ageDiff = Math.abs(queryInfo.age - profileInfo.age);
+            if (ageDiff <= 20) {
+                reasons.push('Age compatible');
+            }
+        }
+
+        // Health/lifestyle indicators
+        const profileLower = (profile.medicalInfo + ' ' + (profile.preferences || '')).toLowerCase();
+        if (profileLower.includes('non-smoker') || profileLower.includes('non smoker')) {
+            reasons.push('Non-smoker');
+        }
+        if (profileLower.includes('healthy') || profileLower.includes('excellent health')) {
+            reasons.push('Healthy lifestyle');
+        }
+        if (profileLower.includes('willing to travel') || profileLower.includes('travel')) {
+            reasons.push('Willing to travel');
+        }
+
+        // Default if no specific reasons
+        if (reasons.length === 0) {
+            reasons.push('Medical profile matches criteria');
+        }
+
+        // Return up to 4 reasons
+        return reasons.slice(0, 4).join(' • ');
     }
 
     /**

@@ -164,3 +164,24 @@
 .view-details-btn:active {
     transform: scale(0.98);
 }
+
+.match-reason-card {
+    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin: 0.75rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-left: 3px solid #667eea;
+}
+
+.reason-icon {
+    font-size: 1.1rem;
+}
+
+.reason-text {
+    font-size: 0.85rem;
+    color: #495057;
+    line-height: 1.4;
+}
