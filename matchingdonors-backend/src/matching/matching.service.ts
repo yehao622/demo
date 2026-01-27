@@ -182,6 +182,7 @@ export class MatchingService {
         // Get query embedding
         let queryEmbedding: number[];
         let queryText = profileText || '';
+        let queryProfile: Profile | undefined;
 
         if (profileText) {
             queryEmbedding = await this.generateEmbedding(profileText);
@@ -193,15 +194,14 @@ export class MatchingService {
             }
 
             queryEmbedding = embData.embedding;
-
-            // Get the profile text for reason generation
-            const profile = this.profiles.get(profileId);
-            if (profile) {
-                queryText = this.buildProfileText(profile);
+            queryProfile = this.profiles.get(profileId);
+            if (queryProfile) {
+                queryText = this.buildProfileText(queryProfile);
             }
         } else {
             throw new Error('Either profileId or profileText must be provided');
         }
+
 
         // Infer searcher type from query text if not provided
         let inferredSearcherType = searcherType;
@@ -213,6 +213,38 @@ export class MatchingService {
             } else if (lower.includes('donate') || lower.includes('donor') || lower.includes('willing to give')) {
                 inferredSearcherType = 'donor';
             }
+        }
+
+        // Extract query info for hybrid scoring
+        const queryInfo = this.extractKeyInfo(queryText);
+        const queryProfileData: Partial<Profile> = {};
+
+        // Only assign properties if they have actual values (not undefined)
+        const bloodType = queryInfo.bloodType || queryProfile?.bloodType;
+        if (bloodType) {
+            queryProfileData.bloodType = bloodType;
+        }
+
+        const age = queryInfo.age ?? queryProfile?.age;
+        if (age !== null && age !== undefined) {
+            queryProfileData.age = age;
+        }
+
+        if (queryProfile?.country) {
+            queryProfileData.country = queryProfile.country;
+        }
+
+        if (queryProfile?.state) {
+            queryProfileData.state = queryProfile.state;
+        }
+
+        if (queryProfile?.city) {
+            queryProfileData.city = queryProfile.city;
+        }
+
+        const organType = queryInfo.organType || queryProfile?.organType;
+        if (organType) {
+            queryProfileData.organType = organType;
         }
 
         // Calculate similarities
@@ -231,18 +263,37 @@ export class MatchingService {
                 if (inferredSearcherType === 'donor' && profile.type !== 'patient') continue;
             }
 
-            const similarity = this.computeSimilarity(queryEmbedding, embData.embedding);
+            // HARD FILTER - Organ type must match if specified
+            const queryOrganType = queryInfo.organType || queryProfile?.organType;
+            if (queryOrganType && profile.organType) {
+                // Both have organ types specified - they must match
+                if (queryOrganType.toLowerCase() !== profile.organType.toLowerCase()) {
+                    continue; // Skip this profile - organ doesn't match
+                }
+            }
 
-            if (similarity >= minSimilarity) {
+            // AI similarity (cosine similarity)
+            const aiSimilarity = this.computeSimilarity(queryEmbedding, embData.embedding);
+
+            // Calculate hybrid score
+            const { hybridScore, breakdown } = this.calculateHybridScore(
+                aiSimilarity,
+                inferredSearcherType === 'patient' ? profile : queryProfileData as Profile,
+                inferredSearcherType === 'patient' ? queryProfileData as Profile : profile
+            );
+
+            if (hybridScore >= minSimilarity) {
                 // Generate match reason
                 const reason = this.generateMatchReason(profile, queryText);
 
                 matches.push({
                     profileId: id,
                     profile,
-                    similarity,
+                    similarity: hybridScore,
                     rank: 0, // Will be set after sorting
-                    reason
+                    reason,
+                    hybridScore,
+                    scoreBreakdown: breakdown
                 });
             }
         }
@@ -266,17 +317,23 @@ export class MatchingService {
         // Blood type extraction
         let bloodType: string | null = null;
         const bloodMatch = text.match(/blood type\s*([ABO][+-]?|AB[+-]?)/i);
-        if (bloodMatch && bloodMatch[1]) bloodType = bloodMatch[1].toUpperCase();
+        if (bloodMatch && bloodMatch[1]) {
+            bloodType = bloodMatch[1].toUpperCase();
+            // Normalize format
+            if (!bloodType.includes('+') && !bloodType.includes('-')) {
+                bloodType += '+'; // Default to positive if not specified
+            }
+        }
 
         // Organ type extraction
         let organType: string | null = null;
         if (lower.includes('kidney')) organType = 'Kidney';
-        if (lower.includes('pancreas')) organType = 'Pancreas';
-        if (lower.includes('liver')) organType = 'Liver';
-        if (lower.includes('heart')) organType = 'Heart';
-        if (lower.includes('lung')) organType = 'Lung';
-        if (lower.includes('intestine')) organType = 'Intestine';
-        if (lower.includes('marrow')) organType = 'Marrow';
+        else if (lower.includes('pancreas')) organType = 'Pancreas';
+        else if (lower.includes('liver')) organType = 'Liver';
+        else if (lower.includes('heart')) organType = 'Heart';
+        else if (lower.includes('lung')) organType = 'Lung';
+        else if (lower.includes('intestine')) organType = 'Intestine';
+        else if (lower.includes('marrow') || lower.includes('bone marrow')) organType = 'Marrow';
 
         // Age extraction
         let age: number | null = null;
@@ -369,4 +426,150 @@ export class MatchingService {
         this.embeddings.clear();
         console.log('✓ Cleared all profiles and embeddings');
     }
+
+    /**
+     * Blood type compatibility matrix
+     * Returns compatibility score (0-1)
+     */
+    private calculateBloodTypeCompatibility(donorBlood: string | undefined, recipientBlood: string | undefined): number {
+        if (!donorBlood || !recipientBlood) return 0.5;
+
+        const donor = donorBlood.toUpperCase();
+        const recipient = recipientBlood.toUpperCase();
+
+        if (donor === recipient) return 1.0; // Matched perfectly
+        if (donor === 'O-') return 0.99; // universal donor blood type
+        if (recipient === 'AB+') return 0.99; // universal recipient blood type
+
+        // Compatibility matrix blood types
+        const compatibilityMap: { [key: string]: string[] } = {
+            'O-': ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
+            'O+': ['O+', 'A+', 'B+', 'AB+'],
+            'A-': ['A-', 'A+', 'AB-', 'AB+'],
+            'A+': ['A+', 'AB+'],
+            'B-': ['B-', 'B+', 'AB-', 'AB+'],
+            'B+': ['B+', 'AB+'],
+            'AB-': ['AB-', 'AB+'],
+            'AB+': ['AB+']
+        };
+
+        const compatibleRecipients = compatibilityMap[donor] || [];
+        return compatibleRecipients.includes(recipient) ? 0.8 : 0.2;
+    }
+
+    /**
+     * Location proximity scoring
+     * Returns score (0-1) based on geographic distance
+     */
+    private calculateLocationScore(
+        profile1: { country?: string; state?: string; city?: string },
+        profile2: { country?: string; state?: string; city?: string }
+    ): number {
+        if (!profile1.country || !profile2.country) return 0.5; // Neutral if unknown
+
+        // Same city = 1.0
+        if (profile1.city && profile2.city &&
+            profile1.city.toLowerCase() === profile2.city.toLowerCase()) {
+            return 1.0;
+        }
+
+        // Same state = 0.8
+        if (profile1.state && profile2.state &&
+            profile1.state.toLowerCase() === profile2.state.toLowerCase()) {
+            return 0.8;
+        }
+
+        // Same country = 0.4
+        if (profile1.country.toLowerCase() === profile2.country.toLowerCase()) {
+            return 0.4;
+        }
+
+        // Different country
+        return 0.1;
+    }
+
+    /**
+     * Age compatibility scoring
+     * Returns score (0-1) based on age difference
+     */
+    private calculateAgeScore(age1: number | undefined, age2: number | undefined): number {
+        if (!age1 || !age2) return 0.5; // Neutral if unknown
+
+        const ageDiff = Math.abs(age1 - age2);
+
+        // Perfect match (within 5 years)
+        if (ageDiff <= 5) return 1.0;
+
+        // Good match (within 10 years)
+        if (ageDiff <= 10) return 0.9;
+
+        // Acceptable (within 20 years)
+        if (ageDiff <= 20) return 0.7;
+
+        // Marginal (within 30 years)
+        if (ageDiff <= 30) return 0.5;
+
+        // Poor match (more than 30 years)
+        return 0.3;
+    }
+
+    /**
+     * Calculate hybrid match score
+     * Combines AI similarity with medical/geographic factors
+     */
+    private calculateHybridScore(
+        aiSimilarity: number,
+        donorProfile: Profile,
+        patientProfile: Profile
+    ): {
+        hybridScore: number;
+        breakdown: {
+            aiSimilarity: number;
+            bloodTypeScore: number;
+            locationScore: number;
+            ageScore: number;
+        }
+    } {
+        // Calculate individual scores
+        const bloodTypeScore = this.calculateBloodTypeCompatibility(
+            donorProfile.bloodType,
+            patientProfile.bloodType
+        );
+
+        const locationScore = this.calculateLocationScore(
+            donorProfile,
+            patientProfile
+        );
+
+        const ageScore = this.calculateAgeScore(
+            donorProfile.age,
+            patientProfile.age
+        );
+
+        // Weighted combination (configurable)
+        const weights = {
+            ai: 0.2,           // 50% AI semantic similarity
+            bloodType: 0.5,    // 25% Blood type compatibility
+            location: 0.1,     // 1% Geographic proximity
+            age: 0.2           // 15% Age compatibility
+        };
+
+        const hybridScore =
+            weights.ai * aiSimilarity +
+            weights.bloodType * bloodTypeScore +
+            weights.location * locationScore +
+            weights.age * ageScore;
+
+        return {
+            hybridScore,
+            breakdown: {
+                aiSimilarity,
+                bloodTypeScore,
+                locationScore,
+                ageScore
+            }
+        };
+    }
+
+
 }

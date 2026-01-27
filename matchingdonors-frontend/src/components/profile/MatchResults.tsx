@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { MatchResult, Profile } from '../../types/profile.types';
 import { ProfileCard } from './ProfileCard';
-import { PostSearchFilters } from './PostSearchFilters';
+import PostSearchFilters, { FilterState } from './PostSearchFilters';
 import './MatchResults.css';
 
 type MatchTier = 'all' | 'excellent' | 'good';
@@ -13,24 +13,37 @@ interface MatchResultsProps {
 
 export const MatchResults: React.FC<MatchResultsProps> = ({ matches, onViewDetails }) => {
     const [filterTier, setFilterTier] = useState<MatchTier>('all');
-
-    // Calculate match counts by tier
-    const matchCounts = useMemo(() => {
-        return {
-            excellent: matches.filter(m => m.similarity >= 0.8).length,
-            good: matches.filter(m => m.similarity >= 0.6 && m.similarity < 0.8).length
-        };
-    }, [matches]);
+    const [geoFilters, setGeoFilters] = useState<FilterState>({
+        country: 'All Countries',
+        state: 'All States'
+    });
 
     // Filter matches based on selected tier
     const filteredMatches = useMemo(() => {
+        let filtered = matches;
+
         if (filterTier === 'excellent') {
-            return matches.filter(m => m.similarity >= 0.8);
+            filtered = filtered.filter(m => m.similarity >= 0.8);
         } else if (filterTier === 'good') {
-            return matches.filter(m => m.similarity >= 0.6 && m.similarity < 0.8);
+            filtered = filtered.filter(m => m.similarity >= 0.6 && m.similarity < 0.8);
         }
-        return matches;
-    }, [matches, filterTier]);
+
+        // Apply geographic filters
+        if (geoFilters.country !== 'All Countries') {
+            filtered = filtered.filter(m =>
+                m.profile.country === geoFilters.country
+            );
+
+            if (geoFilters.state !== 'All States' &&
+                !geoFilters.state.includes('All')) {
+                filtered = filtered.filter(m =>
+                    m.profile.state === geoFilters.state
+                );
+            }
+        }
+
+        return filtered;
+    }, [matches, filterTier, geoFilters]);
 
     if (matches.length === 0) {
         return (
@@ -58,10 +71,12 @@ export const MatchResults: React.FC<MatchResultsProps> = ({ matches, onViewDetai
 
             {/* Post-search filters */}
             <PostSearchFilters
-                totalMatches={matches.length}
-                currentFilter={filterTier}
-                onFilterChange={setFilterTier}
-                matchCounts={matchCounts}
+                // totalMatches={matches.length}
+                // currentFilter={filterTier}
+                onFilterChange={setGeoFilters}
+                matchTier={filterTier}
+                onMatchTierChange={setFilterTier}
+            // matchCounts={matchCounts}
             />
 
             {filteredMatches.length === 0 ? (
@@ -84,7 +99,7 @@ export const MatchResults: React.FC<MatchResultsProps> = ({ matches, onViewDetai
                             matchScore={topMatch.similarity}
                             rank={topMatch.rank}
                             reason={topMatch.reason}
-                            onViewDetails={onViewDetails}
+                            onViewDetails={() => onViewDetails(topMatch.profile)}
                         />
                     </div>
 
@@ -100,7 +115,7 @@ export const MatchResults: React.FC<MatchResultsProps> = ({ matches, onViewDetai
                                         matchScore={match.similarity}
                                         rank={match.rank}
                                         reason={match.reason}
-                                        onViewDetails={onViewDetails}
+                                        onViewDetails={() => onViewDetails(match.profile)}
                                     />
                                 ))}
                             </div>

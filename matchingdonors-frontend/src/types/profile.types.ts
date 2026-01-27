@@ -5,6 +5,18 @@ export interface Profile {
     description: string;
     medicalInfo: string;
     preferences?: string;
+    bloodType?: string;
+    age?: number;
+    country?: string;
+    state?: string;
+    city?: string;
+    organType?: string;
+}
+
+export interface ProfileEmbedding {
+    profileId: string;
+    embedding: number[];
+    timestamp: Date;
 }
 
 export interface MatchResult {
@@ -13,6 +25,13 @@ export interface MatchResult {
     similarity: number;
     rank: number;
     reason?: string;
+    hybridScore?: number;
+    scoreBreakdown?: {
+        aiSimilarity: number;         // 0-1
+        bloodTypeScore: number;       // 0-1
+        locationScore: number;        // 0-1
+        ageScore: number;             // 0-1
+    };
 }
 
 export interface MatchRequest {

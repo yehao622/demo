@@ -6,6 +6,94 @@
     border: 1px solid #dee2e6;
 }
 
+.filter-section h3 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.geographic-filters {
+    margin-bottom: 20px;
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 10px;
+}
+
+.filter-row label {
+    min-width: 120px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.filter-select {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: white;
+    cursor: pointer;
+}
+
+.filter-select:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+}
+
+.match-tier-filters {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+.match-tier-filters label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.tier-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tier-buttons button {
+    padding: 8px 16px;
+    border: 2px solid #007bff;
+    background: white;
+    color: #007bff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.tier-buttons button:hover {
+    background: #e7f3ff;
+}
+
+.tier-buttons button.active {
+    background: #007bff;
+    color: white;
+}
+
+.tier-buttons button:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+}
+
 .filter-label {
     font-size: 0.9rem;
     color: #495057;
@@ -51,4 +139,29 @@
 .filter-btn.good.active {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     border-color: #f093fb;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .filter-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filter-row label {
+        min-width: auto;
+        margin-bottom: 5px;
+    }
+
+    .filter-select {
+        width: 100%;
+    }
+
+    .tier-buttons {
+        flex-direction: column;
+    }
+
+    .tier-buttons button {
+        width: 100%;
+    }
 }
