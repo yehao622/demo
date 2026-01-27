@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MatchRequest } from '../../types/profile.types';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import './ProfileSearch.css';
+import '../../styles/shared-voice-input.css';
 
 interface ProfileSearchProps {
     onSearch: (request: MatchRequest) => void;

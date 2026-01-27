@@ -1,5 +1,5 @@
 import React from 'react';
-import { ProfileAgent } from './ProfileAgent';
+import { ProfileAgent } from './components/profile/ProfileAgent';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import { ProfileMatchingPage } from './components/profile/ProfileMatchingPage';
 import { NewsHub } from './components/news/NewsHub';

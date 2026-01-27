@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { useVoiceInput } from "./hooks/useVoiceInput";
+import { useVoiceInput } from "../../hooks/useVoiceInput";
 import "./ProfileAgent.css";
+import '../../styles/shared-voice-input.css';
 
 type ProfileSuggestion = {
     summary: string;

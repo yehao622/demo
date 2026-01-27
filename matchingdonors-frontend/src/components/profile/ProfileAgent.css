@@ -52,76 +52,10 @@
   gap: 12px;
 }
 
-.form-label-with-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
 .form-label {
   font-size: 15px;
   font-weight: 600;
   color: #333;
-}
-
-/* Audio Recording Button */
-.audio-button {
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  position: relative;
-}
-
-.audio-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.audio-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.audio-button.recording {
-  background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
-  animation: recordingPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes recordingPulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
-  }
-}
-
-.recording-pulse {
-  width: 8px;
-  height: 8px;
-  background: white;
-  border-radius: 50%;
-  animation: pulse 1s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
 }
 
 .profile-textarea {
@@ -270,6 +204,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -542,6 +477,7 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
