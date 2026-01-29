@@ -3,6 +3,7 @@ import { Article, LabelStatistics } from '../../types/article.types';
 import { contentService } from '../../services/contentService';
 import { LabelCloud } from './LabelCloud';
 import { ArticleList } from './ArticleList';
+import { ArticleSearchBox } from './ArticleSearchBox';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
 import './NewsHub.css';
@@ -15,6 +16,7 @@ export const NewsHub: React.FC = () => {
     const [selectedLabelType, setSelectedLabelType] = useState<'topic' | 'organ' | 'category' | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showSearch, setShowSearch] = useState(true);
 
     useEffect(() => {
         loadData();
@@ -80,6 +82,12 @@ export const NewsHub: React.FC = () => {
         setFilteredArticles([]);
     };
 
+    const handleSearchResults = (results: any) => {
+        // Optionally handle search results
+        // For now, the search component displays its own results
+        console.log('Search results:', results);
+    };
+
     if (isLoading) {
         return <LoadingSpinner message="Loading news articles..." />;
     }
@@ -116,6 +124,21 @@ export const NewsHub: React.FC = () => {
                 <p className="page-description">
                     Browse medical news from trusted sources, organized by AI-labeled topics, organs, and categories
                 </p>
+            </div>
+
+            {/* Article Search Section */}
+            {showSearch && (
+                <ArticleSearchBox onSearch={handleSearchResults} />
+            )}
+
+            {/* Toggle Search Button */}
+            <div className="toggle-search-container">
+                <button
+                    className="toggle-search-btn"
+                    onClick={() => setShowSearch(!showSearch)}
+                >
+                    {showSearch ? '▲ Hide Search' : '▼ Show Search'}
+                </button>
             </div>
 
             {/* Label Cloud Section */}

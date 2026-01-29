@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { Article } from '../models/Article';
 import { CrawlerManager } from '../services/crawler/CrawlerManager';
 import { TopicLabeler } from '../services/labeler/topicLabeler';
+import { ArticleMatcherService } from '../services/articleMatcher.service';
 
 const router = express.Router();
 
@@ -13,6 +14,10 @@ const articles: Article[] = [];
 
 // Initialize TopicLabeler (after crawlerManager initialization)
 const topicLabeler = new TopicLabeler(process.env.GEMINI_API_KEY || '');
+
+// Initial Article match service
+const articleMatcher = new ArticleMatcherService();
+let articlesIndexed = false;
 
 /**
  * POST /api/content/crawl
@@ -58,6 +63,9 @@ router.post('/crawl', async (req: Request, res: Response) => {
         // Store articles
         articles.push(...crawledArticles);
         console.log(`[API] ✓ Crawl completed: ${crawledArticles.length} articles\n`);
+
+        // Mark articles as not indexed (need to re-index after new crawl)
+        articlesIndexed = false;
 
         res.json({
             success: true,
@@ -238,6 +246,8 @@ router.delete('/articles', (req: Request, res: Response) => {
     const count = articles.length;
     articles.length = 0;
     crawlerManager.clearArticles();
+    articleMatcher.clearAll();
+    articlesIndexed = false;
 
     res.json({
         success: true,
@@ -275,6 +285,9 @@ router.post('/label', async (req, res) => {
             }
         });
 
+        // Mark articles as not indexed (need to re-index after labeling)
+        articlesIndexed = false;
+
         res.json({
             success: true,
             message: `Successfully labeled ${labeledArticles.length} articles`,
@@ -308,6 +321,12 @@ router.post('/label/:id', async (req, res) => {
 
         const labeledArticle = await topicLabeler.labelArticle(article);
 
+        // Update the article in the array
+        const index = articles.findIndex(a => a.id === articleId);
+        if (index !== -1) {
+            articles[index] = labeledArticle;
+        }
+
         res.json({
             success: true,
             article: {
@@ -325,6 +344,112 @@ router.post('/label/:id', async (req, res) => {
             error: 'Failed to label article'
         });
     }
+});
+
+/**
+ * POST /api/content/search
+ * Search articles using AI-powered semantic search
+ * Request body:
+ * - query: string (search query)
+ * - topN?: number (number of results, default: 10)
+ * - minSimilarity?: number (minimum similarity score 0-1, default: 0.3)
+ */
+router.post('/search', async (req: Request, res: Response) => {
+    try {
+        const { query, topN = 10, minSimilarity = 0.3 } = req.body;
+
+        if (!query || typeof query !== 'string') {
+            return res.status(400).json({
+                success: false,
+                error: 'Query parameter is required and must be a string'
+            });
+        }
+
+        // Ensure articles are labeled before searching
+        const labeledArticles = articles.filter(a => a.topics && a.topics.length > 0);
+
+        if (labeledArticles.length === 0) {
+            return res.json({
+                success: true,
+                message: 'No labeled articles available. Please crawl and label articles first.',
+                query,
+                summary: 'No articles available to search. Please ensure articles have been crawled and labeled.',
+                matches: [],
+                queryAnalysis: {
+                    extractedOrgans: [],
+                    extractedTopics: [],
+                    intent: query
+                }
+            });
+        }
+
+        // Index articles if not already indexed or if articles have changed
+        if (!articlesIndexed) {
+            console.log(`[Search] Indexing ${labeledArticles.length} articles...`);
+            await articleMatcher.storeArticlesBatch(labeledArticles);
+            articlesIndexed = true;
+            console.log('[Search] ✓ Articles indexed successfully');
+        }
+
+        // Perform search
+        const searchResult = await articleMatcher.searchArticles({
+            query,
+            topN,
+            minSimilarity
+        });
+
+        res.json({
+            success: true,
+            data: {
+                query: searchResult.query,
+                summary: searchResult.summary,
+                matches: searchResult.matches.map(match => ({
+                    article: {
+                        id: match.article.id,
+                        title: match.article.title,
+                        url: match.article.url,
+                        excerpt: match.article.excerpt,
+                        source: match.article.source,
+                        publishDate: match.article.publishDate,
+                        topics: match.article.topics,
+                        organTypes: match.article.organTypes,
+                        categories: match.article.categories
+                    },
+                    similarity: match.similarity,
+                    rank: match.rank,
+                    relevanceReason: match.relevanceReason
+                })),
+                queryAnalysis: searchResult.queryAnalysis
+            }
+        });
+    } catch (error) {
+        console.error('[Search] Error:', error);
+        res.status(500).json({
+            success: false,
+            error: error instanceof Error ? error.message : 'Search failed'
+        });
+    }
+});
+
+/**
+ * GET /api/content/search/status
+ * Get search index status
+ */
+router.get('/search/status', (req: Request, res: Response) => {
+    const stats = articleMatcher.getStats();
+    const labeledArticles = articles.filter(a => a.topics && a.topics.length > 0);
+
+    res.json({
+        success: true,
+        status: {
+            indexed: articlesIndexed,
+            totalArticles: articles.length,
+            labeledArticles: labeledArticles.length,
+            indexedArticles: stats.articleCount,
+            embeddingCount: stats.embeddingCount,
+            ready: articlesIndexed && stats.articleCount > 0
+        }
+    });
 });
 
 export default router;

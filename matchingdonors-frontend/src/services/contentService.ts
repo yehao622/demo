@@ -1,5 +1,12 @@
 import api from './api';
-import { Article, ContentApiResponse, LabelStatistics } from '../types/article.types';
+import {
+    Article,
+    ContentApiResponse,
+    LabelStatistics,
+    ArticleSearchResult,
+    SearchApiResponse,
+    SearchIndexStatus
+} from '../types/article.types';
 
 export const contentService = {
     // Get all labeled articles
@@ -53,6 +60,38 @@ export const contentService = {
         } catch (error: any) {
             if (error.response?.status === 404) return null;
             throw new Error(error.response?.data?.error || 'Failed to get article');
+        }
+    },
+
+    // Search articles with AI-powered semantic search
+    async searchArticles(query: string, options?: {
+        topN?: number;
+        minSimilarity?: number;
+    }): Promise<ArticleSearchResult> {
+        try {
+            const response = await api.post<SearchApiResponse>('/api/content/search', {
+                query,
+                topN: options?.topN || 5,
+                minSimilarity: options?.minSimilarity || 0.3
+            });
+
+            if (!response.data.success || !response.data.data) {
+                throw new Error(response.data.error || 'Search failed');
+            }
+
+            return response.data.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.error || 'Failed to search articles');
+        }
+    },
+
+    // Get search index status
+    async getSearchStatus(): Promise<SearchIndexStatus> {
+        try {
+            const response = await api.get<{ success: boolean; status: SearchIndexStatus }>('/api/content/search/status');
+            return response.data.status;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.error || 'Failed to get search status');
         }
     }
 };

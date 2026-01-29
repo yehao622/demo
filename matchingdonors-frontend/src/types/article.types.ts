@@ -33,3 +33,39 @@ export interface ContentApiResponse {
     statistics?: LabelStatistics;
     error?: string;
 }
+
+// Search-related types
+export interface ArticleMatch {
+    article: Article;
+    similarity: number;
+    rank: number;
+    relevanceReason: string;
+}
+
+export interface QueryAnalysis {
+    extractedOrgans: string[];
+    extractedTopics: string[];
+    intent: string;
+}
+
+export interface ArticleSearchResult {
+    query: string;
+    summary: string;
+    matches: ArticleMatch[];
+    queryAnalysis: QueryAnalysis;
+}
+
+export interface SearchApiResponse {
+    success: boolean;
+    data?: ArticleSearchResult;
+    error?: string;
+}
+
+export interface SearchIndexStatus {
+    indexed: boolean;
+    totalArticles: number;
+    labeledArticles: number;
+    indexedArticles: number;
+    embeddingCount: number;
+    ready: boolean;
+}

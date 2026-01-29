@@ -275,7 +275,7 @@ test_endpoint "POST" "/api/matching/store" "Store donor profile" '{
   "country": "Australia",
   "state": "New South Wales",
   "city": "Sydney",
-  "organType": "Kidney",
+  "organType": "Liver",
   "description": "Urgently need liver transplant, blood type B+",
   "medicalInfo": "Age 28, blood type B+, liver disease, non-smoker, otherwise healthy, in Sydney, New South Wales, Australia",
   "preferences": "Can travel to USA or Europe if needed"
@@ -320,25 +320,25 @@ test_endpoint "POST" "/api/matching/store" "Store donor profile" '{
   "country": "Germany",
   "state": "Bavaria",
   "city": "Munich",
-  "organType": "Kidney",
+  "organType": "Liver",
   "description": "Willing to donate liver segment, blood type AB+",
   "medicalInfo": "Age 45, blood type AB+, excellent health, non-smoker, regular exercise, Munich, Bavaria, Germany",
   "preferences": "Willing to help patients in EU countries"
 }'
 
 test_endpoint "POST" "/api/matching/store" "Store donor profile" '{
-  "id": "japan-patient-001",
+  "id": "japan-donor-001",
   "name": "Yuki Tanaka",
-  "type": "patient",
+  "type": "donor",
   "bloodType": "A-",
   "age": 55,
   "country": "Japan",
   "state": "Tokyo",
   "city": "Tokyo",
   "organType": "Heart",
-  "description": "Need heart transplant, blood type A-",
-  "medicalInfo": "Age 55, blood type A-, heart failure, non-smoker, otherwise stable condition, Tokyo, Japan",
-  "preferences": "Seeking donor in Asia, willing to travel"
+  "description": "Donate my heart, blood type A-",
+  "medicalInfo": "Age 55, blood type A-, heart healthy, non-smoker, Tokyo, Japan",
+  "preferences": "Seeking patient in Asia, willing to travel"
 }'
 
 test_endpoint "POST" "/api/matching/store" "Store donor profile" '{
@@ -365,7 +365,7 @@ test_endpoint "POST" "/api/matching/store" "Store donor profile" '{
   "country": "Brazil",
   "state": "São Paulo",
   "city": "São Paulo",
-  "organType": "Kidney",
+  "organType": "Pancreas",
   "description": "Need pancreas transplant, blood type B-",
   "medicalInfo": "Age 38, blood type B-, pancreatic failure, diabetic, non-smoker, São Paulo, Brazil",
   "preferences": "Seeking donor in South America, willing to travel"
@@ -380,7 +380,7 @@ test_endpoint "POST" "/api/matching/store" "Store donor profile" '{
   "country": "China",
   "state": "Shanghai",
   "city": "Shanghai",
-  "organType": "Kidney",
+  "organType": "Lung",
   "description": "Willing to donate lung, blood type AB-",
   "medicalInfo": "Age 40, blood type AB-, excellent respiratory health, non-smoker, athlete, Shanghai, China",
   "preferences": "Can travel within Asia for donation"
@@ -410,7 +410,7 @@ test_endpoint "POST" "/api/matching/store" "Store donor profile" '{
   "country": "USA",
   "state": "New York",
   "city": "New York",
-  "organType": "marrow",
+  "organType": "Marrow",
   "description": "Need bone marrow transplant, blood type A+",
   "medicalInfo": "Age 25, blood type A+, leukemia patient, non-smoker, fighting cancer, NYC, USA",
   "preferences": "Seeking bone marrow donor, HLA typing available"

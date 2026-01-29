@@ -327,12 +327,12 @@ export class MatchingService {
 
         // Organ type extraction
         let organType: string | null = null;
-        if (lower.includes('kidney')) organType = 'Kidney';
+        if (lower.includes('kidney') || lower.includes('kidneys')) organType = 'Kidney';
         else if (lower.includes('pancreas')) organType = 'Pancreas';
         else if (lower.includes('liver')) organType = 'Liver';
         else if (lower.includes('heart')) organType = 'Heart';
-        else if (lower.includes('lung')) organType = 'Lung';
-        else if (lower.includes('intestine')) organType = 'Intestine';
+        else if (lower.includes('lung') || lower.includes('lungs')) organType = 'Lung';
+        else if (lower.includes('intestine') || lower.includes('intestines')) organType = 'Intestine';
         else if (lower.includes('marrow') || lower.includes('bone marrow')) organType = 'Marrow';
 
         // Age extraction
