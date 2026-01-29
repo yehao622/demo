@@ -63,7 +63,7 @@ router.post('/chat/message', async (req, res) => {
         if (error.status === 429) {
             return res.status(200).json({
                 success: true,
-                response: "I'm currently experiencing high volume. Please email us directly at advertising@matchingdonors.com or call 1-800-XXX-XXXX to speak with our team immediately.",
+                response: "I'm currently experiencing high volume. Please email Paul Dooley directly at ceo@matchingdonors.com to speak with our team immediately.",
                 timestamp: new Date()
             });
         }
@@ -134,7 +134,7 @@ router.post('/lead', (req, res) => {
 
         res.json({
             success: true,
-            message: 'Lead submitted successfully',
+            message: 'Lead submitted successfully. Paul Dooley will contact you soon.',
             leadId: lead.id
         });
     } catch (error) {

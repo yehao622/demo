@@ -60,7 +60,7 @@ const AdvertiserChat: React.FC = () => {
             console.error('Failed to initialize chat:', error);
             setMessages([{
                 role: 'assistant',
-                content: 'Sorry, I\'m having trouble connecting. Please refresh the page or email advertising@matchingdonors.com',
+                content: 'Sorry, I\'m having trouble connecting. Please refresh the page or email Paul Dooley at ceo@matchingdonors.com',
                 timestamp: new Date()
             }]);
         }
@@ -111,7 +111,7 @@ const AdvertiserChat: React.FC = () => {
             console.error('Failed to send message:', error);
             const errorMessage: Message = {
                 role: 'assistant',
-                content: 'Sorry, I encountered an error. Please try again.',
+                content: 'Sorry, I encountered an error. Please try again or contact Paul Dooley at ceo@matchingdonors.com',
                 timestamp: new Date()
             };
             setMessages(prev => [...prev, errorMessage]);
@@ -142,6 +142,128 @@ const AdvertiserChat: React.FC = () => {
         }
     };
 
+    // Save chat history
+    const saveChatHistoryAsPDF = () => {
+        if (messages.length === 0) {
+            alert('No chat history to save yet!');
+            return;
+        }
+
+        // Create a simple HTML representation of the chat
+        let htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>MatchingDonors.com - Advertising Chat History</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        max-width: 800px;
+                        margin: 0 auto;
+                        padding: 40px 20px;
+                        color: #333;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        padding-bottom: 20px;
+                        border-bottom: 3px solid #667eea;
+                    }
+                    .header h1 {
+                        color: #667eea;
+                        margin: 0 0 10px 0;
+                    }
+                    .header p {
+                        color: #666;
+                        margin: 5px 0;
+                    }
+                    .message {
+                        margin: 20px 0;
+                        padding: 15px;
+                        border-radius: 10px;
+                    }
+                    .assistant {
+                        background: #f0f4ff;
+                        border-left: 4px solid #667eea;
+                    }
+                    .user {
+                        background: #f9f9f9;
+                        border-left: 4px solid #999;
+                    }
+                    .role {
+                        font-weight: bold;
+                        color: #667eea;
+                        margin-bottom: 5px;
+                    }
+                    .user .role {
+                        color: #666;
+                    }
+                    .timestamp {
+                        font-size: 12px;
+                        color: #999;
+                        margin-top: 8px;
+                    }
+                    .content {
+                        line-height: 1.6;
+                        white-space: pre-wrap;
+                    }
+                    .footer {
+                        margin-top: 40px;
+                        padding-top: 20px;
+                        border-top: 2px solid #eee;
+                        text-align: center;
+                        font-size: 14px;
+                        color: #666;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>MatchingDonors.com Advertising Chat</h1>
+                    <p>Conversation History</p>
+                    <p>Session ID: ${sessionId}</p>
+                    <p>Generated: ${new Date().toLocaleString()}</p>
+                </div>
+            `;
+
+        messages.forEach((msg) => {
+            const time = new Date(msg.timestamp).toLocaleTimeString();
+            const role = msg.role === 'assistant' ? 'AI Assistant' : 'You';
+
+            htmlContent += `
+                    <div class="message ${msg.role}">
+                        <div class="role">${role}</div>
+                        <div class="content">${msg.content}</div>
+                        <div class="timestamp">${time}</div>
+                    </div>
+                `;
+        });
+
+        htmlContent += `
+                    <div class="footer">
+                        <p><strong>MatchingDonors.com</strong></p>
+                        <p>For inquiries, contact Paul Dooley at ceo@matchingdonors.com</p>
+                    </div>
+                </body>
+                </html>
+                `;
+
+        // Create a Blob and download
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `MatchingDonors-Chat-${new Date().toISOString().slice(0, 10)}.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        // Show success message
+        alert('Chat history saved! Open the HTML file and use your browser\'s Print to PDF feature to create a PDF.');
+    };
+
     const quickActions = [
         { text: 'Pricing', message: 'What are your advertising rates?' },
         { text: 'Audience', message: 'Tell me about your audience' },
@@ -153,7 +275,16 @@ const AdvertiserChat: React.FC = () => {
         <div className="advertiser-chat-container">
             <div className="chat-header">
                 <h1>Advertise with MatchingDonors.com</h1>
-                <p>Reach 900K+ monthly visitors across our medical network</p>
+                <p>Reach 90K+ monthly visitors across our medical network</p>
+                {messages.length > 0 && (
+                    <button
+                        className="save-history-btn"
+                        onClick={saveChatHistoryAsPDF}
+                        title="Download chat history as HTML (then print to PDF)"
+                    >
+                        💾 Save Chat History
+                    </button>
+                )}
             </div>
 
             <div className="chat-messages" ref={chatContainerRef}>
@@ -221,7 +352,7 @@ const AdvertiserChat: React.FC = () => {
                         setShowLeadForm(false);
                         const successMessage: Message = {
                             role: 'assistant',
-                            content: `Thank you, ${contactName}! 🎉\n\nYour information has been received. Our advertising team will contact you at ${email} within 1 business day to discuss your campaign.\n\nIn the meantime, feel free to ask me any other questions!`,
+                            content: `Thank you, ${contactName}! 🎉\n\nYour information has been received. Paul Dooley and our team will contact you at ${email} within 1 business day to discuss your campaign.\n\nIn the meantime, feel free to ask me any other questions!`,
                             timestamp: new Date()
                         };
                         setMessages(prev => [...prev, successMessage]);
@@ -282,6 +413,9 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ sessionId, onClose, onSuc
                 <button className="modal-close" onClick={onClose}>×</button>
 
                 <h3>📝 Tell us about your advertising needs</h3>
+                <p style={{ color: '#666', marginBottom: '20px', fontSize: '15px' }}>
+                    Paul Dooley will personally review your inquiry
+                </p>
 
                 {error && <div className="error-message">{error}</div>}
 

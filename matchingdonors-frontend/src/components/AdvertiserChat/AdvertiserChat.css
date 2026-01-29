@@ -1,5 +1,6 @@
 .advertiser-chat-container {
-    max-width: 900px;
+    max-width: 1200px;
+    /* Increased from 900px */
     width: 100%;
     margin: 0 auto;
     background: white;
@@ -9,38 +10,45 @@
     display: flex;
     flex-direction: column;
     height: 90vh;
-    max-height: 700px;
+    max-height: 800px;
+    /* Increased from 700px */
 }
 
 .chat-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 25px 30px;
+    padding: 35px 40px;
+    /* Increased padding */
     text-align: center;
 }
 
 .chat-header h1 {
-    font-size: 24px;
-    margin-bottom: 8px;
+    font-size: 32px;
+    /* Increased from 24px */
+    margin-bottom: 10px;
+    font-weight: 700;
 }
 
 .chat-header p {
-    font-size: 14px;
-    opacity: 0.9;
+    font-size: 18px;
+    /* Increased from 14px */
+    opacity: 0.95;
+    font-weight: 500;
 }
 
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 20px;
-    background: #f7f9fc;
+    padding: 30px;
+    /* Increased from 20px */
+    background: linear-gradient(to bottom, #f7f9fc 0%, #ffffff 100%);
 }
 
 .message {
     display: flex;
-    margin-bottom: 16px;
+    margin-bottom: 24px;
+    /* Increased from 16px */
     animation: fadeIn 0.3s ease-in;
-    /* Remove justify-content to allow natural left alignment */
 }
 
 @keyframes fadeIn {
@@ -56,71 +64,89 @@
 }
 
 .message.assistant {
-    /* Assistant messages stay left-aligned naturally */
     justify-content: flex-start;
 }
 
 .message.user {
-    /* User messages align to the right */
     justify-content: flex-end;
 }
 
 .message-content {
-    max-width: 70%;
-    padding: 12px 16px;
+    max-width: 75%;
+    /* Increased from 70% */
+    padding: 16px 20px;
+    /* Increased padding */
     border-radius: 18px;
-    line-height: 1.5;
+    line-height: 1.6;
+    /* Increased from 1.5 */
     white-space: pre-wrap;
     word-wrap: break-word;
-    /* Text alignment left for readability */
     text-align: left;
+    font-size: 17px;
+    /* Added explicit larger font size */
 }
 
 .message.assistant .message-content {
     background: white;
-    color: #333;
+    color: #2c3e50;
+    /* Darker for better contrast */
     border-bottom-left-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+    border: 1px solid #f0f0f0;
 }
 
 .message.user .message-content {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-bottom-right-radius: 4px;
+    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.3);
+    font-weight: 500;
 }
 
 .message-avatar {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    /* Increased from 36px */
+    height: 42px;
     border-radius: 50%;
-    margin: 0 12px;
+    margin: 0 14px;
+    /* Increased spacing */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 16px;
+    /* Increased from 18px - note: this was actually larger before, adjusted for proportion */
+    font-weight: 700;
     flex-shrink: 0;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .message.user .message-avatar {
-    background: #e0e0e0;
+    background: linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 100%);
+    color: #555;
 }
 
 .typing-indicator {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
+    gap: 10px;
+    /* Increased from 8px */
+    padding: 16px 20px;
+    /* Increased padding */
     background: white;
     border-radius: 18px;
-    max-width: 70px;
-    margin-left: 48px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 80px;
+    /* Slightly wider */
+    margin-left: 56px;
+    /* Adjusted for new avatar size */
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
 }
 
 .typing-dot {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    /* Increased from 8px */
+    height: 10px;
     background: #667eea;
     border-radius: 50%;
     animation: typing 1.4s infinite;
@@ -148,29 +174,38 @@
 }
 
 .quick-actions {
-    padding: 15px 20px;
+    padding: 20px 30px;
+    /* Increased padding */
     background: white;
     border-top: 1px solid #e0e0e0;
     display: flex;
-    gap: 8px;
+    gap: 12px;
     flex-wrap: wrap;
     justify-content: center;
 }
 
 .quick-action-btn {
-    padding: 8px 16px;
-    background: #f0f0f0;
-    border: 1px solid #e0e0e0;
-    border-radius: 16px;
-    font-size: 13px;
+    padding: 12px 20px;
+    /* Increased padding */
+    background: #f5f7fa;
+    border: 2px solid #e0e0e0;
+    /* Thicker border */
+    border-radius: 20px;
+    /* More rounded */
+    font-size: 15px;
+    /* Increased from 13px */
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    color: #555;
 }
 
 .quick-action-btn:hover:not(:disabled) {
-    background: #667eea;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .quick-action-btn:disabled {
@@ -179,42 +214,51 @@
 }
 
 .chat-input-container {
-    padding: 20px;
+    padding: 25px 30px;
+    /* Increased padding */
     background: white;
     border-top: 1px solid #e0e0e0;
     display: flex;
-    gap: 12px;
+    gap: 15px;
+    /* Increased gap */
 }
 
 .chat-input {
     flex: 1;
-    padding: 12px 16px;
+    padding: 16px 20px;
+    /* Increased padding */
     border: 2px solid #e0e0e0;
     border-radius: 24px;
-    font-size: 15px;
+    font-size: 17px;
+    /* Increased from 15px */
     outline: none;
-    transition: border-color 0.3s;
+    transition: all 0.3s ease;
+    font-family: inherit;
 }
 
 .chat-input:focus {
     border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .send-button {
-    padding: 12px 24px;
+    padding: 16px 32px;
+    /* Increased padding */
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
     border-radius: 24px;
-    font-size: 15px;
+    font-size: 17px;
+    /* Increased from 15px */
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
+    min-width: 100px;
 }
 
 .send-button:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
 .send-button:disabled {
@@ -229,24 +273,30 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
+    /* Darker overlay */
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
     animation: fadeIn 0.2s ease-in;
+    backdrop-filter: blur(4px);
 }
 
 .modal-content {
     background: white;
-    padding: 30px;
-    border-radius: 16px;
-    max-width: 500px;
+    padding: 40px;
+    /* Increased padding */
+    border-radius: 20px;
+    /* More rounded */
+    max-width: 600px;
+    /* Increased from 500px */
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
     animation: slideUp 0.3s ease-out;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes slideUp {
@@ -263,15 +313,16 @@
 
 .modal-close {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    background: none;
+    top: 20px;
+    right: 20px;
+    background: #f0f0f0;
     border: none;
     font-size: 28px;
     cursor: pointer;
-    color: #999;
-    width: 32px;
-    height: 32px;
+    color: #666;
+    width: 36px;
+    /* Slightly larger */
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -280,62 +331,80 @@
 }
 
 .modal-close:hover {
-    background: #f0f0f0;
+    background: #e0e0e0;
     color: #333;
+    transform: rotate(90deg);
 }
 
 .modal-content h3 {
-    margin-bottom: 20px;
-    color: #333;
+    margin-bottom: 24px;
+    /* Increased spacing */
+    color: #2c3e50;
+    font-size: 24px;
+    /* Larger heading */
+    font-weight: 700;
 }
 
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    /* Increased spacing */
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    /* Increased spacing */
     color: #555;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    /* Increased from 14px */
+    font-weight: 600;
 }
 
 .form-group input,
 .form-group textarea,
 .form-group select {
     width: 100%;
-    padding: 10px 12px;
+    padding: 14px 16px;
+    /* Increased padding */
     border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 14px;
+    border-radius: 10px;
+    /* More rounded */
+    font-size: 16px;
+    /* Increased from 14px */
     font-family: inherit;
     outline: none;
-    transition: border-color 0.3s;
+    transition: all 0.3s ease;
 }
 
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
     border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .form-group textarea {
     resize: vertical;
-    min-height: 80px;
+    min-height: 100px;
+    /* Increased from 80px */
 }
 
 .form-actions {
     display: flex;
-    gap: 12px;
-    margin-top: 20px;
+    gap: 15px;
+    /* Increased gap */
+    margin-top: 24px;
+    /* Increased spacing */
 }
 
 .btn {
-    padding: 10px 20px;
+    padding: 14px 28px;
+    /* Increased padding */
     border: none;
-    border-radius: 8px;
-    font-size: 14px;
+    border-radius: 10px;
+    /* More rounded */
+    font-size: 16px;
+    /* Increased from 14px */
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -349,7 +418,7 @@
 
 .btn-primary:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
 .btn-primary:disabled {
@@ -358,21 +427,35 @@
 }
 
 .btn-secondary {
-    background: #e0e0e0;
+    background: #e8eaed;
     color: #555;
+    font-weight: 600;
 }
 
 .btn-secondary:hover {
-    background: #d0d0d0;
+    background: #d8dadd;
+    transform: translateY(-1px);
 }
 
 .error-message {
     background: #fee;
     color: #c33;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-size: 14px;
+    padding: 14px;
+    /* Increased padding */
+    border-radius: 10px;
+    /* More rounded */
+    margin-bottom: 20px;
+    /* Increased spacing */
+    font-size: 15px;
+    /* Increased from 14px */
+    border: 1px solid #fcc;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .advertiser-chat-container {
+        max-width: 95%;
+    }
 }
 
 @media (max-width: 768px) {
@@ -380,18 +463,86 @@
         height: 100vh;
         max-height: 100vh;
         border-radius: 0;
+        max-width: 100%;
+    }
+
+    .chat-header h1 {
+        font-size: 24px;
+    }
+
+    .chat-header p {
+        font-size: 15px;
     }
 
     .message-content {
         max-width: 85%;
+        font-size: 16px;
     }
 
     .quick-actions {
-        padding: 10px;
+        padding: 15px;
+    }
+
+    .quick-action-btn {
+        font-size: 14px;
+        padding: 10px 16px;
     }
 
     .modal-content {
         width: 95%;
-        padding: 20px;
+        padding: 25px;
+    }
+
+    .chat-input {
+        font-size: 16px;
+    }
+
+    .send-button {
+        font-size: 16px;
+        padding: 14px 24px;
+    }
+}
+
+/* Save Chat History Button */
+.save-history-btn {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.save-history-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.8);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.save-history-btn:active {
+    transform: translateY(0);
+}
+
+/* Make chat-header position relative for absolute positioning */
+.chat-header {
+    position: relative;
+}
+
+/* Responsive: Move button below title on mobile */
+@media (max-width: 768px) {
+    .save-history-btn {
+        position: static;
+        display: block;
+        margin: 15px auto 0;
+        font-size: 13px;
+        padding: 8px 16px;
     }
 }
