@@ -7,6 +7,8 @@ import profileRoutes from "./profile/routes";
 import matchingRoutes from './matching/matching.routes'
 import contenRoutes from './routes/content'
 import advertiseRoutes from './routes/advertiser'
+import authRoutes from './routes/auth.routes';
+import './database';
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -26,6 +28,7 @@ app.use(express.json());
 //     });
 // });
 
+app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/matching", matchingRoutes);
 app.use("/api/content", contenRoutes);
