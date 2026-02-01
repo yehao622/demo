@@ -13,16 +13,12 @@ describe('Auth Routes', () => {
         db.prepare('DELETE FROM users').run();
     });
 
-    afterAll(() => {
-        db.close();
-    });
-
     describe('POST /api/auth/register', () => {
         it('should register a new user', async () => {
             const response = await request(app)
                 .post('/api/auth/register')
                 .send({
-                    email: 'test@example.com',
+                    email: 'routes-register@example.com',
                     password: 'password123',
                     role: 'patient',
                     firstName: 'John',
@@ -31,14 +27,14 @@ describe('Auth Routes', () => {
 
             expect(response.status).toBe(201);
             expect(response.body).toHaveProperty('token');
-            expect(response.body.user.email).toBe('test@example.com');
+            expect(response.body.user.email).toBe('routes-register@example.com');
         });
 
         it('should return 400 for missing fields', async () => {
             const response = await request(app)
                 .post('/api/auth/register')
                 .send({
-                    email: 'test@example.com'
+                    email: 'incomplete@example.com'
                 });
 
             expect(response.status).toBe(400);
@@ -50,7 +46,7 @@ describe('Auth Routes', () => {
             await request(app)
                 .post('/api/auth/register')
                 .send({
-                    email: 'test@example.com',
+                    email: 'routes-login@example.com',
                     password: 'password123',
                     role: 'patient',
                     firstName: 'John',
@@ -62,7 +58,7 @@ describe('Auth Routes', () => {
             const response = await request(app)
                 .post('/api/auth/login')
                 .send({
-                    email: 'test@example.com',
+                    email: 'routes-login@example.com',
                     password: 'password123'
                 });
 
@@ -74,7 +70,7 @@ describe('Auth Routes', () => {
             const response = await request(app)
                 .post('/api/auth/login')
                 .send({
-                    email: 'test@example.com',
+                    email: 'routes-login@example.com',
                     password: 'wrongpassword'
                 });
 
@@ -89,7 +85,7 @@ describe('Auth Routes', () => {
             const response = await request(app)
                 .post('/api/auth/register')
                 .send({
-                    email: 'test@example.com',
+                    email: 'routes-me@example.com',
                     password: 'password123',
                     role: 'donor',
                     firstName: 'Jane',
@@ -105,7 +101,7 @@ describe('Auth Routes', () => {
                 .set('Authorization', `Bearer ${token}`);
 
             expect(response.status).toBe(200);
-            expect(response.body.email).toBe('test@example.com');
+            expect(response.body.email).toBe('routes-me@example.com');
         });
 
         it('should return 401 without token', async () => {

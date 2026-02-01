@@ -1,6 +1,9 @@
 import React from 'react';
 import { ProfileAgent } from './components/profile/ProfileAgent';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { AuthGate } from './components/auth/AuthGate';
+import { UserHeader } from './components/auth/UserHeader';
 import { ProfileMatchingPage } from './components/profile/ProfileMatchingPage';
 import { NewsHub } from './components/news/NewsHub';
 import AdvertiserChatPage from './pages/AdvertiserChatPage';
@@ -18,7 +21,7 @@ const AdvertiserChat: React.FC = () => {
 
 function App() {
   return (
-    <div>
+    <AuthProvider>
       <Router>
         <div className="App">
           {/* Navigation */}
@@ -32,7 +35,7 @@ function App() {
                 <NavLink
                   to="/profile-fill"
                   className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
-                > Profile Fill
+                > 📝 Profile Fill
                 </NavLink>
                 <NavLink
                   to="/profile-match"
@@ -58,9 +61,24 @@ function App() {
           {/* Main contents: Routes */}
           <main className="app-main">
             <Routes>
-              <Route path="/" element={<ProfileAgent />} />
-              <Route path="/profile-fill" element={<ProfileAgent />} />
-              <Route path="/profile-match" element={<ProfileMatchingPage />} />
+              <Route path="/" element={
+                <AuthGate>
+                  <UserHeader />
+                  <ProfileAgent />
+                </AuthGate>
+              } />
+              <Route path="/profile-fill" element={
+                <AuthGate>
+                  <UserHeader />
+                  <ProfileAgent />
+                </AuthGate>
+              } />
+              <Route path="/profile-match" element={
+                <AuthGate>
+                  <UserHeader />
+                  <ProfileMatchingPage />
+                </AuthGate>
+              } />
               <Route path="/news-hub" element={<NewsHub />} />
               <Route path="/advertiser-chat" element={<AdvertiserChat />} />
             </Routes>
@@ -78,7 +96,7 @@ function App() {
 
         </div>
       </Router>
-    </div>
+    </AuthProvider>
   );
 }
 

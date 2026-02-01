@@ -2,11 +2,13 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
+// Use in-memory database for tests
+const isTest = process.env.NODE_ENV === 'test';
 const DB_DIR = path.join(__dirname, '../../database');
-const DB_PATH = path.join(DB_DIR, 'matchingdonors.db');
+const DB_PATH = isTest ? ':memory:' : path.join(DB_DIR, 'matchingdonors.db');
 
 // Ensure database directory exists
-if (!fs.existsSync(DB_DIR)) {
+if (!isTest && !fs.existsSync(DB_DIR)) {
     fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
@@ -48,6 +50,8 @@ db.exec(`
     CREATE INDEX IF NOT EXISTS idx_reset_codes_code ON password_reset_codes(code);
 `);
 
-console.log('✅ Database initialized successfully at:', DB_PATH);
+if (!isTest) {
+    console.log('✅ Database initialized successfully at:', DB_PATH);
+}
 
 export default db;
