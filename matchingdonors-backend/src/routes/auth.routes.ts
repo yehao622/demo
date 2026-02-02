@@ -36,18 +36,27 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
  * POST /api/auth/login
  * Login user
  */
-router.post('/login', async (req: Request, res: Response): Promise<void> => {
+router.post('/login', async (req: Request, res: Response) => {
     try {
-        const data: LoginRequest = req.body;
+        const { email, password, role } = req.body;
 
         // Validate required fields
-        if (!data.email || !data.password) {
-            res.status(400).json({ error: 'Email and password are required' });
-            return;
+        if (!email || !password || !role) {
+            return res.status(400).json({
+                error: 'Email, password, and role are required'
+            });
         }
 
-        const result = await AuthService.login(data);
-        res.status(200).json(result);
+        // Validate role
+        if (role !== 'patient' && role !== 'donor') {
+            return res.status(400).json({
+                error: 'Role must be either patient or donor'
+            });
+        }
+
+        const result = await AuthService.login({ email, password, role });
+
+        res.json(result);
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Login failed';
         res.status(401).json({ error: message });
@@ -82,24 +91,32 @@ router.get('/me', authenticate, (req: AuthRequest, res: Response): void => {
  * POST /api/auth/forgot-password
  * Generate password reset code
  */
-router.post('/forgot-password', async (req: Request, res: Response): Promise<void> => {
+router.post('/forgot-password', async (req: Request, res: Response) => {
     try {
-        const { email } = req.body;
+        const { email, role } = req.body;
 
-        if (!email) {
-            res.status(400).json({ error: 'Email is required' });
+        if (!email || !role) {
+            res.status(400).json({ error: 'Email and role are required' });
             return;
         }
 
-        const result = await AuthService.generatePasswordResetCode(email);
+        if (role !== 'patient' && role !== 'donor') {
+            return res.status(400).json({ error: 'Role must be either patient or donor' });
+        }
 
-        // In production, send code via email
-        // For demo, return the code (REMOVE IN PRODUCTION)
-        res.status(200).json({
-            message: 'Reset code sent successfully',
-            code: result.code, // REMOVE THIS IN PRODUCTION
-            expiresAt: result.expiresAt
-        });
+        const result = await AuthService.generatePasswordResetCode(email, role);
+
+        // In development, return the code for testing
+        if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+            res.status(200).json({
+                message: 'Password reset code sent',
+                code: result.code,
+                expiresAt: result.expiresAt
+            });
+        } else {
+            // In production, don't return the code
+            res.status(200).json({ message: 'Password reset code sent' });
+        }
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to generate reset code';
         res.status(400).json({ error: message });
@@ -110,16 +127,15 @@ router.post('/forgot-password', async (req: Request, res: Response): Promise<voi
  * POST /api/auth/verify-code
  * Verify password reset code
  */
-router.post('/verify-code', (req: Request, res: Response): void => {
+router.post('/verify-code', (req: Request, res: Response) => {
     try {
-        const { email, code } = req.body;
+        const { email, code, role } = req.body;
 
-        if (!email || !code) {
-            res.status(400).json({ error: 'Email and code are required' });
-            return;
+        if (!email || !code || !role) {
+            return res.status(400).json({ error: 'Email, code, and role are required' });
         }
 
-        const result = AuthService.verifyPasswordResetCode(email, code);
+        const result = AuthService.verifyPasswordResetCode(email, code, role);
 
         if (result.valid) {
             res.status(200).json({ valid: true, message: 'Code verified successfully' });
@@ -135,16 +151,15 @@ router.post('/verify-code', (req: Request, res: Response): void => {
  * POST /api/auth/reset-password
  * Reset password with verified code
  */
-router.post('/reset-password', async (req: Request, res: Response): Promise<void> => {
+router.post('/reset-password', async (req: Request, res: Response) => {
     try {
-        const { email, code, newPassword } = req.body;
+        const { email, code, newPassword, role } = req.body;
 
-        if (!email || !code || !newPassword) {
-            res.status(400).json({ error: 'Email, code, and new password are required' });
-            return;
+        if (!email || !code || !newPassword || !role) {
+            res.status(400).json({ error: 'Email, code, new password and role are required' });
         }
 
-        await AuthService.resetPassword(email, code, newPassword);
+        await AuthService.resetPassword(email, code, newPassword, role);
         res.status(200).json({ message: 'Password reset successfully' });
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to reset password';

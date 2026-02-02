@@ -23,9 +23,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setIsLoading(false);
     }, []);
 
-    const login = async (email: string, password: string): Promise<void> => {
+    const login = async (email: string, password: string, role: 'patient' | 'donor'): Promise<void> => {
         try {
-            const response = await AuthService.login({ email, password });
+            const response = await AuthService.login(email, password, role);
             setToken(response.token);
             setUser(response.user);
             AuthService.storeAuthData(response.token, response.user);

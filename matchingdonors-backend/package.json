@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev src/index.ts",
-    "test": "NODE_ENV=test jest --runInBand"
+    "dev": "NODE_ENV=development ts-node-dev src/index.ts",
+    "test": "NODE_ENV=test jest --runInBand",
+    "seed": "ts-node src/database/seed.ts",
+    "seed:dev": "NODE_ENV=development npm run seed"
   },
   "keywords": [],
   "author": "",

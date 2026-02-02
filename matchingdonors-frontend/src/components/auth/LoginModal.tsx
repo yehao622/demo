@@ -24,18 +24,27 @@ export const LoginModal: React.FC<LoginModalProps> = ({ role, onClose, onSwitchT
         setIsLoading(true);
 
         try {
-            await login(email, password);
-            // Success - AuthContext will update and AuthGate will show content
-        } catch (err: any) {
-            setError(err.message || 'Login failed. Please try again.');
-        } finally {
+            // Pass role to login API
+            await login(email, password, role);
+            onClose();
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Login failed';
+            setError(errorMessage);
             setIsLoading(false);
+
+            // If role mismatch error, show for 3 seconds then close
+            if (errorMessage.includes('registered as')) {
+                setTimeout(() => {
+                    onClose();
+                }, 3000);
+            }
         }
     };
 
     if (showForgotPassword) {
         return (
             <ForgotPasswordModal
+                role={role}
                 onClose={() => setShowForgotPassword(false)}
                 onBack={() => setShowForgotPassword(false)}
             />
@@ -52,9 +61,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ role, onClose, onSwitchT
                     <p>Sign in to continue</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="auth-form">
-                    {error && <div className="error-message">{error}</div>}
+                {error && <div className="error-message">{error}</div>}
 
+                <form onSubmit={handleSubmit} className="auth-form">
                     <div className="form-group">
                         <label htmlFor="email">Email</label>
                         <input

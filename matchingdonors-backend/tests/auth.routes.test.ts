@@ -59,7 +59,8 @@ describe('Auth Routes', () => {
                 .post('/api/auth/login')
                 .send({
                     email: 'routes-login@example.com',
-                    password: 'password123'
+                    password: 'password123',
+                    role: 'patient'  // ← ADDED role
                 });
 
             expect(response.status).toBe(200);
@@ -71,7 +72,8 @@ describe('Auth Routes', () => {
                 .post('/api/auth/login')
                 .send({
                     email: 'routes-login@example.com',
-                    password: 'wrongpassword'
+                    password: 'wrongpassword',
+                    role: 'patient'  // ← ADDED role
                 });
 
             expect(response.status).toBe(401);

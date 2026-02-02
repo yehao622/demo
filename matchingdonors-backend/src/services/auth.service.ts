@@ -48,9 +48,10 @@ export class AuthService {
         }
 
         // Check if user already exists
-        const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(data.email);
+        const existingUser = db.prepare('SELECT id FROM users WHERE email = ? AND role = ?').get(data.email, data.role);
+
         if (existingUser) {
-            throw new Error('User with this email already exists');
+            throw new Error(`An account with this email already exists as a ${data.role}`);
         }
 
         // Hash password
@@ -75,11 +76,20 @@ export class AuthService {
     }
 
     // Login user
-    static async login(data: LoginRequest): Promise<AuthResponse> {
+    static async login(data: LoginRequest & { role: 'patient' | 'donor' }): Promise<AuthResponse> {
         // Find user by email
-        const user = db.prepare('SELECT * FROM users WHERE email = ?').get(data.email) as User;
+        const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(data.email, data.role) as User;
 
         if (!user) {
+            // Check if user exists with different role
+            const userWithDifferentRole = db.prepare('SELECT role FROM users WHERE email = ?').get(data.email) as { role: 'patient' | 'donor' } | undefined;
+
+            if (userWithDifferentRole) {
+                const article = userWithDifferentRole.role === 'donor' ? 'a' : 'a';
+                throw new Error(
+                    `This email is registered as ${article} ${userWithDifferentRole.role}. Please login as a ${userWithDifferentRole.role}.`
+                );
+            }
             throw new Error('Invalid email or password');
         }
 
@@ -116,9 +126,9 @@ export class AuthService {
     }
 
     // Generate password reset code
-    static async generatePasswordResetCode(email: string): Promise<{ code: string; expiresAt: Date }> {
+    static async generatePasswordResetCode(email: string, role: 'patient' | 'donor'): Promise<{ code: string; expiresAt: Date }> {
         // Find user
-        const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User;
+        const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(email, role) as User;
 
         if (!user) {
             // Don't reveal if user exists for security
@@ -155,9 +165,9 @@ export class AuthService {
     }
 
     // Verify password reset code
-    static verifyPasswordResetCode(email: string, code: string): { valid: boolean; userId?: number } {
+    static verifyPasswordResetCode(email: string, code: string, role: 'patient' | 'donor'): { valid: boolean; userId?: number } {
         // Find user
-        const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as User;
+        const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(email, role) as User;
 
         if (!user) {
             return { valid: false };
@@ -182,9 +192,9 @@ export class AuthService {
     }
 
     // reset password with code
-    static async resetPassword(email: string, code: string, newPassword: string): Promise<boolean> {
+    static async resetPassword(email: string, code: string, newPassword: string, role: 'patient' | 'donor'): Promise<boolean> {
         // Verify code
-        const verification = this.verifyPasswordResetCode(email, code);
+        const verification = this.verifyPasswordResetCode(email, code, role);
 
         if (!verification.valid || !verification.userId) {
             throw new Error('Invalid or expired reset code');

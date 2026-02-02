@@ -68,7 +68,7 @@ describe('AuthContext', () => {
             });
 
             await act(async () => {
-                await result.current.login('test@example.com', 'password123');
+                await result.current.login('test@example.com', 'password123', 'patient');
             });
 
             expect(result.current.isAuthenticated).toBe(true);
@@ -89,7 +89,7 @@ describe('AuthContext', () => {
 
             await expect(
                 act(async () => {
-                    await result.current.login('test@example.com', 'wrongpassword');
+                    await result.current.login('test@example.com', 'wrongpassword', 'patient');
                 })
             ).rejects.toThrow('Invalid credentials');
 
@@ -155,7 +155,7 @@ describe('AuthContext', () => {
             });
 
             await act(async () => {
-                await result.current.login('test@example.com', 'password123');
+                await result.current.login('test@example.com', 'password123', 'patient');
             });
 
             expect(result.current.isAuthenticated).toBe(true);

@@ -105,5 +105,4 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, requiredRoles = ['
             )}
         </div>
     );
-    return null;
 };

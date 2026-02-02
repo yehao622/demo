@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { AuthService } from '../../services/auth.service';
+import { UserRole } from '../../types/auth.types';
 import '../../styles/AuthModals.css';
 
 interface ForgotPasswordModalProps {
+    role: UserRole;
     onClose: () => void;
     onBack: () => void;
 }
 
 type Step = 'email' | 'code' | 'password' | 'success';
 
-export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ onClose, onBack }) => {
+export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ role, onClose, onBack }) => {
     const [step, setStep] = useState<Step>('email');
     const [email, setEmail] = useState('');
     const [code, setCode] = useState('');
@@ -36,7 +38,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ onClos
         setIsLoading(true);
 
         try {
-            const response = await AuthService.forgotPassword(email);
+            const response = await AuthService.forgotPassword(email, role);
             setStep('code');
             setResendTimer(60);
             setCanResend(false);
@@ -57,7 +59,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ onClos
         setIsLoading(true);
 
         try {
-            const response = await AuthService.verifyResetCode(email, code);
+            const response = await AuthService.verifyResetCode(email, code, role);
             if (response.valid) {
                 setStep('password');
             } else {
@@ -87,7 +89,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ onClos
         setIsLoading(true);
 
         try {
-            await AuthService.resetPassword(email, code, newPassword);
+            await AuthService.resetPassword(email, code, newPassword, role);
             setStep('success');
         } catch (err: any) {
             setError(err.response?.data?.error || 'Failed to reset password');
@@ -101,7 +103,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ onClos
         setIsLoading(true);
 
         try {
-            await AuthService.forgotPassword(email);
+            await AuthService.forgotPassword(email, role);
             setResendTimer(60);
             setCanResend(false);
         } catch (err: any) {
@@ -120,7 +122,8 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ onClos
                     <>
                         <div className="modal-header">
                             <h2>Reset Your Password 🔑</h2>
-                            <p>Enter your email to receive a reset code</p>
+                            <p>Enter your email to receive a reset code for <strong>{role === 'patient' ? 'Patient 🩺' : 'Donor ❤️'}</strong></p>
+
                         </div>
 
                         <form onSubmit={handleRequestCode} className="auth-form">

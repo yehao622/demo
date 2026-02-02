@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AuthResponse, RegisterData, LoginData, User } from '../types/auth.types';
+import { AuthResponse, RegisterData, User } from '../types/auth.types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
@@ -19,41 +19,49 @@ authApi.interceptors.request.use((config) => {
     return config;
 });
 
-
 export class AuthService {
-    // Register a new use
+    // Register a new user
     static async register(data: RegisterData): Promise<AuthResponse> {
-        const response = await authApi.post<AuthResponse>('/register', data);
+        const response = await authApi.post('/register', data);
         return response.data;
     }
 
     // Login user
-    static async login(data: LoginData): Promise<AuthResponse> {
-        const response = await authApi.post<AuthResponse>('/login', data);
+    static async login(email: string, password: string, role: 'patient' | 'donor'): Promise<AuthResponse> {
+        const response = await authApi.post<AuthResponse>('/login', {
+            email,
+            password,
+            role
+        });
+
+        if (response.data.token) {
+            this.storeAuthData(response.data.token, response.data.user);
+        }
+
         return response.data;
     }
 
-    // Get current use info
+    // Get current user info
     static async getCurrentUser(): Promise<User> {
-        const response = await authApi.get<User>('/me');
+        const response = await authApi.get('/me');
         return response.data;
     }
 
     // Request password reset code
-    static async forgotPassword(email: string): Promise<{ message: string; code?: string; expiresAt?: string }> {
-        const response = await authApi.post('/forgot-password', { email });
+    static async forgotPassword(email: string, role: 'patient' | 'donor'): Promise<{ message: string; code?: string; expiresAt?: string }> {
+        const response = await authApi.post('/forgot-password', { email, role });
         return response.data;
     }
 
     // Verify password reset code
-    static async verifyResetCode(email: string, code: string): Promise<{ valid: boolean; message?: string }> {
-        const response = await authApi.post('/verify-code', { email, code });
+    static async verifyResetCode(email: string, code: string, role: 'patient' | 'donor'): Promise<{ valid: boolean; message?: string }> {
+        const response = await authApi.post('/verify-code', { email, code, role });
         return response.data;
     }
 
     // Reset password with code
-    static async resetPassword(email: string, code: string, newPassword: string): Promise<{ message: string }> {
-        const response = await authApi.post('/reset-password', { email, code, newPassword });
+    static async resetPassword(email: string, code: string, newPassword: string, role: 'patient' | 'donor'): Promise<{ message: string }> {
+        const response = await authApi.post('/reset-password', { email, code, newPassword, role });
         return response.data;
     }
 
