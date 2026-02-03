@@ -27,7 +27,9 @@ export class AuthService {
             {
                 id: user.id,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                firstName: user.first_name,
+                lastName: user.last_name
             },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRES_IN }
@@ -110,9 +112,15 @@ export class AuthService {
     }
 
     // Verify JWT token
-    static verifyToken(token: string): { id: number; email: string; role: 'patient' | 'donor' } {
+    static verifyToken(token: string): { id: number; email: string; role: 'patient' | 'donor'; firstName: string; lastName: string } {
         try {
-            const decoded = jwt.verify(token, JWT_SECRET) as { id: number; email: string; role: 'patient' | 'donor' };
+            const decoded = jwt.verify(token, JWT_SECRET) as {
+                id: number;
+                email: string;
+                role: 'patient' | 'donor';
+                firstName: string;
+                lastName: string;
+            };
             return decoded;
         } catch (error) {
             throw new Error('Invalid or expired token');

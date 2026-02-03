@@ -427,6 +427,61 @@ export class MatchingService {
         console.log('✓ Cleared all profiles and embeddings');
     }
 
+    // Convert ProfileData (from database) to Profile (matching format)
+    private convertProfileDataToProfile(data: any): Profile {
+        return {
+            id: data.id,
+            name: data.name,
+            type: data.type,
+            bloodType: data.blood_type,
+            age: data.age,
+            country: data.country,
+            state: data.state,
+            city: data.city,
+            organType: data.organ_type,
+            description: data.description,
+            medicalInfo: data.medical_info,
+            preferences: data.preferences || ''
+        };
+    }
+
+    /**
+     * Load real user profiles from database and store with embeddings
+     * @param targetType - Type of profiles to load ('patient' or 'donor')
+     * @param excludeUserId - User ID to exclude from results (current user)
+     */
+    async loadRealUserProfiles(
+        targetType: 'patient' | 'donor',
+        excludeUserId?: number
+    ): Promise<Profile[]> {
+        try {
+            // Import ProfileService dynamically to avoid circular dependency
+            const { ProfileService } = await import('../services/profile.service');
+
+            // Fetch complete profiles from database
+            const profilesData = ProfileService.getAllCompleteProfiles(targetType, excludeUserId);
+
+            if (profilesData.length === 0) {
+                console.log(`No complete ${targetType} profiles found in database`);
+                return [];
+            }
+
+            // Convert to Profile format
+            const profiles: Profile[] = profilesData.map(data =>
+                this.convertProfileDataToProfile(data)
+            );
+
+            // Store profiles with embeddings in batch
+            await this.storeProfilesBatch(profiles);
+
+            console.log(`✓ Loaded ${profiles.length} real ${targetType} profiles from database`);
+            return profiles;
+        } catch (error) {
+            console.error('Error loading real user profiles:', error);
+            throw error;
+        }
+    }
+
     /**
      * Blood type compatibility matrix
      * Returns compatibility score (0-1)

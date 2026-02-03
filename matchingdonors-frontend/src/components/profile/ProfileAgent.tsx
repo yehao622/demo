@@ -40,7 +40,7 @@ export const ProfileAgent: React.FC = () => {
         (transcript) => setText(prev => prev ? prev + ' ' + transcript : transcript)
     );
 
-    const { user } = useAuth();
+    const { user, triggerRegistration } = useAuth();
     const [validationModal, setValidationModal] = useState<{
         isOpen: boolean;
         type: 'role' | 'tab';
@@ -396,8 +396,11 @@ export const ProfileAgent: React.FC = () => {
                 message={validationModal.message}
                 suggestedAction={validationModal.suggestedAction}
                 onActionClick={() => {
+                    // Extract suggested role from validation message
+                    const suggestedRole = validationModal.message.toLowerCase().includes('donor') ? 'donor' : 'patient';
+
+                    triggerRegistration(suggestedRole);
                     setValidationModal({ ...validationModal, isOpen: false });
-                    // Navigate to suggested location (you can implement this)
                 }}
             />
         </div>

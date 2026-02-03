@@ -49,6 +49,27 @@ export class ProfileService {
         return !!profile;
     }
 
+    static getAllCompleteProfiles(
+        targetType: 'patient' | 'donor',
+        excludeUserId?: number
+    ): ProfileData[] {
+        let query = `
+            SELECT * FROM profiles 
+            WHERE type = ? AND is_complete = 1
+        `;
+        const params: any[] = [targetType];
+
+        if (excludeUserId) {
+            query += ' AND user_id != ?';
+            params.push(excludeUserId);
+        }
+
+        query += ' ORDER BY updated_at DESC';
+
+        const profiles = db.prepare(query).all(...params) as ProfileData[];
+        return profiles;
+    }
+
     // Get user's profile
     static getUserProfile(userId: number, role: 'patient' | 'donor'): ProfileData | null {
         const profile = db.prepare(`

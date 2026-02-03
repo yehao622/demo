@@ -12,13 +12,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [pendingRegistration, setPendingRegistration] = useState<{ role: 'patient' | 'donor' } | null>(null);
 
     // Load auth data from localStorage on mount
     useEffect(() => {
         const { token: storedToken, user: storedUser } = AuthService.getStoredAuthData();
-        if (storedToken && storedUser) {
+        if (storedUser?.firstName && storedUser.lastName) {
             setToken(storedToken);
             setUser(storedUser);
+        } else {
+            AuthService.clearAuthData();
         }
         setIsLoading(false);
     }, []);
@@ -72,6 +75,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         register,
         logout,
         refreshUser,
+        pendingRegistration,
+        triggerRegistration: (role: 'patient' | 'donor') => {
+            logout();
+            setPendingRegistration({ role });
+        },
+        clearPendingRegistration: () => setPendingRegistration(null),
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

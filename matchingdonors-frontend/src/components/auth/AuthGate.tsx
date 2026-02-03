@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { UserRole } from '../../types/auth.types';
 import { LoginModal } from './LoginModal';
 import { RegisterModal } from './RegisterModal';
@@ -11,10 +11,18 @@ interface AuthGateProps {
 }
 
 export const AuthGate: React.FC<AuthGateProps> = ({ children, requiredRoles = ['patient', 'donor'] }) => {
-    const { isAuthenticated, user, isLoading } = useAuth();
+    const { isAuthenticated, user, isLoading, pendingRegistration, clearPendingRegistration } = useAuth();
     const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
     const [showLogin, setShowLogin] = useState(false);
     const [showRegister, setShowRegister] = useState(false);
+
+    useEffect(() => {
+        if (pendingRegistration && !isAuthenticated) {
+            setSelectedRole(pendingRegistration.role);
+            setShowRegister(true);
+            clearPendingRegistration();
+        }
+    }, [pendingRegistration, isAuthenticated, clearPendingRegistration]);
 
     // Show loading state
     if (isLoading) {

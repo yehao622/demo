@@ -30,4 +30,7 @@ export interface AuthContextType {
     register: (data: RegisterData) => Promise<void>;
     logout: () => void;
     refreshUser: () => Promise<void>;
+    pendingRegistration: { role: 'patient' | 'donor' } | null;
+    triggerRegistration: (role: 'patient' | 'donor') => void;
+    clearPendingRegistration: () => void;
 }

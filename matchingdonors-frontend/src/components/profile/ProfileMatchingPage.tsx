@@ -17,19 +17,32 @@ export const ProfileMatchingPage: React.FC = () => {
     const [isSearching, setIsSearching] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [filterType, setFilterType] = useState<'all' | 'patient' | 'donor'>('all');
+    const [useRealData, setUseRealData] = useState(false);
+    const [dataMode, setDataMode] = useState<'demo' | 'real'>('demo');
+
 
     // Load all profiles on mount
     useEffect(() => {
         loadProfiles();
     }, []);
 
+    // Reload profiles when data mode changes
+    useEffect(() => {
+        console.log('🔄 useRealData changed to:', useRealData);
+        loadProfiles();
+    }, [useRealData]);
+
+
     const loadProfiles = async () => {
+        console.log('📋 loadProfiles called with useRealData:', useRealData);
         setIsLoading(true);
         setError(null);
         try {
-            const profiles = await profileService.getAllProfiles();
+            const profiles = await profileService.getAllProfiles(useRealData);
+            console.log('✅ Profiles loaded:', profiles.length);
             setAllProfiles(profiles);
         } catch (err: any) {
+            console.error('❌ Error loading profiles:', err);
             setError(err.message);
         } finally {
             setIsLoading(false);
@@ -42,8 +55,9 @@ export const ProfileMatchingPage: React.FC = () => {
         setMatches([]);
 
         try {
-            const results = await profileService.findMatches(request);
+            const results = await profileService.findMatches(request, useRealData);
             setMatches(results);
+            setDataMode(useRealData ? 'real' : 'demo');
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -71,6 +85,30 @@ export const ProfileMatchingPage: React.FC = () => {
                 </p>
             </div>
 
+            {/* Data Mode Toggle */}
+            <div className="data-mode-section">
+                <div className="toggle-container">
+                    <label className="toggle-label">
+                        <input
+                            type="checkbox"
+                            className="toggle-checkbox"
+                            checked={useRealData}
+                            onChange={(e) => setUseRealData(e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                        <span className="toggle-text">
+                            {useRealData ? '🔴 Real Matches Mode' : '🟢 Demo Mode'}
+                        </span>
+                    </label>
+                    <p className="toggle-description">
+                        {useRealData
+                            ? 'Searching registered users from database'
+                            : 'Using demo/seed data for testing'}
+                    </p>
+                </div>
+            </div>
+
+
             {/* Search Section */}
             <ProfileSearch onSearch={handleSearch} isSearching={isSearching} />
 
@@ -79,13 +117,38 @@ export const ProfileMatchingPage: React.FC = () => {
 
             {/* Match Results */}
             {matches.length > 0 && (
-                <MatchResults
-                    matches={matches}
-                    onViewDetails={(profile) => {
-                        const match = matches.find(m => m.profileId === profile.id);
-                        handleViewDetails(profile, match?.similarity);
-                    }}
-                />
+                <>
+                    <div className="results-header">
+                        <h2>✨ Match Results</h2>
+                        <span className={`mode-badge ${dataMode}`}>
+                            {dataMode === 'real' ? '🔴 Real Users' : '🟢 Demo Data'}
+                        </span>
+                    </div>
+                    <MatchResults
+                        matches={matches}
+                        onViewDetails={(profile) => {
+                            const match = matches.find(m => m.profileId === profile.id);
+                            handleViewDetails(profile, match?.similarity);
+                        }}
+                    />
+                </>
+            )}
+
+            {/* Empty State for Real Data */}
+            {matches.length === 0 && isSearching === false && dataMode === 'real' && (
+                <div className="empty-state-real">
+                    <div className="empty-icon">🔍</div>
+                    <h3>No Real Matches Found</h3>
+                    <p>No registered users match your search criteria yet.</p>
+                    <div className="empty-actions">
+                        <button
+                            className="btn-demo"
+                            onClick={() => setUseRealData(false)}
+                        >
+                            Try Demo Mode
+                        </button>
+                    </div>
+                </div>
             )}
 
             {/* Browse All Profiles Section */}
