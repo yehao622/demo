@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
-import { authenticate, AuthRequest } from '../middleware/auth.middleware';
+import { authMiddleware } from '../middleware/auth.middleware';
 import { RegisterRequest, LoginRequest } from '../models/user.model';
 
 const router = Router();
@@ -67,7 +67,7 @@ router.post('/login', async (req: Request, res: Response) => {
  * GET /api/auth/me
  * Get current user info
  */
-router.get('/me', authenticate, (req: AuthRequest, res: Response): void => {
+router.get('/me', authMiddleware, (req: Request, res: Response): void => {
     try {
         if (!req.user) {
             res.status(401).json({ error: 'Not authenticated' });

@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { useVoiceInput } from "../../hooks/useVoiceInput";
 import "./ProfileAgent.css";
 import '../../styles/shared-voice-input.css';
+import { useAuth } from "../../contexts/AuthContext";
+import { AuthService } from "../../services/auth.service";
+import { ValidationModal } from "../common/ValidationModal";
 
 type ProfileSuggestion = {
     summary: string;
@@ -37,6 +40,14 @@ export const ProfileAgent: React.FC = () => {
         (transcript) => setText(prev => prev ? prev + ' ' + transcript : transcript)
     );
 
+    const { user } = useAuth();
+    const [validationModal, setValidationModal] = useState<{
+        isOpen: boolean;
+        type: 'role' | 'tab';
+        message: string;
+        suggestedAction?: string;
+    }>({ isOpen: false, type: 'role', message: '' });
+
     const minCharacters = 20;
     const maxCharacters = 2000;
 
@@ -47,6 +58,37 @@ export const ProfileAgent: React.FC = () => {
         setSuggestion(null);
 
         try {
+            // Validate input first if user is authenticated
+            if (user) {
+                const validation = await AuthService.validateInput(text, 'profile_fill');
+
+                if (!validation.isValid) {
+                    setLoading(false);
+
+                    // Show role mismatch
+                    if (validation.roleMismatch?.detected) {
+                        setValidationModal({
+                            isOpen: true,
+                            type: 'role',
+                            message: validation.roleMismatch.message,
+                            suggestedAction: 'Go to Registration',
+                        });
+                        return;
+                    }
+
+                    // Show tab mismatch
+                    if (validation.tabMismatch?.detected) {
+                        setValidationModal({
+                            isOpen: true,
+                            type: 'tab',
+                            message: validation.tabMismatch.message,
+                            suggestedAction: `Go to ${validation.tabMismatch.suggestedTab}`,
+                        });
+                        return;
+                    }
+                }
+            }
+
             const res = await fetch("http://localhost:8080/api/profile/suggest", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -86,8 +128,26 @@ export const ProfileAgent: React.FC = () => {
         setEditableStory("");
     };
 
-    const handleSaveProfile = () => {
-        setShowSaveModal(true);
+    const handleSaveProfile = async () => {
+        try {
+            if (!user) {
+                setError('You must be logged in to save your profile');
+                return;
+            }
+
+            await AuthService.saveProfile({
+                summary: editableSummary,
+                organType: editableOrganType,
+                age: editableAge,
+                bloodType: editableBloodType,
+                location: editableLocation,
+                personalStory: editableStory,
+            });
+
+            setShowSaveModal(true);
+        } catch (err: any) {
+            setError(err.message || 'Failed to save profile');
+        }
     };
 
     const closeSaveModal = () => {
@@ -328,6 +388,18 @@ export const ProfileAgent: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <ValidationModal
+                isOpen={validationModal.isOpen}
+                onClose={() => setValidationModal({ ...validationModal, isOpen: false })}
+                type={validationModal.type}
+                message={validationModal.message}
+                suggestedAction={validationModal.suggestedAction}
+                onActionClick={() => {
+                    setValidationModal({ ...validationModal, isOpen: false });
+                    // Navigate to suggested location (you can implement this)
+                }}
+            />
         </div>
     );
 };

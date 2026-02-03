@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from 'multer';
 import { buildProfilePrompt } from "./buildProfilePrompt";
 import { callGemini } from "../common/geminiClient";
-import { parseGeminiProfileResponse } from "./parseGeminiProfileResponse";
+import { parseGeminiResponse } from "./parseGeminiProfileResponse";
 import { TranscriptionService } from "../services/TranscriptionService";
 import console = require("node:console");
 
@@ -36,7 +36,7 @@ router.post("/suggest", async (req, res) => {
         const prompt = buildProfilePrompt(text);
         const raw = await callGemini(prompt);
         // console.log("RAW GEMINI OUTPUT:\n", raw);
-        const suggestion = parseGeminiProfileResponse(raw);
+        const suggestion = parseGeminiResponse(raw);
 
         res.json({ suggestion });
     } catch (err: any) {
@@ -58,7 +58,7 @@ router.post('/transcribe', upload.single('audio'), async (req, res) => {
         console.log('Received audio file:', req.file.originalname, 'Size:', req.file.size, 'bytes', 'Type:', req.file.mimetype);
 
         const transcript = await transcriptionService.transcribe(req.file.buffer, req.file.mimetype);
-        
+
         if (!transcript || transcript.trim().length === 0) {
             console.log('No speech detected in audio');
             return res.json({

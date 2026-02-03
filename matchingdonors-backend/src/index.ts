@@ -3,15 +3,17 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
-import profileRoutes from "./profile/routes";
+// import profileRoutes from "./profile/routes";
+import profileRoutes from "./routes/profileRoutes";
+import suggestRoutes from "./profile/suggest.routes";
 import matchingRoutes from './matching/matching.routes'
 import contenRoutes from './routes/content'
 import advertiseRoutes from './routes/advertiser'
 import authRoutes from './routes/auth.routes';
-import './database';
+import './database/init';
 
 const app = express();
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 8080;
 
 app.use(cors({
     origin: ['http://localhost:3000'],
@@ -30,6 +32,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/profile", suggestRoutes);
 app.use("/api/matching", matchingRoutes);
 app.use("/api/content", contenRoutes);
 app.use("/api/advertiser", advertiseRoutes);

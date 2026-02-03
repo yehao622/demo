@@ -1,0 +1,114 @@
+.profile-completion-modal {
+    max-width: 500px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-completion-modal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px 12px 0 0;
+    text-align: center;
+}
+
+.profile-completion-modal .modal-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.profile-completion-modal .modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.profile-completion-modal .modal-body {
+    padding: 2rem;
+}
+
+.profile-completion-modal .modal-body p {
+    color: #4a5568;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.required-fields {
+    background: #f7fafc;
+    border-left: 4px solid #667eea;
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    border-radius: 4px;
+}
+
+.required-fields h4 {
+    margin: 0 0 0.5rem 0;
+    color: #2d3748;
+    font-size: 1rem;
+}
+
+.required-fields ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.required-fields li {
+    color: #4a5568;
+    padding: 0.25rem 0;
+}
+
+.hint {
+    font-size: 0.9rem;
+    color: #718096;
+    font-style: italic;
+}
+
+.profile-completion-modal .modal-footer {
+    padding: 1.5rem 2rem;
+    background: #f7fafc;
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.profile-completion-modal .btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.profile-completion-modal .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.profile-completion-modal .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.profile-completion-modal .btn-secondary {
+    background: white;
+    color: #4a5568;
+    border: 2px solid #e2e8f0;
+}
+
+.profile-completion-modal .btn-secondary:hover {
+    background: #f7fafc;
+}

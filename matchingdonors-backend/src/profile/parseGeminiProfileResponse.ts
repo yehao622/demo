@@ -11,26 +11,15 @@ export interface ProfileSuggestion {
     safety_flags: string[];
 }
 
-export function parseGeminiProfileResponse(text: string): ProfileSuggestion {
-    let json: any;
-
+export function parseGeminiResponse(responseText: string): ProfileSuggestion {
     try {
-        json = JSON.parse(text);
-    } catch {
-        throw new Error("Gemini output is not valid JSON");
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new Error('No JSON found in response');
+        }
+        return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+        console.error('Failed to parse Gemini response:', error);
+        throw new Error('Invalid response format from AI');
     }
-
-    if (!json.personal_story || typeof json.personal_story !== "string") {
-        throw new Error("Missing personal_story in Gemini response");
-    }
-
-    return {
-        summary: json.summary ?? "",
-        organ_type: json.organ_type ?? null,
-        age: json.age ?? null,
-        blood_type: json.blood_type ?? null,
-        location: json.location ?? null,
-        personal_story: json.personal_story.trim(),
-        safety_flags: Array.isArray(json.safety_flags) ? json.safety_flags : [],
-    };
 }

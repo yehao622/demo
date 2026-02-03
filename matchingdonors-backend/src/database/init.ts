@@ -56,6 +56,7 @@ db.exec(`
 db.exec(`
     CREATE TABLE IF NOT EXISTS profiles (
         id TEXT PRIMARY KEY,
+        user_id INTEGER,
         name TEXT NOT NULL,
         type TEXT NOT NULL CHECK(type IN ('patient', 'donor')),
         blood_type TEXT NOT NULL,
@@ -68,14 +69,18 @@ db.exec(`
         medical_info TEXT NOT NULL,
         preferences TEXT NOT NULL,
         embedding TEXT,
+        is_complete BOOLEAN DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
+    CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
     CREATE INDEX IF NOT EXISTS idx_profiles_type ON profiles(type);
     CREATE INDEX IF NOT EXISTS idx_profiles_blood_type ON profiles(blood_type);
     CREATE INDEX IF NOT EXISTS idx_profiles_organ_type ON profiles(organ_type);
     CREATE INDEX IF NOT EXISTS idx_profiles_country ON profiles(country);
+    CREATE INDEX IF NOT EXISTS idx_profiles_is_complete ON profiles(is_complete);
 `);
 
 // Create articles table

@@ -10,6 +10,13 @@ const authApi = axios.create({
     },
 });
 
+const api = axios.create({
+    baseURL: `${API_BASE_URL}/api`,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
 // Add token to requests if available
 authApi.interceptors.request.use((config) => {
     const token = localStorage.getItem('auth_token');
@@ -28,7 +35,7 @@ export class AuthService {
 
     // Login user
     static async login(email: string, password: string, role: 'patient' | 'donor'): Promise<AuthResponse> {
-        const response = await authApi.post<AuthResponse>('/login', {
+        const response = await authApi.post('/login', {
             email,
             password,
             role
@@ -83,5 +90,67 @@ export class AuthService {
     static clearAuthData(): void {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
+    }
+
+    static async checkProfileCompletion(): Promise<{
+        hasProfile: boolean;
+        isComplete: boolean;
+        profile: any | null;
+    }> {
+        const { token } = this.getStoredAuthData();
+        if (!token) {
+            throw new Error('Not authenticated');
+        }
+
+        const response = await axios.get(`${API_BASE_URL}/api/profile/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        // Backend returns { success, profile, hasCompleteProfile }
+        const data = response.data;
+
+        return {
+            hasProfile: !!data.profile,
+            isComplete: data.hasCompleteProfile || false,
+            profile: data.profile || null,
+        };
+    }
+
+    static async saveProfile(profileData: {
+        summary: string;
+        organType: string;
+        age: string;
+        bloodType: string;
+        location: string;
+        personalStory: string;
+    }): Promise<any> {
+        const { token } = this.getStoredAuthData();
+        if (!token) {
+            throw new Error('Not authenticated');
+        }
+
+        const response = await axios.post(`${API_BASE_URL}/api/profile/save`, profileData, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+
+        return response.data;
+    }
+
+    static async validateInput(text: string, currentTab: string): Promise<any> {
+        const { token } = this.getStoredAuthData();
+        if (!token) {
+            throw new Error('Not authenticated');
+        }
+
+        // const response = await api.post('/profile/validate',
+        //     { text, currentTab },
+        //     { headers: { Authorization: `Bearer ${token}` } }
+        // );
+        const response = await axios.post(`${API_BASE_URL}/api/profile/validate`,
+            { text, currentTab },
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        return response.data.validation;
     }
 }
