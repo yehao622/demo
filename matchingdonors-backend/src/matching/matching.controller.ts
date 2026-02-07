@@ -35,28 +35,45 @@ export class MatchingController {
         }
     }
 
-    // Post /api/matching/find; Find matching profiles
+    // Post /api/matching/find - Find matching profiles
     async findMatches(req: Request, res: Response): Promise<void> {
         try {
-            const matchRequest: MatchRequest = req.body;
+            const { profileId, profileText, searcherType, topN, minSimilarity } = req.body;
             const useRealData = req.query.useRealData === 'true';
 
-            if (!matchRequest.profileId && !matchRequest.profileText) {
+            console.log('🔍 Match request:', {
+                hasProfileId: !!profileId,
+                hasProfileText: !!profileText,
+                searcherType,
+                useRealData
+            });
+
+            // Validate input
+            if (!profileId && !profileText) {
                 res.status(400).json({
-                    error: 'Either profiled or profileText must be provided'
+                    error: 'Either profileId or profileText must be provided'
                 });
                 return;
             }
 
-            // If using real data, load profiles from database first
-            if (useRealData && matchRequest.searcherType) {
-                // Determine target type (opposite of searcher)
-                const targetType = matchRequest.searcherType === 'patient' ? 'donor' : 'patient';
+            let matches: any[];
 
-                // Extract user ID from profileId if available (format: user-{type}-{userId}-{timestamp})
+            if (useRealData) {
+                // Real data mode - search database profiles
+                if (!searcherType) {
+                    res.status(400).json({
+                        error: 'searcherType is required for real data search'
+                    });
+                    return;
+                }
+
+                // Determine target type (opposite of searcher)
+                const targetType = searcherType === 'patient' ? 'donor' : 'patient';
+
+                // Extract user ID from profileId if available
                 let excludeUserId: number | undefined;
-                if (matchRequest.profileId) {
-                    const parts = matchRequest.profileId.split('-');
+                if (profileId) {
+                    const parts = profileId.split('-');
                     if (parts.length >= 3 && parts[2]) {
                         const userId = parseInt(parts[2]);
                         if (!isNaN(userId)) {
@@ -65,19 +82,41 @@ export class MatchingController {
                     }
                 }
 
-                // Clear old data and load fresh profiles from database
-                matchingService.clearAll();
-                await matchingService.loadRealUserProfiles(targetType, excludeUserId);
-            }
+                // Use search criteria if provided, otherwise use profileId
+                const searchCriteria = profileText || '';
 
-            const matches = await matchingService.findTopMatches(matchRequest);
+                if (searchCriteria) {
+                    // AI-powered search with criteria
+                    const minScore = minSimilarity !== undefined ? minSimilarity * 100 : 50;
+                    matches = await matchingService.searchRealProfiles(
+                        searchCriteria,
+                        targetType,
+                        excludeUserId,
+                        topN || 10,
+                        minScore
+                    );
+                } else {
+                    // Profile-to-profile matching
+                    matchingService.clearAll();
+                    await matchingService.loadRealUserProfiles(targetType, excludeUserId);
+
+                    const matchRequest = { profileId, profileText, searcherType, topN, minSimilarity };
+                    matches = await matchingService.findTopMatches(matchRequest);
+                }
+            } else {
+                // Demo mode - use in-memory profiles
+                const matchRequest = { profileId, profileText, searcherType, topN, minSimilarity };
+                matches = await matchingService.findTopMatches(matchRequest);
+            }
 
             res.json({
                 success: true,
                 matches,
                 count: matches.length,
-                mode: useRealData ? 'real' : 'demo'
+                mode: useRealData ? 'real' : 'demo',
+                searchCriteria: profileText || 'profile-based'
             });
+
         } catch (error) {
             console.error('Error finding matches:', error);
             res.status(500).json({
@@ -122,11 +161,39 @@ export class MatchingController {
     // Get /api/matching/profiles; Get all stored profiles for testing
     async getAllProfiles(req: Request, res: Response): Promise<void> {
         try {
-            const profiles = matchingService.getAllProfiles();
+            // Load all real profiles from database for Demo Mode
+            const { ProfileService } = await import('../services/profile.service');
+
+            // Get ALL profiles (both patients and donors, complete and incomplete)
+            const allProfiles = ProfileService.getAllProfilesForDemo();
+
+            // Convert to matching service format
+            const profiles = allProfiles.map(data => ({
+                id: data.id,
+                name: data.name || 'Unknown',
+                type: data.type,
+                bloodType: data.blood_type || 'Not specified',
+                age: data.age || 0,
+                country: data.country || '',
+                state: data.state || '',
+                city: data.city || '',
+                organType: data.organ_type || 'Not specified',
+                description: data.description || 'No description provided',
+                medicalInfo: data.medical_info || '',
+                preferences: data.preferences || ''
+            }));
+
             res.json({
                 success: true,
-                profiles,
-                count: profiles.length
+                profiles: allProfiles,
+                count: allProfiles.length,
+                source: 'database-all',
+                breakdown: {
+                    patients: profiles.filter(p => p.type === 'patient').length,
+                    donors: profiles.filter(p => p.type === 'donor').length,
+                    complete: allProfiles.filter(p => p.is_complete).length,
+                    incomplete: allProfiles.filter(p => !p.is_complete).length
+                }
             });
         } catch (error) {
             console.error('Error getting profiles:', error),

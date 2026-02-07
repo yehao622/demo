@@ -49,14 +49,27 @@ export class ProfileService {
         return !!profile;
     }
 
+    // Get ALL profiles for Demo Mode (no filtering)
+    static getAllProfilesForDemo(): ProfileData[] {
+        const query = `
+        SELECT * FROM profiles 
+        ORDER BY is_complete DESC, updated_at DESC
+    `;
+
+        const profiles = db.prepare(query).all() as ProfileData[];
+        console.log(`📋 Demo Mode: Loaded ${profiles.length} total profiles from database`);
+        return profiles;
+    }
+
     static getAllCompleteProfiles(
         targetType: 'patient' | 'donor',
         excludeUserId?: number
     ): ProfileData[] {
         let query = `
             SELECT * FROM profiles 
-            WHERE type = ? AND is_complete = 1
+            WHERE type = ?
         `;
+
         const params: any[] = [targetType];
 
         if (excludeUserId) {
@@ -64,7 +77,7 @@ export class ProfileService {
             params.push(excludeUserId);
         }
 
-        query += ' ORDER BY updated_at DESC';
+        query += ' ORDER BY is_complete DESC, updated_at DESC';
 
         const profiles = db.prepare(query).all(...params) as ProfileData[];
         return profiles;

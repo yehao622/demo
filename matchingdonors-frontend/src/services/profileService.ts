@@ -1,6 +1,5 @@
 import api from './api';
 import { Profile, MatchRequest, MatchResult } from '../types/profile.types';
-import { use } from 'react';
 
 export const profileService = {
     // Store a new profile with AI embedding generation
@@ -14,22 +13,41 @@ export const profileService = {
     },
 
     // Find matching profiles using Gemini AI embeddings
-    async findMatches(request: MatchRequest, useRealData: boolean = false): Promise<MatchResult[]> {
+    async findMatches(request: {
+        profileId?: string;
+        profileText?: string;
+        searcherType?: string;
+        topN?: number;
+        minSimilarity?: number;
+    }, useRealData: boolean = false): Promise<any> {
         try {
             const url = useRealData
-                ? '/api/matching/find?useRealData=true'
-                : '/api/matching/find';
+                ? `/api/matching/find?useRealData=true`
+                : `/api/matching/find`;
+
+            console.log('🔍 Searching profiles:', {
+                hasText: !!request.profileText,
+                searcherType: request.searcherType,
+                useRealData
+            });
+
             const response = await api.post(url, request);
-            return response.data.matches || [];
+
+            console.log(`✅ Search returned ${response.data.count} matches`);
+
+            // Return the full response object
+            return response.data;
         } catch (error: any) {
+            console.error('❌ Error in findMatches:', error);
             throw new Error(error.response?.data?.error || 'Failed to find matches');
         }
     },
 
+
     // Get all stored profiles (for browsing)
     async getAllProfiles(useRealData: boolean = false): Promise<Profile[]> {
         try {
-            console.log('🔍 getAllProfiles called with useRealData:', useRealData);
+            // console.log('🔍 getAllProfiles called with useRealData:', useRealData);
 
             if (useRealData) {
                 // Get current user from localStorage to determine which profiles to load
@@ -54,22 +72,22 @@ export const profileService = {
                 // Load opposite type: if user is patient, load donors; if user is donor, load patients
                 const targetType = userRole === 'patient' ? 'donor' : 'patient';
 
-                console.log(`👤 Current user: ${userRole} (ID: ${userId})`);
-                console.log(`🎯 Loading ${targetType} profiles...`);
+                // console.log(`👤 Current user: ${userRole} (ID: ${userId})`);
+                // console.log(`🎯 Loading ${targetType} profiles...`);
 
                 const url = `/api/matching/real-profiles?type=${targetType}&excludeUserId=${userId}`;
-                console.log('📡 Fetching:', url);
+                // console.log('📡 Fetching:', url);
 
                 const response = await api.get(url);
 
-                console.log('✅ Real profiles loaded:', response.data.profiles.length, 'profiles');
+                // console.log('✅ Real profiles loaded:', response.data.profiles.length, 'profiles');
 
                 return response.data.profiles || [];
             } else {
                 // Demo mode: use in-memory profiles
-                console.log('🟢 Demo mode: loading in-memory profiles');
+                // console.log('🟢 Demo mode: loading in-memory profiles');
                 const response = await api.get('/api/matching/profiles');
-                console.log('✅ Demo profiles loaded:', response.data.profiles.length, 'profiles');
+                // console.log('✅ Demo profiles loaded:', response.data.profiles.length, 'profiles');
                 return response.data.profiles || [];
             }
         } catch (error: any) {

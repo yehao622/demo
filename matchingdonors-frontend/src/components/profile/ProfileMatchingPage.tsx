@@ -19,6 +19,8 @@ export const ProfileMatchingPage: React.FC = () => {
     const [filterType, setFilterType] = useState<'all' | 'patient' | 'donor'>('all');
     const [useRealData, setUseRealData] = useState(false);
     const [dataMode, setDataMode] = useState<'demo' | 'real'>('demo');
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchCriteria, setSearchCriteria] = useState('');
 
 
     // Load all profiles on mount
@@ -39,7 +41,7 @@ export const ProfileMatchingPage: React.FC = () => {
         setError(null);
         try {
             const profiles = await profileService.getAllProfiles(useRealData);
-            console.log('✅ Profiles loaded:', profiles.length);
+            // console.log('✅ Profiles loaded:', profiles.length);
             setAllProfiles(profiles);
         } catch (err: any) {
             console.error('❌ Error loading profiles:', err);
@@ -50,20 +52,64 @@ export const ProfileMatchingPage: React.FC = () => {
     };
 
     const handleSearch = async (request: MatchRequest) => {
+        console.log('🔍 Search request received:', request);
+
+        // Validate that we have search text
+        if (!request.profileText || !request.profileText.trim()) {
+            alert('Please enter search criteria');
+            return;
+        }
+
         setIsSearching(true);
-        setError(null);
-        setMatches([]);
+        setSearchResults([]);
 
         try {
-            const results = await profileService.findMatches(request, useRealData);
-            setMatches(results);
-            setDataMode(useRealData ? 'real' : 'demo');
-        } catch (err: any) {
-            setError(err.message);
+            // Get current user info from localStorage
+            const authUser = localStorage.getItem('auth_user');
+            let searcherType = 'patient'; // default
+
+            if (authUser) {
+                const user = JSON.parse(authUser);
+                searcherType = user.role;
+            }
+
+            // Build the request with searcherType
+            const searchRequest = {
+                ...request,
+                searcherType
+            };
+
+            console.log('📤 Sending to backend:', {
+                profileText: searchRequest.profileText?.substring(0, 50) + '...',
+                searcherType,
+                topN: searchRequest.topN,
+                minSimilarity: searchRequest.minSimilarity,
+                useRealData
+            });
+
+            const response = await profileService.findMatches(
+                // {
+                //     profileText: searchCriteria,
+                //     searcherType,
+                //     topN: 10,
+                //     minSimilarity: 0.5
+                // },
+                searchRequest,
+                useRealData
+            );
+
+            if (response.success) {
+                setSearchResults(response.matches || []);
+                console.log(`✅ Found ${response.count} matches`);
+            }
+        } catch (error) {
+            console.error('Error during search:', error);
+            alert('Search failed. Please try again.');
         } finally {
             setIsSearching(false);
         }
     };
+
 
     const handleViewDetails = (profile: Profile, matchScore?: number) => {
         setSelectedProfile(profile);
@@ -216,6 +262,57 @@ export const ProfileMatchingPage: React.FC = () => {
                     setSelectedMatchScore(undefined);
                 }}
             />
+
+            {/* Search Results Section */}
+            {searchResults.length > 0 && (
+                <div className="browse-section">
+                    <div className="browse-header">
+                        <h2>✨ Search Results ({searchResults.length})</h2>
+                        {useRealData && <span className="mode-badge real">Real Users</span>}
+                    </div>
+
+                    <div className="profiles-grid">
+                        {searchResults.map((match: any) => {
+                            const profile = match.profile;
+                            const score = Math.round(match.similarity * 100);
+
+                            return (
+                                <div key={profile.id} className="profile-card-wrapper">
+                                    <div className="profile-card-simple">
+                                        <div className="match-score-badge">{score}%</div>
+                                        <div className="profile-header-simple">
+                                            <h3>{profile.name}</h3>
+                                            <span className={`badge-simple ${profile.type}`}>
+                                                {profile.type}
+                                            </span>
+                                        </div>
+                                        <div className="profile-details-simple">
+                                            <p>🩸 {profile.bloodType || 'Not specified'}</p>
+                                            <p>🎂 {profile.age || 'N/A'} years</p>
+                                            <p>📍 {profile.city}, {profile.state}</p>
+                                            <p>💉 {profile.organType || 'Not specified'}</p>
+                                        </div>
+                                        <p className="description-simple">
+                                            {profile.description?.substring(0, 100)}...
+                                        </p>
+                                        {match.reason && (
+                                            <p className="match-reason">
+                                                ✓ {match.reason}
+                                            </p>
+                                        )}
+                                        <button
+                                            className="view-btn-simple"
+                                            onClick={() => {/* View details logic */ }}
+                                        >
+                                            View Details
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

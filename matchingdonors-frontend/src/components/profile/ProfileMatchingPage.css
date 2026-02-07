@@ -376,3 +376,48 @@
 .btn-demo:active {
     transform: translateY(0);
 }
+
+/* Match Score Badge */
+.match-score-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    z-index: 10;
+}
+
+.profile-card-simple {
+    position: relative;
+}
+
+.profile-details-simple {
+    margin: 12px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.profile-details-simple p {
+    margin: 4px 0;
+}
+
+.match-reason {
+    font-size: 13px;
+    color: #28a745;
+    font-weight: 500;
+    margin: 8px 0;
+    padding: 8px;
+    background: #d4edda;
+    border-radius: 6px;
+}
+
+/* Search button loading state */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

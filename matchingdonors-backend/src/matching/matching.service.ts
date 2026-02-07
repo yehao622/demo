@@ -433,14 +433,14 @@ export class MatchingService {
             id: data.id,
             name: data.name,
             type: data.type,
-            bloodType: data.blood_type,
+            bloodType: data.blood_type || 'Not specified',
             age: data.age,
             country: data.country,
             state: data.state,
             city: data.city,
-            organType: data.organ_type,
-            description: data.description,
-            medicalInfo: data.medical_info,
+            organType: data.organ_type || 'Not specified',
+            description: data.description || 'No description provided',
+            medicalInfo: data.medical_info || '',
             preferences: data.preferences || ''
         };
     }
@@ -480,6 +480,112 @@ export class MatchingService {
             console.error('Error loading real user profiles:', error);
             throw error;
         }
+    }
+
+    /**
+ * Search real profiles with AI matching
+ * @param searchCriteria - Natural language search query
+ * @param targetType - Type of profiles to search ('patient' or 'donor')
+ * @param excludeUserId - User ID to exclude from results
+ * @param maxResults - Maximum number of results to return
+ * @param minScore - Minimum similarity score (0-100)
+ */
+    async searchRealProfiles(
+        searchCriteria: string,
+        targetType: 'patient' | 'donor',
+        excludeUserId?: number,
+        maxResults: number = 10,
+        minScore: number = 50
+    ): Promise<MatchResult[]> {
+        console.log(`🔍 AI Search: "${searchCriteria}" for ${targetType}s`);
+
+        // Load real profiles from database
+        await this.loadRealUserProfiles(targetType, excludeUserId);
+
+        // Get profiles of target type
+        const profiles = Array.from(this.profiles.values())
+            .filter(p => p.type === targetType);
+
+        if (profiles.length === 0) {
+            console.log('⚠️  No profiles available for search');
+            return [];
+        }
+
+        // Generate embedding for search criteria
+        const searchEmbedding = await this.generateEmbedding(searchCriteria);
+
+        if (!searchEmbedding) {
+            console.log('⚠️  Failed to generate search embedding');
+            return [];
+        }
+
+        // Extract query info for hybrid scoring
+        const queryInfo = this.extractKeyInfo(searchCriteria);
+        const queryProfileData: Partial<Profile> = {};
+
+        if (queryInfo.bloodType) {
+            queryProfileData.bloodType = queryInfo.bloodType;
+        }
+        if (queryInfo.age !== null) {
+            queryProfileData.age = queryInfo.age;
+        }
+        if (queryInfo.organType) {
+            queryProfileData.organType = queryInfo.organType;
+        }
+
+        // Calculate similarities
+        const matches: MatchResult[] = [];
+
+        for (const [id, profile] of this.profiles.entries()) {
+            if (profile.type !== targetType) continue;
+
+            const embedding = this.embeddings.get(id);
+            if (!embedding) continue;
+
+            // HARD FILTER - Organ type must match if specified
+            const queryOrganType = queryInfo.organType;
+            if (queryOrganType && profile.organType) {
+                if (queryOrganType.toLowerCase() !== profile.organType.toLowerCase()) {
+                    continue; // Skip this profile
+                }
+            }
+
+            // AI similarity (cosine similarity)
+            const aiSimilarity = this.computeSimilarity(searchEmbedding, embedding.embedding);
+
+            // Calculate hybrid score
+            const { hybridScore, breakdown } = this.calculateHybridScore(
+                aiSimilarity,
+                targetType === 'donor' ? profile : queryProfileData as Profile,
+                targetType === 'donor' ? queryProfileData as Profile : profile
+            );
+
+            const scorePercentage = Math.round(hybridScore * 100);
+
+            if (scorePercentage >= minScore) {
+                const reason = this.generateMatchReason(profile, searchCriteria);
+
+                matches.push({
+                    profileId: id,
+                    profile,
+                    similarity: hybridScore,
+                    rank: 0,
+                    reason,
+                    hybridScore,
+                    scoreBreakdown: breakdown
+                });
+            }
+        }
+
+        // Sort by similarity (descending) and assign ranks
+        matches.sort((a, b) => b.similarity - a.similarity);
+        matches.forEach((match, index) => {
+            match.rank = index + 1;
+        });
+
+        console.log(`✅ Found ${matches.length} matches above ${minScore}% similarity`);
+
+        return matches.slice(0, maxResults);
     }
 
     /**
