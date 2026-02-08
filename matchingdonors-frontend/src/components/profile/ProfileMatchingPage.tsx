@@ -20,7 +20,7 @@ export const ProfileMatchingPage: React.FC = () => {
     const [useRealData, setUseRealData] = useState(false);
     const [dataMode, setDataMode] = useState<'demo' | 'real'>('demo');
     const [searchResults, setSearchResults] = useState<any[]>([]);
-    const [searchCriteria, setSearchCriteria] = useState('');
+    const [showModal, setShowModal] = useState(false);
 
 
     // Load all profiles on mount
@@ -71,6 +71,7 @@ export const ProfileMatchingPage: React.FC = () => {
             if (authUser) {
                 const user = JSON.parse(authUser);
                 searcherType = user.role;
+                console.log('👤 Searching as:', searcherType, '(user ID:', user.id, ')');
             }
 
             // Build the request with searcherType
@@ -87,29 +88,33 @@ export const ProfileMatchingPage: React.FC = () => {
                 useRealData
             });
 
+            // Call the API
             const response = await profileService.findMatches(
-                // {
-                //     profileText: searchCriteria,
-                //     searcherType,
-                //     topN: 10,
-                //     minSimilarity: 0.5
-                // },
-                searchRequest,
-                useRealData
+                searchRequest
+                // useRealData
             );
 
+            console.log('📥 Response received:', response);
+
             if (response.success) {
-                setSearchResults(response.matches || []);
-                console.log(`✅ Found ${response.count} matches`);
+                const matches = response.matches || [];
+                setSearchResults(matches);
+                console.log(`✅ Found ${matches.length} matches`);
+
+                if (matches.length === 0) {
+                    alert('No matches found. Try adjusting your search criteria or minimum match score.');
+                }
+            } else {
+                console.error('❌ Search failed:', response);
+                alert('Search failed. Please try again.');
             }
         } catch (error) {
-            console.error('Error during search:', error);
-            alert('Search failed. Please try again.');
+            console.error('❌ Error during search:', error);
+            alert('Search failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
         } finally {
             setIsSearching(false);
         }
     };
-
 
     const handleViewDetails = (profile: Profile, matchScore?: number) => {
         setSelectedProfile(profile);
@@ -302,7 +307,7 @@ export const ProfileMatchingPage: React.FC = () => {
                                         )}
                                         <button
                                             className="view-btn-simple"
-                                            onClick={() => {/* View details logic */ }}
+                                            onClick={() => handleViewDetails(profile, match.similarity)}
                                         >
                                             View Details
                                         </button>

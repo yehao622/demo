@@ -38,38 +38,38 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     return (
         <div className="profile-card">
             <div className="profile-card-header">
-                <div className="profile-info">
-                    <h3 className="profile-name">{profile.name}</h3>
-                    <span className={`type-badge ${getTypeColor(profile.type)}`}>
-                        {profile.type.toUpperCase()}
-                    </span>
-                </div>
-                {matchScore !== undefined && (
-                    <div className={`match-score ${getMatchScoreClass(matchScore)}`}>
-                        <div className="score-value">{Math.round(matchScore * 100)}%</div>
-                        <div className="score-label">{getMatchLabel(matchScore)}</div>
-                        {rank !== undefined && <div className="rank-badge">#{rank}</div>}
-                    </div>
-                )}
+                <h3 className="profile-name">{profile.name}</h3>
+                <span className={`profile-type-badge ${getTypeColor(profile.type)}`}>
+                    {profile.type.toUpperCase()}
+                </span>
             </div>
 
-            {/* Match reason */}
-            {reason && (
-                <div className="match-reason-card">
-                    <span className="reason-icon">✨</span>
-                    <span className="reason-text">{reason}</span>
+            {matchScore !== undefined && (
+                <div className="match-score-container">
+                    <div className={`match-score ${getMatchScoreClass(matchScore)}`}>
+                        {Math.round(matchScore * 100)}%
+                    </div>
+                    <div className="match-label">{getMatchLabel(matchScore)}</div>
+                    {rank !== undefined && <div className="match-rank">#{rank}</div>}
                 </div>
             )}
 
-            <div className="profile-card-body">
-                <div className="profile-section">
-                    <label className="section-label">Description:</label>
-                    <p className="section-content">{profile.description}</p>
+            {reason && (
+                <div className="match-reason">
+                    <div className="reason-icon">✓</div>
+                    <p className="reason-text">{reason}</p>
+                </div>
+            )}
+
+            <div className="profile-details">
+                <div className="detail-section">
+                    <strong>Description:</strong>
+                    <p>{profile.description}</p>
                 </div>
 
-                <div className="profile-section">
-                    <label className="section-label">Medical Info:</label>
-                    <p className="section-content medical-info">
+                <div className="detail-section">
+                    <strong>Medical Info:</strong>
+                    <p>
                         {profile.medicalInfo.length > 150
                             ? `${profile.medicalInfo.substring(0, 150)}...`
                             : profile.medicalInfo}
@@ -77,21 +77,21 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 </div>
 
                 {profile.preferences && (
-                    <div className="profile-section">
-                        <label className="section-label">Preferences:</label>
-                        <p className="section-content">{profile.preferences}</p>
+                    <div className="detail-section">
+                        <strong>Preferences:</strong>
+                        <p>{profile.preferences}</p>
                     </div>
                 )}
             </div>
 
-            <div className="profile-card-footer">
-                <button
-                    className="view-details-btn"
-                    onClick={() => onViewDetails(profile)}
-                >
-                    View Full Profile
-                </button>
-            </div>
+            <button
+                className="view-details-button"
+                onClick={() => {
+                    onViewDetails(profile)
+                }}
+            >
+                View Full Profile
+            </button>
         </div>
     );
 };

@@ -5,8 +5,11 @@ export class MatchingService {
     private genAI: GoogleGenAI;
     private embeddingModel: string = 'gemini-embedding-001';
     // In-memory storage (replace with PostgreSQL in production)
-    private embeddings: Map<string, ProfileEmbedding> = new Map();
-    private profiles: Map<string, Profile> = new Map();
+    // private embeddings: Map<string, ProfileEmbedding> = new Map();
+    // private profiles: Map<string, Profile> = new Map();
+
+    // ONLY keep temporary cache for current search session
+    private searchCache: Map<string, number[]> = new Map();
 
     constructor() {
         const apiKey = process.env.GEMINI_API_KEY;
@@ -124,188 +127,188 @@ export class MatchingService {
     /**
      * Store profile with its embedding
      */
-    async storeProfile(profile: Profile): Promise<void> {
-        try {
-            const profileText = this.buildProfileText(profile);
-            const embedding = await this.generateEmbedding(profileText);
+    // async storeProfile(profile: Profile): Promise<void> {
+    //     try {
+    //         const profileText = this.buildProfileText(profile);
+    //         const embedding = await this.generateEmbedding(profileText);
 
-            this.profiles.set(profile.id, profile);
-            this.embeddings.set(profile.id, {
-                profileId: profile.id,
-                embedding,
-                timestamp: new Date()
-            });
+    //         this.profiles.set(profile.id, profile);
+    //         this.embeddings.set(profile.id, {
+    //             profileId: profile.id,
+    //             embedding,
+    //             timestamp: new Date()
+    //         });
 
-            console.log(`✓ Stored profile ${profile.id} with embedding dimension: ${embedding.length}`);
-        } catch (error) {
-            console.error(`Failed to store profile ${profile.id}:`, error);
-            throw error;
-        }
-    }
+    //         console.log(`✓ Stored profile ${profile.id} with embedding dimension: ${embedding.length}`);
+    //     } catch (error) {
+    //         console.error(`Failed to store profile ${profile.id}:`, error);
+    //         throw error;
+    //     }
+    // }
 
     /**
      * Store multiple profiles with embeddings (batch)
      */
-    async storeProfilesBatch(profiles: Profile[]): Promise<void> {
-        try {
-            const profileTexts = profiles.map(p => this.buildProfileText(p));
-            const embeddings = await this.generateEmbeddingsBatch(profileTexts);
+    // async storeProfilesBatch(profiles: Profile[]): Promise<void> {
+    //     try {
+    //         const profileTexts = profiles.map(p => this.buildProfileText(p));
+    //         const embeddings = await this.generateEmbeddingsBatch(profileTexts);
 
-            profiles.forEach((profile, index) => {
-                const embedding = embeddings[index];
+    //         profiles.forEach((profile, index) => {
+    //             const embedding = embeddings[index];
 
-                if (!embedding) {
-                    throw new Error(`Missing embedding for profile ${profile.id} at index ${index}`);
-                }
+    //             if (!embedding) {
+    //                 throw new Error(`Missing embedding for profile ${profile.id} at index ${index}`);
+    //             }
 
-                this.profiles.set(profile.id, profile);
-                this.embeddings.set(profile.id, {
-                    profileId: profile.id,
-                    embedding,
-                    timestamp: new Date()
-                });
-            });
+    //             this.profiles.set(profile.id, profile);
+    //             this.embeddings.set(profile.id, {
+    //                 profileId: profile.id,
+    //                 embedding,
+    //                 timestamp: new Date()
+    //             });
+    //         });
 
-            console.log(`✓ Stored ${profiles.length} profiles in batch`);
-        } catch (error) {
-            console.error('Failed to store profiles in batch:', error);
-            throw error;
-        }
-    }
+    //         console.log(`✓ Stored ${profiles.length} profiles in batch`);
+    //     } catch (error) {
+    //         console.error('Failed to store profiles in batch:', error);
+    //         throw error;
+    //     }
+    // }
 
     /**
      * Find top N matching profiles
      */
-    async findTopMatches(request: MatchRequest): Promise<MatchResult[]> {
-        const { profileId, profileText, topN = 5, minSimilarity = 0.5, searcherType } = request;
+    // async findTopMatches(request: MatchRequest): Promise<MatchResult[]> {
+    //     const { profileId, profileText, topN = 5, minSimilarity = 0.5, searcherType } = request;
 
-        // Get query embedding
-        let queryEmbedding: number[];
-        let queryText = profileText || '';
-        let queryProfile: Profile | undefined;
+    //     // Get query embedding
+    //     let queryEmbedding: number[];
+    //     let queryText = profileText || '';
+    //     let queryProfile: Profile | undefined;
 
-        if (profileText) {
-            queryEmbedding = await this.generateEmbedding(profileText);
-        } else if (profileId) {
-            const embData = this.embeddings.get(profileId);
+    //     if (profileText) {
+    //         queryEmbedding = await this.generateEmbedding(profileText);
+    //     } else if (profileId) {
+    //         const embData = this.embeddings.get(profileId);
 
-            if (!embData) {
-                throw new Error(`Profile ${profileId} not found in embeddings`);
-            }
+    //         if (!embData) {
+    //             throw new Error(`Profile ${profileId} not found in embeddings`);
+    //         }
 
-            queryEmbedding = embData.embedding;
-            queryProfile = this.profiles.get(profileId);
-            if (queryProfile) {
-                queryText = this.buildProfileText(queryProfile);
-            }
-        } else {
-            throw new Error('Either profileId or profileText must be provided');
-        }
+    //         queryEmbedding = embData.embedding;
+    //         queryProfile = this.profiles.get(profileId);
+    //         if (queryProfile) {
+    //             queryText = this.buildProfileText(queryProfile);
+    //         }
+    //     } else {
+    //         throw new Error('Either profileId or profileText must be provided');
+    //     }
 
 
-        // Infer searcher type from query text if not provided
-        let inferredSearcherType = searcherType;
-        if (!inferredSearcherType && queryText) {
-            const lower = queryText.toLowerCase();
-            if (lower.includes('need') || lower.includes('seeking') || lower.includes('looking for') ||
-                lower.includes('require') || lower.includes('patient')) {
-                inferredSearcherType = 'patient';
-            } else if (lower.includes('donate') || lower.includes('donor') || lower.includes('willing to give')) {
-                inferredSearcherType = 'donor';
-            }
-        }
+    //     // Infer searcher type from query text if not provided
+    //     let inferredSearcherType = searcherType;
+    //     if (!inferredSearcherType && queryText) {
+    //         const lower = queryText.toLowerCase();
+    //         if (lower.includes('need') || lower.includes('seeking') || lower.includes('looking for') ||
+    //             lower.includes('require') || lower.includes('patient')) {
+    //             inferredSearcherType = 'patient';
+    //         } else if (lower.includes('donate') || lower.includes('donor') || lower.includes('willing to give')) {
+    //             inferredSearcherType = 'donor';
+    //         }
+    //     }
 
-        // Extract query info for hybrid scoring
-        const queryInfo = this.extractKeyInfo(queryText);
-        const queryProfileData: Partial<Profile> = {};
+    //     // Extract query info for hybrid scoring
+    //     const queryInfo = this.extractKeyInfo(queryText);
+    //     const queryProfileData: Partial<Profile> = {};
 
-        // Only assign properties if they have actual values (not undefined)
-        const bloodType = queryInfo.bloodType || queryProfile?.bloodType;
-        if (bloodType) {
-            queryProfileData.bloodType = bloodType;
-        }
+    //     // Only assign properties if they have actual values (not undefined)
+    //     const bloodType = queryInfo.bloodType || queryProfile?.bloodType;
+    //     if (bloodType) {
+    //         queryProfileData.bloodType = bloodType;
+    //     }
 
-        const age = queryInfo.age ?? queryProfile?.age;
-        if (age !== null && age !== undefined) {
-            queryProfileData.age = age;
-        }
+    //     const age = queryInfo.age ?? queryProfile?.age;
+    //     if (age !== null && age !== undefined) {
+    //         queryProfileData.age = age;
+    //     }
 
-        if (queryProfile?.country) {
-            queryProfileData.country = queryProfile.country;
-        }
+    //     if (queryProfile?.country) {
+    //         queryProfileData.country = queryProfile.country;
+    //     }
 
-        if (queryProfile?.state) {
-            queryProfileData.state = queryProfile.state;
-        }
+    //     if (queryProfile?.state) {
+    //         queryProfileData.state = queryProfile.state;
+    //     }
 
-        if (queryProfile?.city) {
-            queryProfileData.city = queryProfile.city;
-        }
+    //     if (queryProfile?.city) {
+    //         queryProfileData.city = queryProfile.city;
+    //     }
 
-        const organType = queryInfo.organType || queryProfile?.organType;
-        if (organType) {
-            queryProfileData.organType = organType;
-        }
+    //     const organType = queryInfo.organType || queryProfile?.organType;
+    //     if (organType) {
+    //         queryProfileData.organType = organType;
+    //     }
 
-        // Calculate similarities
-        const matches: MatchResult[] = [];
+    //     // Calculate similarities
+    //     const matches: MatchResult[] = [];
 
-        for (const [id, embData] of this.embeddings.entries()) {
-            // Skip self-matching
-            if (id === profileId) continue;
+    //     for (const [id, embData] of this.embeddings.entries()) {
+    //         // Skip self-matching
+    //         if (id === profileId) continue;
 
-            const profile = this.profiles.get(id);
-            if (!profile) continue;
+    //         const profile = this.profiles.get(id);
+    //         if (!profile) continue;
 
-            // If searcher is a patient, only show donors. If searcher is a donor, only show patients.
-            if (inferredSearcherType) {
-                if (inferredSearcherType === 'patient' && profile.type !== 'donor') continue;
-                if (inferredSearcherType === 'donor' && profile.type !== 'patient') continue;
-            }
+    //         // If searcher is a patient, only show donors. If searcher is a donor, only show patients.
+    //         if (inferredSearcherType) {
+    //             if (inferredSearcherType === 'patient' && profile.type !== 'donor') continue;
+    //             if (inferredSearcherType === 'donor' && profile.type !== 'patient') continue;
+    //         }
 
-            // HARD FILTER - Organ type must match if specified
-            const queryOrganType = queryInfo.organType || queryProfile?.organType;
-            if (queryOrganType && profile.organType) {
-                // Both have organ types specified - they must match
-                if (queryOrganType.toLowerCase() !== profile.organType.toLowerCase()) {
-                    continue; // Skip this profile - organ doesn't match
-                }
-            }
+    //         // HARD FILTER - Organ type must match if specified
+    //         const queryOrganType = queryInfo.organType || queryProfile?.organType;
+    //         if (queryOrganType && profile.organType) {
+    //             // Both have organ types specified - they must match
+    //             if (queryOrganType.toLowerCase() !== profile.organType.toLowerCase()) {
+    //                 continue; // Skip this profile - organ doesn't match
+    //             }
+    //         }
 
-            // AI similarity (cosine similarity)
-            const aiSimilarity = this.computeSimilarity(queryEmbedding, embData.embedding);
+    //         // AI similarity (cosine similarity)
+    //         const aiSimilarity = this.computeSimilarity(queryEmbedding, embData.embedding);
 
-            // Calculate hybrid score
-            const { hybridScore, breakdown } = this.calculateHybridScore(
-                aiSimilarity,
-                inferredSearcherType === 'patient' ? profile : queryProfileData as Profile,
-                inferredSearcherType === 'patient' ? queryProfileData as Profile : profile
-            );
+    //         // Calculate hybrid score
+    //         const { hybridScore, breakdown } = this.calculateHybridScore(
+    //             aiSimilarity,
+    //             inferredSearcherType === 'patient' ? profile : queryProfileData as Profile,
+    //             inferredSearcherType === 'patient' ? queryProfileData as Profile : profile
+    //         );
 
-            if (hybridScore >= minSimilarity) {
-                // Generate match reason
-                const reason = this.generateMatchReason(profile, queryText);
+    //         if (hybridScore >= minSimilarity) {
+    //             // Generate match reason
+    //             const reason = this.generateMatchReason(profile, queryText);
 
-                matches.push({
-                    profileId: id,
-                    profile,
-                    similarity: hybridScore,
-                    rank: 0, // Will be set after sorting
-                    reason,
-                    hybridScore,
-                    scoreBreakdown: breakdown
-                });
-            }
-        }
+    //             matches.push({
+    //                 profileId: id,
+    //                 profile,
+    //                 similarity: hybridScore,
+    //                 rank: 0, // Will be set after sorting
+    //                 reason,
+    //                 hybridScore,
+    //                 scoreBreakdown: breakdown
+    //             });
+    //         }
+    //     }
 
-        // Sort by similarity (descending) and assign ranks
-        matches.sort((a, b) => b.similarity - a.similarity);
-        matches.forEach((match, index) => {
-            match.rank = index + 1;
-        });
+    //     // Sort by similarity (descending) and assign ranks
+    //     matches.sort((a, b) => b.similarity - a.similarity);
+    //     matches.forEach((match, index) => {
+    //         match.rank = index + 1;
+    //     });
 
-        return matches.slice(0, topN);
-    }
+    //     return matches.slice(0, topN);
+    // }
 
     private extractKeyInfo(text: string): {
         bloodType: string | null;
@@ -404,28 +407,28 @@ export class MatchingService {
     /**
      * Get all stored profiles (for testing)
      */
-    getAllProfiles(): Profile[] {
-        return Array.from(this.profiles.values());
-    }
+    // getAllProfiles(): Profile[] {
+    //     return Array.from(this.profiles.values());
+    // }
 
     /**
      * Get embedding statistics
      */
-    getStats(): { profileCount: number; embeddingCount: number } {
-        return {
-            profileCount: this.profiles.size,
-            embeddingCount: this.embeddings.size
-        };
-    }
+    // getStats(): { profileCount: number; embeddingCount: number } {
+    //     return {
+    //         profileCount: this.profiles.size,
+    //         embeddingCount: this.embeddings.size
+    //     };
+    // }
 
     /**
      * Clear all stored data (for testing)
      */
-    clearAll(): void {
-        this.profiles.clear();
-        this.embeddings.clear();
-        console.log('✓ Cleared all profiles and embeddings');
-    }
+    // clearAll(): void {
+    //     this.profiles.clear();
+    //     this.embeddings.clear();
+    //     console.log('✓ Cleared all profiles and embeddings');
+    // }
 
     // Convert ProfileData (from database) to Profile (matching format)
     private convertProfileDataToProfile(data: any): Profile {
@@ -472,7 +475,7 @@ export class MatchingService {
             );
 
             // Store profiles with embeddings in batch
-            await this.storeProfilesBatch(profiles);
+            // await this.storeProfilesBatch(profiles);
 
             console.log(`✓ Loaded ${profiles.length} real ${targetType} profiles from database`);
             return profiles;
@@ -500,11 +503,11 @@ export class MatchingService {
         console.log(`🔍 AI Search: "${searchCriteria}" for ${targetType}s`);
 
         // Load real profiles from database
-        await this.loadRealUserProfiles(targetType, excludeUserId);
+        const profiles = await this.loadRealUserProfiles(targetType, excludeUserId);
 
         // Get profiles of target type
-        const profiles = Array.from(this.profiles.values())
-            .filter(p => p.type === targetType);
+        // const profiles = Array.from(this.profiles.values())
+        //     .filter(p => p.type === targetType);
 
         if (profiles.length === 0) {
             console.log('⚠️  No profiles available for search');
@@ -518,6 +521,10 @@ export class MatchingService {
             console.log('⚠️  Failed to generate search embedding');
             return [];
         }
+
+        // Generate embeddings for all profiles (batch)
+        const profileTexts = profiles.map(p => this.buildProfileText(p));
+        const profileEmbeddings = await this.generateEmbeddingsBatch(profileTexts);
 
         // Extract query info for hybrid scoring
         const queryInfo = this.extractKeyInfo(searchCriteria);
@@ -536,11 +543,11 @@ export class MatchingService {
         // Calculate similarities
         const matches: MatchResult[] = [];
 
-        for (const [id, profile] of this.profiles.entries()) {
-            if (profile.type !== targetType) continue;
+        for (let i = 0; i < profiles.length; i++) {
+            const profile = profiles[i];
+            const embedding = profileEmbeddings[i];
 
-            const embedding = this.embeddings.get(id);
-            if (!embedding) continue;
+            if (!embedding || !profile) continue;
 
             // HARD FILTER - Organ type must match if specified
             const queryOrganType = queryInfo.organType;
@@ -551,7 +558,7 @@ export class MatchingService {
             }
 
             // AI similarity (cosine similarity)
-            const aiSimilarity = this.computeSimilarity(searchEmbedding, embedding.embedding);
+            const aiSimilarity = this.computeSimilarity(searchEmbedding, embedding);
 
             // Calculate hybrid score
             const { hybridScore, breakdown } = this.calculateHybridScore(
@@ -566,7 +573,7 @@ export class MatchingService {
                 const reason = this.generateMatchReason(profile, searchCriteria);
 
                 matches.push({
-                    profileId: id,
+                    profileId: profile.id,
                     profile,
                     similarity: hybridScore,
                     rank: 0,
@@ -731,6 +738,4 @@ export class MatchingService {
             }
         };
     }
-
-
 }

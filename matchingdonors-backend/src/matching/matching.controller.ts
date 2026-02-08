@@ -8,44 +8,44 @@ const matchingService = new MatchingService();
 export class MatchingController {
     // Post /api/matching/store. Store a profile with embedding
 
-    async storeProfile(req: Request, res: Response): Promise<void> {
-        try {
-            const profile: Profile = req.body;
+    // async storeProfile(req: Request, res: Response): Promise<void> {
+    //     try {
+    //         const profile: Profile = req.body;
 
-            if (!profile.id || !profile.name || !profile.type || !profile.description) {
-                res.status(400).json({
-                    error: 'Missing required fields: id, name, type, description'
-                });
-                return;
-            }
+    //         if (!profile.id || !profile.name || !profile.type || !profile.description) {
+    //             res.status(400).json({
+    //                 error: 'Missing required fields: id, name, type, description'
+    //             });
+    //             return;
+    //         }
 
-            await matchingService.storeProfile(profile);
+    //         await matchingService.storeProfile(profile);
 
-            res.json({
-                success: true,
-                message: 'Profile stored successfully',
-                profileId: profile.id
-            });
-        } catch (error) {
-            console.error('Error storing profile:', error);
-            res.status(500).json({
-                error: 'Failed to store profile',
-                details: error instanceof Error ? error.message : 'Unknown error'
-            });
-        }
-    }
+    //         res.json({
+    //             success: true,
+    //             message: 'Profile stored successfully',
+    //             profileId: profile.id
+    //         });
+    //     } catch (error) {
+    //         console.error('Error storing profile:', error);
+    //         res.status(500).json({
+    //             error: 'Failed to store profile',
+    //             details: error instanceof Error ? error.message : 'Unknown error'
+    //         });
+    //     }
+    // }
 
     // Post /api/matching/find - Find matching profiles
     async findMatches(req: Request, res: Response): Promise<void> {
         try {
             const { profileId, profileText, searcherType, topN, minSimilarity } = req.body;
-            const useRealData = req.query.useRealData === 'true';
+            // const useRealData = req.query.useRealData === 'true';
 
             console.log('🔍 Match request:', {
                 hasProfileId: !!profileId,
                 hasProfileText: !!profileText,
-                searcherType,
-                useRealData
+                searcherType
+                // useRealData
             });
 
             // Validate input
@@ -58,62 +58,64 @@ export class MatchingController {
 
             let matches: any[];
 
-            if (useRealData) {
-                // Real data mode - search database profiles
-                if (!searcherType) {
-                    res.status(400).json({
-                        error: 'searcherType is required for real data search'
-                    });
-                    return;
-                }
+            // if (useRealData) {
+            // Real data mode - search database profiles
+            if (!searcherType) {
+                res.status(400).json({
+                    error: 'searcherType is required for real data search'
+                });
+                return;
+            }
 
-                // Determine target type (opposite of searcher)
-                const targetType = searcherType === 'patient' ? 'donor' : 'patient';
+            // Determine target type (opposite of searcher)
+            const targetType = searcherType === 'patient' ? 'donor' : 'patient';
 
-                // Extract user ID from profileId if available
-                let excludeUserId: number | undefined;
-                if (profileId) {
-                    const parts = profileId.split('-');
-                    if (parts.length >= 3 && parts[2]) {
-                        const userId = parseInt(parts[2]);
-                        if (!isNaN(userId)) {
-                            excludeUserId = userId;
-                        }
+            // Extract user ID from profileId if available
+            let excludeUserId: number | undefined;
+
+            if (profileId) {
+                const parts = profileId.split('-');
+                if (parts.length >= 3 && parts[2]) {
+                    const userId = parseInt(parts[2]);
+                    if (!isNaN(userId)) {
+                        excludeUserId = userId;
                     }
                 }
-
-                // Use search criteria if provided, otherwise use profileId
-                const searchCriteria = profileText || '';
-
-                if (searchCriteria) {
-                    // AI-powered search with criteria
-                    const minScore = minSimilarity !== undefined ? minSimilarity * 100 : 50;
-                    matches = await matchingService.searchRealProfiles(
-                        searchCriteria,
-                        targetType,
-                        excludeUserId,
-                        topN || 10,
-                        minScore
-                    );
-                } else {
-                    // Profile-to-profile matching
-                    matchingService.clearAll();
-                    await matchingService.loadRealUserProfiles(targetType, excludeUserId);
-
-                    const matchRequest = { profileId, profileText, searcherType, topN, minSimilarity };
-                    matches = await matchingService.findTopMatches(matchRequest);
-                }
-            } else {
-                // Demo mode - use in-memory profiles
-                const matchRequest = { profileId, profileText, searcherType, topN, minSimilarity };
-                matches = await matchingService.findTopMatches(matchRequest);
             }
+
+            // Use search criteria if provided, otherwise use profileId
+            const searchCriteria = profileText || '';
+
+            // if (searchCriteria) {
+            // AI-powered search with criteria
+            const minScore = minSimilarity !== undefined ? minSimilarity * 100 : 50;
+            matches = await matchingService.searchRealProfiles(
+                searchCriteria,
+                targetType,
+                excludeUserId,
+                topN || 10,
+                minScore
+            );
+            // } else {
+            // Profile-to-profile matching
+            // matchingService.clearAll();
+            // await matchingService.loadRealUserProfiles(targetType, excludeUserId);
+
+            // const matchRequest = { profileId, profileText, searcherType, topN, minSimilarity };
+            // matches = await matchingService.findTopMatches(matchRequest);
+            // }
+            // }
+            // else {
+            // Demo mode - use in-memory profiles
+            //     const matchRequest = { profileId, profileText, searcherType, topN, minSimilarity };
+            //     matches = await matchingService.findTopMatches(matchRequest);
+            // }
 
             res.json({
                 success: true,
                 matches,
                 count: matches.length,
-                mode: useRealData ? 'real' : 'demo',
+                // mode: useRealData ? 'real' : 'demo',
                 searchCriteria: profileText || 'profile-based'
             });
 

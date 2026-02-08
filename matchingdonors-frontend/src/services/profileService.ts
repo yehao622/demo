@@ -19,21 +19,18 @@ export const profileService = {
         searcherType?: string;
         topN?: number;
         minSimilarity?: number;
-    }, useRealData: boolean = false): Promise<any> {
+    }): Promise<any> {
         try {
-            const url = useRealData
-                ? `/api/matching/find?useRealData=true`
-                : `/api/matching/find`;
+            // const url = useRealData
+            //     ? `/api/matching/find?useRealData=true`
+            //     : `/api/matching/find`;
+            const url = `/api/matching/find`;  // Always use real data
 
-            console.log('🔍 Searching profiles:', {
-                hasText: !!request.profileText,
-                searcherType: request.searcherType,
-                useRealData
-            });
+            console.log('🌐 API Request:', url, request);
 
             const response = await api.post(url, request);
 
-            console.log(`✅ Search returned ${response.data.count} matches`);
+            console.log('🌐 API Response:', response.data);
 
             // Return the full response object
             return response.data;
