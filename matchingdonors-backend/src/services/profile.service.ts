@@ -52,20 +52,31 @@ export class ProfileService {
     }
 
     // Get ALL profiles for Demo Mode (no filtering)
-    static getAllProfilesForDemo(): ProfileData[] {
-        const query = `
+    static getAllProfilesForDemo(currentUserId?: number): ProfileData[] {
+        let query = `
         SELECT * FROM profiles 
-        ORDER BY is_complete DESC, updated_at DESC
+        WHERE is_public = 1
     `;
 
-        const profiles = db.prepare(query).all() as ProfileData[];
-        console.log(`📋 Demo Mode: Loaded ${profiles.length} total profiles from database`);
+        const params: any[] = [];
+
+        // Include current user's profile even if private
+        if (currentUserId) {
+            query += ` OR user_id = ?`;
+            params.push(currentUserId);
+        }
+
+        query += ` ORDER BY is_complete DESC, updated_at DESC`;
+
+        const profiles = db.prepare(query).all(...params) as ProfileData[];
+        console.log(`📋 Demo Mode: Loaded ${profiles.length} total profiles (including user ${currentUserId || 'none'})`);
         return profiles;
     }
 
     static getAllCompleteProfiles(
         targetType: 'patient' | 'donor',
-        excludeUserId?: number
+        excludeUserId?: number,
+        currentUserId?: number
     ): ProfileData[] {
         let query = `
             SELECT * FROM profiles 
@@ -73,6 +84,12 @@ export class ProfileService {
         `;
 
         const params: any[] = [targetType];
+
+        // Include current user's profile even if private
+        if (currentUserId) {
+            query += ` OR (type = ? AND user_id = ?)`;
+            params.push(targetType, currentUserId);
+        }
 
         if (excludeUserId) {
             query += ' AND user_id != ?';

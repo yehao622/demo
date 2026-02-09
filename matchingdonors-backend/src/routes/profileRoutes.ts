@@ -305,6 +305,38 @@ router.post('/transcribe', upload.single('audio'), async (req, res) => {
     }
 });
 
+// Get all profiles (for Browse section) - Protected route
+router.get('/all', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
+
+        const currentUserId = req.user.id;
+        const useRealData = req.query.useRealData === 'true';
+
+        let profiles;
+        if (useRealData) {
+            // Include user's own profile even if private
+            profiles = ProfileService.getAllProfilesForDemo(currentUserId);
+        } else {
+            // Demo mode - include user's profile
+            profiles = ProfileService.getAllProfilesForDemo(currentUserId);
+        }
+
+        res.json({
+            success: true,
+            profiles,
+        });
+    } catch (error: any) {
+        console.error('Get all profiles error:', error);
+        res.status(500).json({
+            error: 'Failed to get profiles',
+            details: error.message,
+        });
+    }
+});
+
 // Toggle profile visibility (protected route)
 router.patch('/visibility', authMiddleware, async (req: Request, res: Response) => {
     try {

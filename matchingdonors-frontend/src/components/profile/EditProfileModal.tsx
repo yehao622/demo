@@ -59,11 +59,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             await AuthService.toggleProfileVisibility(newValue);
             setIsPublic(newValue);
 
+            await fetchProfile();
+
             // Show success notification
             const message = newValue
                 ? '✅ Profile is now public and visible to others'
                 : '✅ Profile is now private and hidden from search';
-            alert(message);
+            console.log(message);
         } catch (err: any) {
             console.error('Failed to update visibility:', err);
             alert('Failed to update visibility: ' + err.message);

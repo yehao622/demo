@@ -42,56 +42,75 @@ export const profileService = {
 
 
     // Get all stored profiles (for browsing)
+    // In frontend/src/services/profileService.ts or similar
     async getAllProfiles(useRealData: boolean = false): Promise<Profile[]> {
-        try {
-            // console.log('🔍 getAllProfiles called with useRealData:', useRealData);
+        const token = localStorage.getItem('auth_token');
 
-            if (useRealData) {
-                // Get current user from localStorage to determine which profiles to load
-                const userStr = localStorage.getItem('auth_user');
-                console.log('📦 Auth data from localStorage:', userStr);
-
-                if (!userStr) {
-                    console.warn('⚠️ No auth data found in localStorage');
-                    return [];
-                }
-
-                const user = JSON.parse(userStr);
-
-                if (!user || !user.role || !user.id) {
-                    console.warn('⚠️ Invalid user data:', user);
-                    return [];
-                }
-
-                const userRole = user.role; // 'patient' or 'donor'
-                const userId = user.id;
-
-                // Load opposite type: if user is patient, load donors; if user is donor, load patients
-                const targetType = userRole === 'patient' ? 'donor' : 'patient';
-
-                // console.log(`👤 Current user: ${userRole} (ID: ${userId})`);
-                // console.log(`🎯 Loading ${targetType} profiles...`);
-
-                const url = `/api/matching/real-profiles?type=${targetType}&excludeUserId=${userId}`;
-                // console.log('📡 Fetching:', url);
-
-                const response = await api.get(url);
-
-                // console.log('✅ Real profiles loaded:', response.data.profiles.length, 'profiles');
-
-                return response.data.profiles || [];
-            } else {
-                // Demo mode: use in-memory profiles
-                // console.log('🟢 Demo mode: loading in-memory profiles');
-                const response = await api.get('/api/matching/profiles');
-                // console.log('✅ Demo profiles loaded:', response.data.profiles.length, 'profiles');
-                return response.data.profiles || [];
+        const response = await fetch(`http://localhost:8080/api/profile/all?useRealData=${useRealData}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
-        } catch (error: any) {
-            console.error('❌ Error in getAllProfiles:', error);
-            throw new Error(error.response?.data?.error || 'Failed to get profiles');
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch profiles');
         }
+
+        const data = await response.json();
+        return data.profiles || [];
     },
+
+    // async getAllProfiles(useRealData: boolean = false): Promise<Profile[]> {
+    //     try {
+    //         // console.log('🔍 getAllProfiles called with useRealData:', useRealData);
+
+    //         if (useRealData) {
+    //             // Get current user from localStorage to determine which profiles to load
+    //             const userStr = localStorage.getItem('auth_user');
+    //             console.log('📦 Auth data from localStorage:', userStr);
+
+    //             if (!userStr) {
+    //                 console.warn('⚠️ No auth data found in localStorage');
+    //                 return [];
+    //             }
+
+    //             const user = JSON.parse(userStr);
+
+    //             if (!user || !user.role || !user.id) {
+    //                 console.warn('⚠️ Invalid user data:', user);
+    //                 return [];
+    //             }
+
+    //             const userRole = user.role; // 'patient' or 'donor'
+    //             const userId = user.id;
+
+    //             // Load opposite type: if user is patient, load donors; if user is donor, load patients
+    //             const targetType = userRole === 'patient' ? 'donor' : 'patient';
+
+    //             // console.log(`👤 Current user: ${userRole} (ID: ${userId})`);
+    //             // console.log(`🎯 Loading ${targetType} profiles...`);
+
+    //             const url = `/api/matching/real-profiles?type=${targetType}&excludeUserId=${userId}`;
+    //             // console.log('📡 Fetching:', url);
+
+    //             const response = await api.get(url);
+
+    //             // console.log('✅ Real profiles loaded:', response.data.profiles.length, 'profiles');
+
+    //             return response.data.profiles || [];
+    //         } else {
+    //             // Demo mode: use in-memory profiles
+    //             // console.log('🟢 Demo mode: loading in-memory profiles');
+    //             const response = await api.get('/api/matching/profiles');
+    //             // console.log('✅ Demo profiles loaded:', response.data.profiles.length, 'profiles');
+    //             return response.data.profiles || [];
+    //         }
+    //     } catch (error: any) {
+    //         console.error('❌ Error in getAllProfiles:', error);
+    //         throw new Error(error.response?.data?.error || 'Failed to get profiles');
+    //     }
+    // },
 
     // Filter profiles by type (patient/donor)
     filterProfilesByType(profiles: Profile[], type: 'patient' | 'donor' | 'all'): Profile[] {

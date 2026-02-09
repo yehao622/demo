@@ -26,6 +26,15 @@ authApi.interceptors.request.use((config) => {
     return config;
 });
 
+// Add token to api requests (THIS IS THE MISSING PART)
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 export class AuthService {
     // Register a new user
     static async register(data: RegisterData): Promise<AuthResponse> {
@@ -130,7 +139,27 @@ export class AuthService {
             throw new Error('Not authenticated');
         }
 
-        const response = await axios.post(`${API_BASE_URL}/api/profile/save`, profileData, {
+        // Parse location
+        const locationParts = (profileData.location || '').split(',').map((s: string) => s.trim());
+        const city = locationParts[0] || '';
+        const state = locationParts[1] || '';
+        const country = locationParts[2] || 'USA';
+
+        const payload = {
+            name: '',
+            age: profileData.age,
+            blood_type: profileData.bloodType,
+            organ_type: profileData.organType,
+            city,
+            state,
+            country,
+            description: profileData.summary || '',
+            medical_info: profileData.personalStory,
+            preferences: '',
+            is_public: profileData.isPublic,
+        };
+
+        const response = await axios.post(`${API_BASE_URL}/api/profile/save`, payload, {
             headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -158,7 +187,7 @@ export class AuthService {
     // Add this method to the AuthService class or object
     static async toggleProfileVisibility(isPublic: boolean): Promise<any> {
         try {
-            const response = await api.patch('/api/profile/visibility', { isPublic });
+            const response = await api.patch('/profile/visibility', { isPublic });
             return response.data;
         } catch (error: any) {
             throw new Error(error.response?.data?.error || 'Failed to update visibility');
@@ -167,7 +196,7 @@ export class AuthService {
 
     static async getProfile(): Promise<any> {
         try {
-            const response = await api.get('/api/profile/me');
+            const response = await api.get('/profile/me');
             return response.data;
         } catch (error: any) {
             throw new Error(error.response?.data?.error || 'Failed to load profile');
@@ -183,7 +212,7 @@ export class AuthService {
         personalStory?: string;
     }): Promise<any> {
         try {
-            const response = await api.put('/api/profile/update', data);
+            const response = await api.put('/profile/update', data);
             return response.data;
         } catch (error: any) {
             throw new Error(error.response?.data?.error || 'Failed to update profile');
