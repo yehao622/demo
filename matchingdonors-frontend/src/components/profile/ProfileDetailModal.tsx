@@ -1,5 +1,6 @@
 import React from 'react';
 import { Profile } from '../../types/profile.types';
+import { ProfileCompletenessBadge } from './ProfileCompletenessBadge';
 import './ProfileDetailModal.css';
 
 interface ProfileDetailModalProps {
@@ -24,6 +25,7 @@ export const ProfileDetailModal: React.FC<ProfileDetailModalProps> = ({
                 </div>
 
                 <div className="modal-body">
+                    <ProfileCompletenessBadge profile={profile} showDetails={true} />
                     <div className="detail-row">
                         <span className="detail-label">Type:</span>
                         <span className={`type-badge-large ${profile.type === 'donor' ? 'donor' : 'patient'}`}>

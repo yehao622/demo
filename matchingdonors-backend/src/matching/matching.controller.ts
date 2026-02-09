@@ -187,8 +187,8 @@ export class MatchingController {
 
             res.json({
                 success: true,
-                profiles: allProfiles,
-                count: allProfiles.length,
+                profiles: profiles, //allProfiles,
+                count: profiles.length,
                 source: 'database-all',
                 breakdown: {
                     patients: profiles.filter(p => p.type === 'patient').length,

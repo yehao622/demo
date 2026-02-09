@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { AuthService } from '../../services/auth.service';
+import { EditProfileModal } from './EditProfileModal';
 import './ViewProfileModal.css';
 
 interface ViewProfileModalProps {
@@ -17,12 +19,14 @@ interface ProfileData {
     country: string;
     description: string;
     medical_info: string;
+    is_public?: boolean | number;
 }
 
 export const ViewProfileModal: React.FC<ViewProfileModalProps> = ({ isOpen, onClose }) => {
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -60,93 +64,146 @@ export const ViewProfileModal: React.FC<ViewProfileModalProps> = ({ isOpen, onCl
         }
     };
 
+    // Handle opening edit modal
+    const handleEdit = () => {
+        setShowEditModal(true);
+    };
+
+    // Handle closing edit modal
+    const handleCloseEdit = () => {
+        setShowEditModal(false);
+        // Reload profile after edit
+        fetchProfile();
+    };
+
+    // Handle saving profile from edit modal
+    const handleSaveProfile = async (updatedData: any) => {
+        try {
+            await AuthService.updateProfile(updatedData);
+            setShowEditModal(false);
+            // Reload the profile
+            await fetchProfile();
+            alert('✅ Profile updated successfully!');
+        } catch (err: any) {
+            console.error('Failed to save profile:', err);
+            alert('❌ Failed to save profile: ' + err.message);
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content view-profile-modal" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-header">
-                    <h2>👤 View Profile</h2>
-                    <button className="close-btn" onClick={onClose}>✕</button>
-                </div>
+        <>
+            <div className="modal-overlay" onClick={onClose}>
+                <div className="modal-content view-profile-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-header">
+                        <h2>👤 View Profile</h2>
+                        <button className="close-btn" onClick={onClose}>✕</button>
+                    </div>
 
-                <div className="modal-body">
-                    {loading ? (
-                        <div className="loading-state">
-                            <div className="spinner"></div>
-                            <p>Loading profile...</p>
-                        </div>
-                    ) : error ? (
-                        <div className="error-state">
-                            <p className="error-message">❌ {error}</p>
-                        </div>
-                    ) : profile ? (
-                        <div className="profile-content">
-                            <div className="profile-section">
-                                <h3>Basic Information</h3>
-                                <div className="profile-grid">
-                                    <div className="profile-field">
-                                        <label>Name:</label>
-                                        <span>{profile.name || 'Not provided'}</span>
-                                    </div>
-                                    <div className="profile-field">
-                                        <label>Role:</label>
-                                        <span className={`role-badge ${profile.type}`}>
-                                            {profile.type === 'patient' ? '🏥 Patient' : '❤️ Donor'}
-                                        </span>
-                                    </div>
-                                    <div className="profile-field">
-                                        <label>Age:</label>
-                                        <span>{profile.age || 'Not provided'}</span>
-                                    </div>
-                                    <div className="profile-field">
-                                        <label>Blood Type:</label>
-                                        <span>{profile.blood_type || 'Not provided'}</span>
-                                    </div>
-                                    <div className="profile-field">
-                                        <label>Organ Type:</label>
-                                        <span>{profile.organ_type || 'Not provided'}</span>
-                                    </div>
-                                </div>
+                    <div className="modal-body">
+                        {loading ? (
+                            <div className="loading-state">
+                                <div className="spinner"></div>
+                                <p>Loading profile...</p>
                             </div>
-
-                            <div className="profile-section">
-                                <h3>Location</h3>
-                                <div className="profile-field">
-                                    <label>Address:</label>
-                                    <span>
-                                        {profile.city && profile.state && profile.country
-                                            ? `${profile.city}, ${profile.state}, ${profile.country}`
-                                            : 'Not provided'}
+                        ) : error ? (
+                            <div className="error-state">
+                                <p className="error-message">❌ {error}</p>
+                            </div>
+                        ) : profile ? (
+                            <div className="profile-content">
+                                {/* Visibility Status Badge */}
+                                <div className="visibility-badge">
+                                    <span className="visibility-icon-small">
+                                        {profile.is_public === 1 || profile.is_public === true ? '🌐' : '🔒'}
+                                    </span>
+                                    <span className="visibility-text-small">
+                                        {profile.is_public === 1 || profile.is_public === true ? 'Public Profile' : 'Private Profile'}
                                     </span>
                                 </div>
+
+                                <div className="profile-section">
+                                    <h3>Basic Information</h3>
+                                    <div className="profile-grid">
+                                        <div className="profile-field">
+                                            <label>Name:</label>
+                                            <span>{profile.name || 'Not provided'}</span>
+                                        </div>
+                                        <div className="profile-field">
+                                            <label>Role:</label>
+                                            <span className={`role-badge ${profile.type}`}>
+                                                {profile.type === 'patient' ? '🏥 Patient' : '❤️ Donor'}
+                                            </span>
+                                        </div>
+                                        <div className="profile-field">
+                                            <label>Age:</label>
+                                            <span>{profile.age || 'Not provided'}</span>
+                                        </div>
+                                        <div className="profile-field">
+                                            <label>Blood Type:</label>
+                                            <span>{profile.blood_type || 'Not provided'}</span>
+                                        </div>
+                                        <div className="profile-field">
+                                            <label>Organ Type:</label>
+                                            <span>{profile.organ_type || 'Not provided'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="profile-section">
+                                    <h3>Location</h3>
+                                    <div className="profile-field">
+                                        <label>Address:</label>
+                                        <span>
+                                            {profile.city && profile.state && profile.country
+                                                ? `${profile.city}, ${profile.state}, ${profile.country}`
+                                                : 'Not provided'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {profile.description && (
+                                    <div className="profile-section">
+                                        <h3>Summary</h3>
+                                        <p className="profile-text">{profile.description}</p>
+                                    </div>
+                                )}
+
+                                {profile.medical_info && (
+                                    <div className="profile-section">
+                                        <h3>Personal Story</h3>
+                                        <p className="profile-text">{profile.medical_info}</p>
+                                    </div>
+                                )}
                             </div>
+                        ) : (
+                            <div className="empty-state">
+                                <p>No profile information available.</p>
+                            </div>
+                        )}
+                    </div>
 
-                            {profile.description && (
-                                <div className="profile-section">
-                                    <h3>Summary</h3>
-                                    <p className="profile-text">{profile.description}</p>
-                                </div>
-                            )}
-
-                            {profile.medical_info && (
-                                <div className="profile-section">
-                                    <h3>Personal Story</h3>
-                                    <p className="profile-text">{profile.medical_info}</p>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="empty-state">
-                            <p>No profile information available.</p>
-                        </div>
-                    )}
-                </div>
-
-                <div className="modal-footer">
-                    <button className="btn-secondary" onClick={onClose}>Close</button>
+                    <div className="modal-footer">
+                        {profile && (
+                            <button className="btn-primary" onClick={handleEdit}>
+                                ✏️ Edit Profile
+                            </button>
+                        )}
+                        <button className="btn-secondary" onClick={onClose}>Close</button>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            {/* Edit Profile Modal */}
+            {showEditModal && profile && (
+                <EditProfileModal
+                    isOpen={showEditModal}
+                    onClose={handleCloseEdit}
+                    profileData={profile}
+                    onSave={handleSaveProfile}
+                />
+            )}
+        </>
     );
 };

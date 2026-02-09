@@ -210,3 +210,10 @@
 .close-modal-btn:hover {
     background-color: #5a6268;
 }
+
+/* Spacing adjustment for completeness badge */
+.modal-body>.completeness-container {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f0f0f0;
+}

@@ -2,11 +2,11 @@ import express, { Request, Response } from 'express';
 import { GoogleGenAI } from "@google/genai";
 import { authMiddleware } from '../middleware/auth.middleware';
 import { ProfileService } from '../services/profile.service';
-import { parseGeminiResponse } from '../profile/parseGeminiProfileResponse';
+// import { parseGeminiResponse } from '../profile/parseGeminiProfileResponse';
 import multer from 'multer';
 // import { ProfileAgent } from '../agents/ProfileAgent';
 import { TranscriptionService } from '../services/TranscriptionService';
-import { buildProfilePrompt } from '../profile/buildProfilePrompt';
+// import { buildProfilePrompt } from '../profile/buildProfilePrompt';
 
 const router = express.Router();
 
@@ -77,11 +77,18 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
         const profile = ProfileService.getUserProfile(userId, userRole);
         const hasComplete = ProfileService.hasCompleteProfile(userId, userRole);
 
-        res.json({
-            success: true,
-            profile,
-            hasCompleteProfile: hasComplete,
-        });
+        if (profile) {
+            res.json({
+                success: true,
+                profile,
+                hasCompleteProfile: hasComplete,
+            });
+        } else {
+            res.status(404).json({
+                success: false,
+                error: 'Profile not found',
+            });
+        }
     } catch (error: any) {
         console.error('Get profile error:', error);
         res.status(500).json({
@@ -100,30 +107,43 @@ router.post('/save', authMiddleware, async (req: Request, res: Response) => {
 
         const userId = req.user.id;
         const userRole = req.user.role;
-        const { summary, organType, age, bloodType, location, personalStory } = req.body;
+        const {
+            name,
+            age,
+            blood_type,
+            organ_type,
+            city,
+            state,
+            country,
+            description,
+            medical_info,
+            preferences,
+            is_public,
+        } = req.body;
 
         // Parse location
-        const locationParts = (location || '').split(',').map((s: string) => s.trim());
-        const city = locationParts[0] || '';
-        const state = locationParts[1] || '';
-        const country = locationParts[2] || locationParts[1] || 'USA';
+        // const locationParts = (location || '').split(',').map((s: string) => s.trim());
+        // const city = locationParts[0] || '';
+        // const state = locationParts[1] || '';
+        // const country = locationParts[2] || locationParts[1] || 'USA';
 
         // Get user's name
         const userName = `${req.user!.firstName} ${req.user!.lastName}`;
 
         const profileData = {
             user_id: userId,
-            name: userName,
+            name: name || userName,
             type: userRole,
-            blood_type: bloodType || '',
-            age: parseInt(age) || 0,
-            country,
-            state,
-            city,
-            organ_type: organType || '',
-            description: summary || '',
-            medical_info: personalStory || '',
-            preferences: '',
+            blood_type: blood_type || '',
+            age: age || 0,
+            country: country || '',
+            state: state || '',
+            city: city || '',
+            organ_type: organ_type || '',
+            description: description || '',
+            medical_info: medical_info || '',
+            preferences: preferences || '',
+            is_public: is_public !== undefined ? is_public : true,
         };
 
         const savedProfile = ProfileService.saveProfile(profileData);
@@ -255,7 +275,7 @@ router.delete('/me', authMiddleware, async (req: Request, res: Response) => {
     }
 });
 
-// New route: Transcribe audio to text
+//  Transcribe audio to text
 router.post('/transcribe', upload.single('audio'), async (req, res) => {
     try {
         if (!req.file) {
@@ -281,6 +301,45 @@ router.post('/transcribe', upload.single('audio'), async (req, res) => {
         console.error('Error transcribing audio:', error);
         res.status(500).json({
             error: 'Failed to transcribe audio. Please try again.'
+        });
+    }
+});
+
+// Toggle profile visibility (protected route)
+router.patch('/visibility', authMiddleware, async (req: Request, res: Response) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
+
+        const userId = req.user.id;
+        const userRole = req.user.role;
+        const { isPublic } = req.body;
+
+        if (typeof isPublic !== 'boolean') {
+            return res.status(400).json({
+                error: 'isPublic must be a boolean value',
+            });
+        }
+
+        const updatedProfile = ProfileService.toggleProfileVisibility(userId, userRole, isPublic);
+
+        if (updatedProfile) {
+            res.json({
+                success: true,
+                message: `Profile is now ${isPublic ? 'public' : 'private'}`,
+                profile: updatedProfile,
+            });
+        } else {
+            res.status(404).json({
+                error: 'Profile not found',
+            });
+        }
+    } catch (error: any) {
+        console.error('Toggle visibility error:', error);
+        res.status(500).json({
+            error: 'Failed to update visibility',
+            details: error.message,
         });
     }
 });

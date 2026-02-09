@@ -70,6 +70,7 @@ db.exec(`
         preferences TEXT NOT NULL,
         embedding TEXT,
         is_complete BOOLEAN DEFAULT 0,
+        is_public BOOLEAN DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -106,6 +107,11 @@ db.exec(`
 
 if (!isTest) {
     console.log('✅ Database initialized successfully at:', DB_PATH);
+    import('./migrations').then(({ runMigrations }) => {
+        runMigrations();
+    }).catch(err => {
+        console.error('Failed to run migrations:', err);
+    });
 }
 
 export default db;

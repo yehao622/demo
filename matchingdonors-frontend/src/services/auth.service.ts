@@ -123,6 +123,7 @@ export class AuthService {
         bloodType: string;
         location: string;
         personalStory: string;
+        isPublic: boolean;
     }): Promise<any> {
         const { token } = this.getStoredAuthData();
         if (!token) {
@@ -152,5 +153,40 @@ export class AuthService {
         );
 
         return response.data.validation;
+    }
+
+    // Add this method to the AuthService class or object
+    static async toggleProfileVisibility(isPublic: boolean): Promise<any> {
+        try {
+            const response = await api.patch('/api/profile/visibility', { isPublic });
+            return response.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.error || 'Failed to update visibility');
+        }
+    }
+
+    static async getProfile(): Promise<any> {
+        try {
+            const response = await api.get('/api/profile/me');
+            return response.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.error || 'Failed to load profile');
+        }
+    }
+
+    static async updateProfile(data: {
+        summary?: string;
+        organType?: string;
+        age?: string;
+        bloodType?: string;
+        location?: string;
+        personalStory?: string;
+    }): Promise<any> {
+        try {
+            const response = await api.put('/api/profile/update', data);
+            return response.data;
+        } catch (error: any) {
+            throw new Error(error.response?.data?.error || 'Failed to update profile');
+        }
     }
 }

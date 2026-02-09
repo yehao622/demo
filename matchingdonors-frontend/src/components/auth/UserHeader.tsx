@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ViewProfileModal } from '../profile/ViewProfileModal';
 import { EditProfileModal } from '../profile/EditProfileModal';
 import { Toast } from '../common/Toast';
+import { AuthService } from '../../services/auth.service';
 import '../../styles/UserHeader.css';
 
 export const UserHeader: React.FC = () => {
@@ -12,6 +13,7 @@ export const UserHeader: React.FC = () => {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [profileData, setProfileData] = useState<any>(null);
     const [toast, setToast] = useState<{
         show: boolean;
         message: string;
@@ -31,10 +33,32 @@ export const UserHeader: React.FC = () => {
         navigate('/profile-fill');
     };
 
-    const handleEditProfile = () => {
+    const handleEditProfile = async () => {
         console.log('Edit Profile clicked'); // Debug log
         setShowProfileMenu(false);
-        setShowEditModal(true);
+
+        try {
+            // Load profile data before opening edit modal
+            const response = await AuthService.getProfile();
+            if (response.success && response.profile) {
+                setProfileData(response.profile);
+                setShowEditModal(true);
+            } else {
+                setToast({
+                    show: true,
+                    message: 'No profile found. Please complete your profile first.',
+                    type: 'error'
+                });
+            }
+        } catch (error: any) {
+            console.error('Failed to load profile:', error);
+            setToast({
+                show: true,
+                message: 'Failed to load profile: ' + error.message,
+                type: 'error'
+            });
+        }
+
         navigate('/profile-fill');
     };
 
@@ -44,12 +68,22 @@ export const UserHeader: React.FC = () => {
         logout();
     };
 
-    const handleSaveProfile = () => {
-        setToast({
-            show: true,
-            message: 'Profile saved successfully!',
-            type: 'success'
-        });
+    const handleSaveProfile = async (updatedData: any) => {
+        try {
+            await AuthService.updateProfile(updatedData);
+            setToast({
+                show: true,
+                message: 'Profile saved successfully!',
+                type: 'success'
+            });
+            setShowEditModal(false);
+        } catch (error: any) {
+            setToast({
+                show: true,
+                message: 'Failed to save profile: ' + error.message,
+                type: 'error'
+            });
+        }
     };
 
     const closeToast = () => {
@@ -114,11 +148,15 @@ export const UserHeader: React.FC = () => {
                 onClose={() => setShowViewModal(false)}
             />
 
-            <EditProfileModal
-                isOpen={showEditModal}
-                onClose={() => setShowEditModal(false)}
-                onSave={handleSaveProfile}
-            />
+            {/* Only render EditProfileModal when profileData is loaded */}
+            {profileData && (
+                <EditProfileModal
+                    isOpen={showEditModal}
+                    onClose={() => setShowEditModal(false)}
+                    profileData={profileData}
+                    onSave={handleSaveProfile}
+                />
+            )}
 
             <Toast
                 message={toast.message}

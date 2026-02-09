@@ -1,3 +1,4 @@
+import { is } from 'cheerio/dist/commonjs/api/traversing';
 import db from '../database';
 import { GoogleGenAI } from "@google/genai";
 
@@ -22,6 +23,7 @@ export interface ProfileData {
     medical_info: string;
     preferences: string;
     is_complete?: boolean;
+    is_public?: boolean;
 }
 
 export interface ProfileValidation {
@@ -67,7 +69,7 @@ export class ProfileService {
     ): ProfileData[] {
         let query = `
             SELECT * FROM profiles 
-            WHERE type = ?
+            WHERE type = ? AND is_public = 1
         `;
 
         const params: any[] = [targetType];
@@ -108,6 +110,7 @@ export class ProfileService {
             description,
             medical_info,
             preferences,
+            is_public = true,
         } = data;
 
         // Check if profile is complete (organ_type, age, blood_type required)
@@ -122,13 +125,13 @@ export class ProfileService {
                 UPDATE profiles 
                 SET name = ?, blood_type = ?, age = ?, country = ?, state = ?, 
                     city = ?, organ_type = ?, description = ?, medical_info = ?, 
-                    preferences = ?, is_complete = ?, updated_at = CURRENT_TIMESTAMP
+                    preferences = ?, is_complete = ?, is_public = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE user_id = ? AND type = ?
             `);
 
             stmt.run(
                 name, blood_type, age, country, state, city, organ_type,
-                description, medical_info, preferences, is_complete ? 1 : 0,
+                description, medical_info, preferences, is_complete ? 1 : 0, is_public ? 1 : 0,
                 user_id, type
             );
 
@@ -139,13 +142,13 @@ export class ProfileService {
             const stmt = db.prepare(`
                 INSERT INTO profiles (
                     id, user_id, name, type, blood_type, age, country, state, 
-                    city, organ_type, description, medical_info, preferences, is_complete
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    city, organ_type, description, medical_info, preferences, is_complete, is_public
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `);
 
             stmt.run(
                 id, user_id, name, type, blood_type, age, country, state,
-                city, organ_type, description, medical_info, preferences, is_complete ? 1 : 0
+                city, organ_type, description, medical_info, preferences, is_complete ? 1 : 0, is_public ? 1 : 0
             );
 
             return this.getUserProfile(user_id, type)!;
@@ -262,4 +265,18 @@ Only flag issues with "high" confidence. Be lenient with ambiguous statements.`;
         const result = stmt.run(userId, role);
         return result.changes > 0;
     }
+
+    // Toggle profile visibility
+    static toggleProfileVisibility(userId: number, role: 'patient' | 'donor', isPublic: boolean): ProfileData | null {
+        const stmt = db.prepare(`
+        UPDATE profiles 
+        SET is_public = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = ? AND type = ?
+    `);
+
+        stmt.run(isPublic ? 1 : 0, userId, role);
+
+        return this.getUserProfile(userId, role);
+    }
+
 }

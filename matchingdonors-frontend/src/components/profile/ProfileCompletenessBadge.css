@@ -1,0 +1,70 @@
+.completeness-container {
+    margin-bottom: 1rem;
+}
+
+.completeness-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.completeness-badge:hover {
+    transform: scale(1.02);
+}
+
+/* Green for complete */
+.completeness-badge.complete {
+    background-color: #28a745;
+}
+
+/* Orange for incomplete */
+.completeness-badge.incomplete {
+    background-color: #ff9800;
+}
+
+.completeness-icon {
+    font-size: 1rem;
+}
+
+.completeness-text {
+    letter-spacing: 0.5px;
+}
+
+.completeness-details {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #fff3cd;
+    border-left: 4px solid #ff9800;
+    border-radius: 4px;
+}
+
+.completeness-message {
+    margin: 0 0 0.5rem 0;
+    color: #856404;
+    font-size: 0.95rem;
+}
+
+.missing-fields-list {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+    color: #856404;
+}
+
+.missing-fields-list li {
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.completeness-tip {
+    margin: 0.75rem 0 0 0;
+    color: #856404;
+    font-size: 0.85rem;
+    font-style: italic;
+}

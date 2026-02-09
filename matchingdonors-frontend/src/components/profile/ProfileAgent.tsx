@@ -35,6 +35,8 @@ export const ProfileAgent: React.FC = () => {
     const [editableBloodType, setEditableBloodType] = useState("");
     const [editableLocation, setEditableLocation] = useState("");
     const [editableStory, setEditableStory] = useState("");
+    const [isPublic, setIsPublic] = useState(true);
+    const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
 
     const { isRecording, isTranscribing, error: voiceError, handleVoiceInput } = useVoiceInput(
         (transcript) => setText(prev => prev ? prev + ' ' + transcript : transcript)
@@ -47,6 +49,26 @@ export const ProfileAgent: React.FC = () => {
         message: string;
         suggestedAction?: string;
     }>({ isOpen: false, type: 'role', message: '' });
+
+    // Add this useEffect to load existing profile
+    React.useEffect(() => {
+        const loadExistingProfile = async () => {
+            if (user) {
+                try {
+                    const profileData = await AuthService.getProfile();
+                    if (profileData.profile) {
+                        // Load visibility status
+                        if (typeof profileData.profile.is_public === 'boolean') {
+                            setIsPublic(profileData.profile.is_public);
+                        }
+                    }
+                } catch (err) {
+                    console.log('No existing profile found');
+                }
+            }
+        };
+        loadExistingProfile();
+    }, [user]);
 
     const minCharacters = 20;
     const maxCharacters = 2000;
@@ -128,6 +150,26 @@ export const ProfileAgent: React.FC = () => {
         setEditableStory("");
     };
 
+    // Add this new handler
+    const handleToggleVisibility = async (newValue: boolean) => {
+        setIsTogglingVisibility(true);
+        try {
+            await AuthService.toggleProfileVisibility(newValue);
+            setIsPublic(newValue);
+            // Show success message
+            const message = newValue
+                ? '✅ Profile is now public and visible to others'
+                : '✅ Profile is now private';
+            console.log(message);
+        } catch (err: any) {
+            setError('Failed to update visibility: ' + err.message);
+            // Revert toggle if failed
+            setIsPublic(!newValue);
+        } finally {
+            setIsTogglingVisibility(false);
+        }
+    };
+
     const handleSaveProfile = async () => {
         try {
             if (!user) {
@@ -135,14 +177,21 @@ export const ProfileAgent: React.FC = () => {
                 return;
             }
 
-            await AuthService.saveProfile({
+            const savedProfile = await AuthService.saveProfile({
                 summary: editableSummary,
                 organType: editableOrganType,
                 age: editableAge,
                 bloodType: editableBloodType,
                 location: editableLocation,
                 personalStory: editableStory,
+                isPublic: isPublic,
             });
+
+            // Load visibility status from saved profile
+            if (savedProfile.profile && typeof savedProfile.profile.is_public !== 'undefined') {
+                const publicStatus = savedProfile.profile.is_public === 1 || savedProfile.profile.is_public === true;
+                setIsPublic(publicStatus);
+            }
 
             setShowSaveModal(true);
         } catch (err: any) {
@@ -348,6 +397,30 @@ export const ProfileAgent: React.FC = () => {
                             </div>
 
                             <div className="action-buttons">
+                                <div className="visibility-toggle-section">
+                                    <label className="visibility-toggle-label">
+                                        <span className="visibility-icon">{isPublic ? '🌐' : '🔒'}</span>
+                                        <span className="visibility-text">
+                                            Profile Visibility: <strong>{isPublic ? 'Public' : 'Private'}</strong>
+                                        </span>
+                                    </label>
+                                    <div className="toggle-switch-container">
+                                        <label className="toggle-switch">
+                                            <input
+                                                type="checkbox"
+                                                checked={isPublic}
+                                                onChange={(e) => handleToggleVisibility(e.target.checked)}
+                                                disabled={isTogglingVisibility}
+                                            />
+                                            <span className="toggle-slider"></span>
+                                        </label>
+                                        <span className="toggle-description">
+                                            {isPublic
+                                                ? 'Your profile is visible to all users'
+                                                : 'Your profile is hidden from search results'}
+                                        </span>
+                                    </div>
+                                </div>
                                 <button className="btn btn-success" onClick={handleSaveProfile}>
                                     💾 Save Profile
                                 </button>
