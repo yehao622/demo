@@ -397,30 +397,6 @@ export const ProfileAgent: React.FC = () => {
                             </div>
 
                             <div className="action-buttons">
-                                <div className="visibility-toggle-section">
-                                    <label className="visibility-toggle-label">
-                                        <span className="visibility-icon">{isPublic ? '🌐' : '🔒'}</span>
-                                        <span className="visibility-text">
-                                            Profile Visibility: <strong>{isPublic ? 'Public' : 'Private'}</strong>
-                                        </span>
-                                    </label>
-                                    <div className="toggle-switch-container">
-                                        <label className="toggle-switch">
-                                            <input
-                                                type="checkbox"
-                                                checked={isPublic}
-                                                onChange={(e) => handleToggleVisibility(e.target.checked)}
-                                                disabled={isTogglingVisibility}
-                                            />
-                                            <span className="toggle-slider"></span>
-                                        </label>
-                                        <span className="toggle-description">
-                                            {isPublic
-                                                ? 'Your profile is visible to all users'
-                                                : 'Your profile is hidden from search results'}
-                                        </span>
-                                    </div>
-                                </div>
                                 <button className="btn btn-success" onClick={handleSaveProfile}>
                                     💾 Save Profile
                                 </button>

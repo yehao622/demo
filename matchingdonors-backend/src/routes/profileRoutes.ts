@@ -78,9 +78,17 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
         const hasComplete = ProfileService.hasCompleteProfile(userId, userRole);
 
         if (profile) {
+            // This satisfies TypeScript while handling the runtime value correctly.
+            const isPublicValue = profile.is_public as any;
+            // This ensures the "Edit Profile" toggle shows the correct state
+            const safeProfile = {
+                ...profile,
+                isPublic: isPublicValue === 1 || isPublicValue === true
+            };
+
             res.json({
                 success: true,
-                profile,
+                profile: safeProfile,
                 hasCompleteProfile: hasComplete,
             });
         } else {
@@ -203,29 +211,44 @@ router.put('/update', authMiddleware, async (req: Request, res: Response) => {
 
         const userId = req.user.id;
         const userRole = req.user.role;
-        const { summary, organType, age, bloodType, location, personalStory } = req.body;
+        // console.log('📝 Received Update Payload:', req.body);
+        const { summary, organType, age, bloodType, location, personalStory, isPublic,
+            description, organ_type, blood_type, medical_info, is_public,
+            city: cityRaw, state: stateRaw, country: countryRaw } = req.body;
 
-        // Parse location
-        const locationParts = (location || '').split(',').map((s: string) => s.trim());
-        const city = locationParts[0] || '';
-        const state = locationParts[1] || '';
-        const country = locationParts[2] || locationParts[1] || 'USA';
+        let finalCity = cityRaw || '';
+        let finalState = stateRaw || '';
+        let finalCountry = countryRaw || 'USA';
+
+        if (location) {
+            const locationParts = location.split(',').map((s: string) => s.trim());
+            finalCity = locationParts[0] || finalCity;
+            finalState = locationParts[1] || finalState;
+            finalCountry = locationParts[2] || locationParts[1] || finalCountry;
+        }
 
         const userName = `${req.user!.firstName} ${req.user!.lastName}`;
+        const real_is_public = isPublic !== undefined ? isPublic : is_public;
+
 
         const profileData = {
             user_id: userId,
             name: userName,
             type: userRole,
-            blood_type: bloodType || '',
             age: parseInt(age) || 0,
-            country,
-            state,
-            city,
-            organ_type: organType || '',
-            description: summary || '',
-            medical_info: personalStory || '',
+
+            // Robust Field Mapping: New Key || Old Key || Empty String
+            blood_type: bloodType || blood_type || '',
+            organ_type: organType || organ_type || '',
+            description: summary || description || '',
+            medical_info: personalStory || medical_info || '',
+
+            city: finalCity,
+            state: finalState,
+            country: finalCountry,
+
             preferences: '',
+            is_public: real_is_public !== undefined ? real_is_public : true,
         };
 
         const updatedProfile = ProfileService.saveProfile(profileData);
@@ -313,15 +336,18 @@ router.get('/all', authMiddleware, async (req: Request, res: Response) => {
         }
 
         const currentUserId = req.user.id;
+        const currentUserRole = req.user.role;
         const useRealData = req.query.useRealData === 'true';
 
         let profiles;
         if (useRealData) {
-            // Include user's own profile even if private
-            profiles = ProfileService.getAllProfilesForDemo(currentUserId);
+            // Patient sees Donor, Donor sees Patient.
+            const targetType = currentUserRole === 'patient' ? 'donor' : 'patient';
+            // Calls the STRICT service method (excludes private & excludes self)
+            profiles = ProfileService.getAllCompleteProfiles(targetType, currentUserId);
         } else {
             // Demo mode - include user's profile
-            profiles = ProfileService.getAllProfilesForDemo(currentUserId);
+            profiles = ProfileService.getAllProfilesForDemo();
         }
 
         res.json({

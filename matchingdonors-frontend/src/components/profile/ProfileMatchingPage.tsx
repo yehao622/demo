@@ -20,8 +20,10 @@ export const ProfileMatchingPage: React.FC = () => {
     const [useRealData, setUseRealData] = useState(false);
     const [dataMode, setDataMode] = useState<'demo' | 'real'>('demo');
     const [searchResults, setSearchResults] = useState<any[]>([]);
-    const [showModal, setShowModal] = useState(false);
 
+    // Get current user for filtering
+    const authUser = localStorage.getItem('auth_user');
+    const currentUser = authUser ? JSON.parse(authUser) : null;
 
     // Load all profiles on mount
     useEffect(() => {
@@ -32,6 +34,16 @@ export const ProfileMatchingPage: React.FC = () => {
     useEffect(() => {
         console.log('🔄 useRealData changed to:', useRealData);
         loadProfiles();
+        setDataMode(useRealData ? 'real' : 'demo');
+
+        // Reset filter type based on mode
+        if (useRealData && currentUser) {
+            // In Real Mode, automatically set filter to opposite of user role
+            const oppositeRole = currentUser.role === 'patient' ? 'donor' : 'patient';
+            setFilterType(oppositeRole);
+        } else {
+            setFilterType('all');
+        }
     }, [useRealData]);
 
 
@@ -64,14 +76,11 @@ export const ProfileMatchingPage: React.FC = () => {
         setSearchResults([]);
 
         try {
-            // Get current user info from localStorage
-            const authUser = localStorage.getItem('auth_user');
             let searcherType = 'patient'; // default
 
-            if (authUser) {
-                const user = JSON.parse(authUser);
-                searcherType = user.role;
-                console.log('👤 Searching as:', searcherType, '(user ID:', user.id, ')');
+            if (currentUser) {
+                searcherType = currentUser.role;
+                console.log('👤 Searching as:', searcherType, '(user ID:', currentUser.id, ')');
             }
 
             // Build the request with searcherType
@@ -80,26 +89,15 @@ export const ProfileMatchingPage: React.FC = () => {
                 searcherType
             };
 
-            console.log('📤 Sending to backend:', {
-                profileText: searchRequest.profileText?.substring(0, 50) + '...',
-                searcherType,
-                topN: searchRequest.topN,
-                minSimilarity: searchRequest.minSimilarity,
-                useRealData
-            });
-
             // Call the API
             const response = await profileService.findMatches(
                 searchRequest
                 // useRealData
             );
 
-            console.log('📥 Response received:', response);
-
             if (response.success) {
                 const matches = response.matches || [];
                 setSearchResults(matches);
-                console.log(`✅ Found ${matches.length} matches`);
 
                 if (matches.length === 0) {
                     alert('No matches found. Try adjusting your search criteria or minimum match score.');
@@ -121,7 +119,27 @@ export const ProfileMatchingPage: React.FC = () => {
         setSelectedMatchScore(matchScore);
     };
 
-    const filteredProfiles = profileService.filterProfilesByType(allProfiles, filterType);
+    // Strict filtering logic for "Browse All Profiles"
+    const getFilteredProfiles = () => {
+        let filtered = allProfiles;
+
+        // 1. First apply strict "Real Mode" Role Filtering
+        if (useRealData && currentUser) {
+            const targetRole = currentUser.role === 'patient' ? 'donor' : 'patient';
+            filtered = filtered.filter(p => p.type === targetRole);
+        }
+
+        // 2. Then apply the UI tab filter (if not in Real Mode or if it matches target)
+        if (!useRealData) {
+            if (filterType !== 'all') {
+                filtered = filtered.filter(p => p.type === filterType);
+            }
+        }
+
+        return filtered;
+    };
+
+    const filteredProfiles = getFilteredProfiles();
 
     if (isLoading) {
         return <LoadingSpinner message="Loading profiles..." />;
@@ -185,7 +203,7 @@ export const ProfileMatchingPage: React.FC = () => {
                 </>
             )}
 
-            {/* Empty State for Real Data */}
+            {/* Empty State for Real Data
             {matches.length === 0 && isSearching === false && dataMode === 'real' && (
                 <div className="empty-state-real">
                     <div className="empty-icon">🔍</div>
@@ -200,38 +218,47 @@ export const ProfileMatchingPage: React.FC = () => {
                         </button>
                     </div>
                 </div>
-            )}
+            )} */}
 
             {/* Browse All Profiles Section */}
             <div className="browse-section">
                 <div className="browse-header">
-                    <h2 className="browse-title">📋 Browse All Profiles</h2>
-                    <div className="filter-tabs">
-                        <button
-                            className={`filter-tab ${filterType === 'all' ? 'active' : ''}`}
-                            onClick={() => setFilterType('all')}
-                        >
-                            All ({allProfiles.length})
-                        </button>
-                        <button
-                            className={`filter-tab ${filterType === 'patient' ? 'active' : ''}`}
-                            onClick={() => setFilterType('patient')}
-                        >
-                            Patients ({allProfiles.filter(p => p.type === 'patient').length})
-                        </button>
-                        <button
-                            className={`filter-tab ${filterType === 'donor' ? 'active' : ''}`}
-                            onClick={() => setFilterType('donor')}
-                        >
-                            Donors ({allProfiles.filter(p => p.type === 'donor').length})
-                        </button>
-                    </div>
+                    <h2 className="browse-title">
+                        {useRealData
+                            ? `📋 Available ${currentUser?.role === 'patient' ? 'Donors' : 'Patients'}`
+                            : '📋 Browse All Profiles'
+                        }
+                    </h2>
+
+                    {/* Hide filter tabs in Real Mode to enforce strict matching logic */}
+                    {!useRealData && (
+                        <div className="filter-tabs">
+                            <button
+                                className={`filter-tab ${filterType === 'all' ? 'active' : ''}`}
+                                onClick={() => setFilterType('all')}
+                            >
+                                All ({allProfiles.length})
+                            </button>
+                            <button
+                                className={`filter-tab ${filterType === 'patient' ? 'active' : ''}`}
+                                onClick={() => setFilterType('patient')}
+                            >
+                                Patients ({allProfiles.filter(p => p.type === 'patient').length})
+                            </button>
+                            <button
+                                className={`filter-tab ${filterType === 'donor' ? 'active' : ''}`}
+                                onClick={() => setFilterType('donor')}
+                            >
+                                Donors ({allProfiles.filter(p => p.type === 'donor').length})
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {filteredProfiles.length === 0 ? (
                     <div className="no-profiles">
-                        <p>No {filterType === 'all' ? '' : filterType} profiles available yet.</p>
-                        <p className="hint">Profiles can be added via the backend API.</p>
+                        <p>No profiles available matching your criteria.</p>
+                        {useRealData && <p className="hint">Try switching to Demo Mode to see example profiles.</p>}
                     </div>
                 ) : (
                     <div className="profiles-grid">

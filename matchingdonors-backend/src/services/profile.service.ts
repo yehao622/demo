@@ -1,4 +1,3 @@
-import { is } from 'cheerio/dist/commonjs/api/traversing';
 import db from '../database';
 import { GoogleGenAI } from "@google/genai";
 
@@ -69,14 +68,13 @@ export class ProfileService {
         query += ` ORDER BY is_complete DESC, updated_at DESC`;
 
         const profiles = db.prepare(query).all(...params) as ProfileData[];
-        console.log(`📋 Demo Mode: Loaded ${profiles.length} total profiles (including user ${currentUserId || 'none'})`);
+        // console.log(`📋 Demo Mode: Loaded ${profiles.length} total profiles (including user ${currentUserId || 'none'})`);
         return profiles;
     }
 
     static getAllCompleteProfiles(
         targetType: 'patient' | 'donor',
         excludeUserId?: number,
-        currentUserId?: number
     ): ProfileData[] {
         let query = `
             SELECT * FROM profiles 
@@ -86,10 +84,10 @@ export class ProfileService {
         const params: any[] = [targetType];
 
         // Include current user's profile even if private
-        if (currentUserId) {
-            query += ` OR (type = ? AND user_id = ?)`;
-            params.push(targetType, currentUserId);
-        }
+        // if (currentUserId) {
+        //     query += ` OR (type = ? AND user_id = ?)`;
+        //     params.push(targetType, currentUserId);
+        // }
 
         if (excludeUserId) {
             query += ' AND user_id != ?';

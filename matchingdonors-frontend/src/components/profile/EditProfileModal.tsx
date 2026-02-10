@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { AuthService } from '../../services/auth.service';
 import './EditProfileModal.css';
 
@@ -29,6 +28,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
     const [formData, setFormData] = useState<ProfileFormData>({
         summary: '',
         organType: '',
@@ -38,42 +38,41 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         personalStory: '',
     });
     const [isPublic, setIsPublic] = useState(true);
-    const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
+    // const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
             fetchProfile();
         }
-
-        if (profileData && typeof profileData.is_public === 'boolean') {
-            setIsPublic(profileData.is_public);
-        } else if (profileData && typeof profileData.is_public === 'number') {
-            setIsPublic(profileData.is_public === 1);
-        }
-    }, [isOpen, profileData]);
+        // if (profileData && typeof profileData.is_public === 'boolean') {
+        //     setIsPublic(profileData.is_public);
+        // } else if (profileData && typeof profileData.is_public === 'number') {
+        //     setIsPublic(profileData.is_public === 1);
+        // }
+    }, [isOpen]); //, profileData]);
 
     // Add this handler function
     const handleToggleVisibility = async (newValue: boolean) => {
-        setIsTogglingVisibility(true);
-        try {
-            await AuthService.toggleProfileVisibility(newValue);
-            setIsPublic(newValue);
+        // setIsTogglingVisibility(true);
+        // try {
+        //  await AuthService.toggleProfileVisibility(newValue);
+        setIsPublic(newValue);
 
-            await fetchProfile();
+        //     await fetchProfile();
 
-            // Show success notification
-            const message = newValue
-                ? '✅ Profile is now public and visible to others'
-                : '✅ Profile is now private and hidden from search';
-            console.log(message);
-        } catch (err: any) {
-            console.error('Failed to update visibility:', err);
-            alert('Failed to update visibility: ' + err.message);
-            // Revert toggle if failed
-            setIsPublic(!newValue);
-        } finally {
-            setIsTogglingVisibility(false);
-        }
+        //     // Show success notification
+        //     const message = newValue
+        //         ? '✅ Profile is now public and visible to others'
+        //         : '✅ Profile is now private and hidden from search';
+        //     console.log(message);
+        // } catch (err: any) {
+        //     console.error('Failed to update visibility:', err);
+        //     alert('Failed to update visibility: ' + err.message);
+        //     // Revert toggle if failed
+        //     setIsPublic(!newValue);
+        // } finally {
+        //     setIsTogglingVisibility(false);
+        // }
     };
 
     const fetchProfile = async () => {
@@ -105,6 +104,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         : '',
                     personalStory: profile.medical_info || '',
                 });
+
+                // Set visibility from DB
+                if (typeof profile.is_public === 'boolean') {
+                    setIsPublic(profile.is_public);
+                } else if (typeof profile.is_public === 'number') {
+                    setIsPublic(profile.is_public === 1);
+                }
             }
         } catch (err: any) {
             console.error('Error fetching profile:', err);
@@ -126,23 +132,16 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         try {
             const token = localStorage.getItem('auth_token');
 
-            // Parse location string (format: "City, State, Country")
-            const locationParts = formData.location.split(',').map(s => s.trim());
-            const city = locationParts[0] || '';
-            const state = locationParts[1] || '';
-            const country = locationParts[2] || 'USA';
-
-            // Prepare updated profile data
-            const updatedProfile = {
-                name: profileData.name || 'User', // Keep existing name
-                age: parseInt(formData.age) || 0,
-                blood_type: formData.bloodType,
-                organ_type: formData.organType,
-                city: city,
-                state: state,
-                country: country,
-                description: formData.summary,
-                medical_info: formData.personalStory,
+            // Send data using keys that match the Backend route's expectations
+            // Backend expects: { summary, organType, age, bloodType, location, personalStory, isPublic }
+            const payload = {
+                summary: formData.summary,
+                organType: formData.organType,
+                age: formData.age,
+                bloodType: formData.bloodType,
+                location: formData.location,
+                personalStory: formData.personalStory,
+                isPublic: isPublic // Send visibility status here!
             };
 
             const response = await fetch('http://localhost:8080/api/profile/update', {
@@ -151,7 +150,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(updatedProfile)
+                body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
@@ -160,7 +159,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
             const data = await response.json();
             if (data.success) {
-                onSave(updatedProfile);
+                onSave(data.profile);
                 onClose();
             } else {
                 throw new Error(data.error || 'Failed to update profile');
@@ -323,7 +322,6 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                                 type="checkbox"
                                 checked={isPublic}
                                 onChange={(e) => handleToggleVisibility(e.target.checked)}
-                                disabled={isTogglingVisibility}
                             />
                             <span className="toggle-slider-large"></span>
                         </label>

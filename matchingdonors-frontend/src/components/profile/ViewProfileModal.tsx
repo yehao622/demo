@@ -185,25 +185,10 @@ export const ViewProfileModal: React.FC<ViewProfileModalProps> = ({ isOpen, onCl
                     </div>
 
                     <div className="modal-footer">
-                        {profile && (
-                            <button className="btn-primary" onClick={handleEdit}>
-                                ✏️ Edit Profile
-                            </button>
-                        )}
                         <button className="btn-secondary" onClick={onClose}>Close</button>
                     </div>
                 </div>
             </div>
-
-            {/* Edit Profile Modal */}
-            {showEditModal && profile && (
-                <EditProfileModal
-                    isOpen={showEditModal}
-                    onClose={handleCloseEdit}
-                    profileData={profile}
-                    onSave={handleSaveProfile}
-                />
-            )}
         </>
     );
 };
