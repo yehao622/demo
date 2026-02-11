@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { AuthService } from '../../services/auth.service';
-import { EditProfileModal } from './EditProfileModal';
 import './ViewProfileModal.css';
 
 interface ViewProfileModalProps {
@@ -20,6 +19,7 @@ interface ProfileData {
     description: string;
     medical_info: string;
     is_public?: boolean | number;
+    preferences: string;
 }
 
 export const ViewProfileModal: React.FC<ViewProfileModalProps> = ({ isOpen, onClose }) => {
@@ -174,6 +174,13 @@ export const ViewProfileModal: React.FC<ViewProfileModalProps> = ({ isOpen, onCl
                                     <div className="profile-section">
                                         <h3>Personal Story</h3>
                                         <p className="profile-text">{profile.medical_info}</p>
+                                    </div>
+                                )}
+
+                                {profile.preferences && (
+                                    <div className="profile-section">
+                                        <h3>My Preferences</h3>
+                                        <p className="profile-text">{profile.preferences}</p>
                                     </div>
                                 )}
                             </div>

@@ -21,16 +21,11 @@ export const profileService = {
         minSimilarity?: number;
     }): Promise<any> {
         try {
-            // const url = useRealData
-            //     ? `/api/matching/find?useRealData=true`
-            //     : `/api/matching/find`;
             const url = `/api/matching/find`;  // Always use real data
-
-            console.log('🌐 API Request:', url, request);
+            // console.log('🌐 API Request:', url, request);
 
             const response = await api.post(url, request);
-
-            console.log('🌐 API Response:', response.data);
+            // console.log('🌐 API Response:', response.data);
 
             // Return the full response object
             return response.data;
@@ -57,7 +52,20 @@ export const profileService = {
         }
 
         const data = await response.json();
-        return data.profiles || [];
+
+        return (data.profiles || []).map((p: any) => ({
+            ...p,
+            // Ensure these fields map correctly
+            isComplete: p.is_complete === 1 || p.is_complete === true,
+            isPublic: p.is_public === 1 || p.is_public === true,
+            medicalInfo: p.medical_info || p.medicalInfo,
+            bloodType: p.blood_type || p.bloodType, // Fallback for safety
+            preferences: p.preferences || '',
+            organType: p.organ_type || p.organType,
+            city: p.city || '',
+            state: p.state || '',
+            country: p.country || '',
+        }));
     },
 
     // Filter profiles by type (patient/donor)

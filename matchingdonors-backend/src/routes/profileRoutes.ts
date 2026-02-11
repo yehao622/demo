@@ -213,7 +213,7 @@ router.put('/update', authMiddleware, async (req: Request, res: Response) => {
         const userRole = req.user.role;
         // console.log('📝 Received Update Payload:', req.body);
         const { summary, organType, age, bloodType, location, personalStory, isPublic,
-            description, organ_type, blood_type, medical_info, is_public,
+            description, organ_type, blood_type, medical_info, is_public, preferences,
             city: cityRaw, state: stateRaw, country: countryRaw } = req.body;
 
         let finalCity = cityRaw || '';
@@ -247,7 +247,7 @@ router.put('/update', authMiddleware, async (req: Request, res: Response) => {
             state: finalState,
             country: finalCountry,
 
-            preferences: '',
+            preferences: preferences || '',
             is_public: real_is_public !== undefined ? real_is_public : true,
         };
 

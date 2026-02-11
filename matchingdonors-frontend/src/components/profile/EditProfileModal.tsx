@@ -16,6 +16,7 @@ interface ProfileFormData {
     bloodType: string;
     location: string;
     personalStory: string;
+    preferences: string;
 }
 
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({
@@ -36,6 +37,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         bloodType: '',
         location: '',
         personalStory: '',
+        preferences: '',
     });
     const [isPublic, setIsPublic] = useState(true);
     // const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
@@ -44,35 +46,11 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         if (isOpen) {
             fetchProfile();
         }
-        // if (profileData && typeof profileData.is_public === 'boolean') {
-        //     setIsPublic(profileData.is_public);
-        // } else if (profileData && typeof profileData.is_public === 'number') {
-        //     setIsPublic(profileData.is_public === 1);
-        // }
-    }, [isOpen]); //, profileData]);
+    }, [isOpen, profileData]); //, profileData]);
 
     // Add this handler function
     const handleToggleVisibility = async (newValue: boolean) => {
-        // setIsTogglingVisibility(true);
-        // try {
-        //  await AuthService.toggleProfileVisibility(newValue);
         setIsPublic(newValue);
-
-        //     await fetchProfile();
-
-        //     // Show success notification
-        //     const message = newValue
-        //         ? '✅ Profile is now public and visible to others'
-        //         : '✅ Profile is now private and hidden from search';
-        //     console.log(message);
-        // } catch (err: any) {
-        //     console.error('Failed to update visibility:', err);
-        //     alert('Failed to update visibility: ' + err.message);
-        //     // Revert toggle if failed
-        //     setIsPublic(!newValue);
-        // } finally {
-        //     setIsTogglingVisibility(false);
-        // }
     };
 
     const fetchProfile = async () => {
@@ -103,6 +81,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         ? `${profile.city}, ${profile.state}, ${profile.country || 'USA'}`
                         : '',
                     personalStory: profile.medical_info || '',
+                    preferences: profile.preferences || '',
                 });
 
                 // Set visibility from DB
@@ -141,6 +120,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 bloodType: formData.bloodType,
                 location: formData.location,
                 personalStory: formData.personalStory,
+                preferences: formData.preferences,
                 isPublic: isPublic // Send visibility status here!
             };
 
@@ -292,6 +272,17 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                                         onChange={handleInputChange}
                                         placeholder="Share your story or medical details"
                                         rows={5}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Preferences & Requirements</label>
+                                    <textarea
+                                        name="preferences"
+                                        value={formData.preferences}
+                                        onChange={handleInputChange}
+                                        rows={3}
+                                        placeholder="e.g. Prefer non-smoker, specific hospital, urgency level..."
                                     />
                                 </div>
                             </div>
