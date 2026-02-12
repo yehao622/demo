@@ -39,7 +39,6 @@ export interface ArticleMatch {
     article: Article;
     similarity: number;
     rank: number;
-    relevanceReason: string;
 }
 
 export interface QueryAnalysis {

@@ -3,395 +3,352 @@ import { Article } from '../models/Article';
 import { CrawlerManager } from '../services/crawler/CrawlerManager';
 import { TopicLabeler } from '../services/labeler/topicLabeler';
 import { ArticleMatcherService } from '../services/articleMatcher.service';
+import db from '../database/init'; // Using your existing DB connection
 
 const router = express.Router();
 
-// Initialize CrawlerManager (singleton pattern)
+// --- Service Initialization ---
 const crawlerManager = new CrawlerManager();
-
-// In-memory storage for demo (replace with database in production)
-const articles: Article[] = [];
-
-// Initialize TopicLabeler (after crawlerManager initialization)
 const topicLabeler = new TopicLabeler(process.env.GEMINI_API_KEY || '');
-
-// Initial Article match service
 const articleMatcher = new ArticleMatcherService();
-let articlesIndexed = false;
+
+// --- Helper Functions: Data Mapping ---
+
+// 1. Database Row (snake_case) -> Application Object (camelCase)
+const rowToArticle = (row: any): Article => ({
+    id: row.id,
+    title: row.title,
+    url: row.url,
+    // Map DB 'summary' to Article 'excerpt'
+    excerpt: row.summary,
+    // Map DB 'publish_date' to Article 'publishDate'
+    publishDate: row.publish_date,
+    source: row.source,
+    // Note: 'content' column does not exist in your init.ts, so we use summary/excerpt
+    content: row.summary,
+    crawledAt: row.created_at, // Map DB 'created_at' to 'crawledAt'
+
+    // Parse JSON strings back to arrays
+    topics: typeof row.topics === 'string' ? JSON.parse(row.topics || '[]') : row.topics,
+    // Map DB 'organs' to Article 'organTypes'
+    organTypes: typeof row.organs === 'string' ? JSON.parse(row.organs || '[]') : row.organs,
+    categories: typeof row.categories === 'string' ? JSON.parse(row.categories || '[]') : row.categories,
+});
+
+// 2. Application Object (camelCase) -> Save to Database (snake_case)
+const saveArticleToDb = (article: Article): boolean => {
+    try {
+        // Check for duplicates
+        const checkStmt = db.prepare('SELECT id FROM articles WHERE url = ?');
+        const existing = checkStmt.get(article.url);
+
+        if (existing) return false;
+
+        const insertStmt = db.prepare(`
+            INSERT INTO articles (
+                id, title, url, summary, source, publish_date, 
+                topics, organs, categories, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        // Helper to ensure 'undefined' becomes 'null' for SQLite
+        const safe = (val: any) => (val === undefined ? null : val);
+
+        // 2. Ensure Date objects become Strings (SQLite requirement)
+        const toDateString = (val: any) => {
+            if (!val) return null;
+            if (val instanceof Date) return val.toISOString();
+            return val; // Assume it's already a string
+        };
+
+        // Use 'excerpt' as 'summary'. If content is available but excerpt is empty, use content snippet.
+        const summaryText = article.excerpt || (article.content ? article.content.substring(0, 200) + '...' : null);
+
+        insertStmt.run(
+            safe(article.id),
+            safe(article.title),
+            safe(article.url),
+            safe(summaryText),
+            safe(article.source),
+            toDateString(article.publishDate), // Matches 'publish_date'
+            JSON.stringify(article.topics || []),
+            JSON.stringify(article.organTypes || []), // Matches 'organs'
+            JSON.stringify(article.categories || []),
+            toDateString(article.crawledAt) || new Date().toISOString() // Matches 'created_at'
+        );
+        return true;
+    } catch (error) {
+        console.error('[Database] Save failed:', error);
+        return false;
+    }
+};
+
+// 3. Update labels in Database
+const updateArticleLabelsInDb = (article: Article) => {
+    try {
+        const updateStmt = db.prepare(`
+            UPDATE articles 
+            SET topics = ?, organs = ?, categories = ? 
+            WHERE id = ?
+        `);
+
+        updateStmt.run(
+            JSON.stringify(article.topics || []),
+            JSON.stringify(article.organTypes || []), // Matches 'organs'
+            JSON.stringify(article.categories || []),
+            article.id
+        );
+    } catch (error) {
+        console.error('[Database] Update labels failed:', error);
+    }
+};
+
+// --- Background Automation ---
+
+/**
+ * 1. Startup Sync: Load existing articles from DB into AI Search Index
+ */
+const initializeSearchIndex = async () => {
+    console.log('[Search] Initializing index from database...');
+    try {
+        // Check if table has data
+        const countRes = db.prepare('SELECT COUNT(*) as count FROM articles').get() as { count: number };
+
+        if (!countRes || countRes.count === 0) {
+            console.log('[Search] Database is empty. Waiting for crawler.');
+            runAutomatedCrawl();
+            return;
+        }
+
+        const rows = db.prepare('SELECT * FROM articles').all();
+        const articles = rows.map(rowToArticle);
+
+        const validArticles = articles.filter(a => a.topics && a.topics.length > 0);
+
+        if (validArticles.length > 0) {
+            await articleMatcher.storeArticlesBatch(validArticles);
+            console.log(`[Search] ✓ Successfully indexed ${validArticles.length} articles from DB.`);
+        } else {
+            console.log('[Search] Found articles in DB, but none are labeled yet.');
+        }
+    } catch (error) {
+        console.error('[Search] Failed to initialize index:', error);
+    }
+};
+
+// Run initialization (delayed slightly to ensure DB connection is ready)
+setTimeout(initializeSearchIndex, 1000);
+
+/**
+ * 2. Scheduled Task: Automated Crawling & Labeling
+ */
+const runAutomatedCrawl = async () => {
+    console.log('[Auto-Crawler] Starting scheduled crawl cycle...');
+    try {
+        // Step A: Crawl
+        const crawledArticles = await crawlerManager.crawlAllSites(5);
+
+        // Step B: Save
+        let newArticles: Article[] = [];
+        for (const article of crawledArticles) {
+            const isNew = saveArticleToDb(article);
+            if (isNew) newArticles.push(article);
+        }
+        console.log(`[Auto-Crawler] Saved ${newArticles.length} new articles.`);
+
+        // Step C: Label & Index
+        if (newArticles.length > 0) {
+            console.log(`[Auto-Crawler] Auto-labeling ${newArticles.length} new articles...`);
+            const labeled = await topicLabeler.labelArticles(newArticles);
+
+            for (const art of labeled) {
+                updateArticleLabelsInDb(art);
+                await articleMatcher.storeArticle(art);
+            }
+            console.log('[Auto-Crawler] Cycle complete. New articles are live.');
+        } else {
+            console.log('[Auto-Crawler] Cycle complete. No new content found.');
+        }
+
+    } catch (error) {
+        console.error('[Auto-Crawler] Error:', error);
+    }
+};
+
+// Schedule: Run every 2 hours
+const CRAWL_INTERVAL = 30 * 60 * 1000;//2 * 60 * 60 * 1000;
+setInterval(runAutomatedCrawl, CRAWL_INTERVAL);
+console.log(`[System] Auto-crawler scheduled (Interval: 2 hours)`);
+
+
+// --- REST API Routes ---
 
 /**
  * POST /api/content/crawl
- * Trigger crawling for DailyDiabetesNews
- * Request body:
- * - site?: string (e.g., 'dailydiabetes', 'dailytransplant', 'irishtransplant', 'matchingdonors')
- * - maxArticles?: number (default: 5)
- * - crawlAll?: boolean (crawl all sites)
  */
 router.post('/crawl', async (req: Request, res: Response) => {
     try {
         const { site, maxArticles = 5, crawlAll = false } = req.body;
-
-        console.log(`\n[API] Crawl request: ${crawlAll ? 'ALL SITES' : site || 'NO SITE SPECIFIED'}, max ${maxArticles} articles`);
+        console.log(`[API] Manual crawl request received.`);
 
         let crawledArticles: Article[] = [];
-        const errors: string[] = [];
 
         if (crawlAll) {
-            // Crawl all sites
-            console.log('[API] Starting crawl of all sites...');
             crawledArticles = await crawlerManager.crawlAllSites(maxArticles);
         } else if (site) {
-            // Crawl specific site
             const availableSites = crawlerManager.getAvailableSites();
             if (!availableSites.includes(site)) {
-                return res.status(400).json({
-                    success: false,
-                    error: `Invalid site. Available sites: ${availableSites.join(', ')}`,
-                });
+                return res.status(400).json({ success: false, error: `Invalid site. Available: ${availableSites.join(', ')}` });
             }
-
-            console.log(`[API] Starting crawl of ${site}...`);
             crawledArticles = await crawlerManager.crawlSite(site, maxArticles);
         } else {
-            return res.status(400).json({
-                success: false,
-                error: 'Please specify "site" parameter or set "crawlAll" to true',
-                availableSites: crawlerManager.getAvailableSites(),
-            });
+            return res.status(400).json({ success: false, error: 'Specify "site" or set "crawlAll": true' });
         }
 
-        // Store articles
-        articles.push(...crawledArticles);
-        console.log(`[API] ✓ Crawl completed: ${crawledArticles.length} articles\n`);
-
-        // Mark articles as not indexed (need to re-index after new crawl)
-        articlesIndexed = false;
+        let newCount = 0;
+        for (const article of crawledArticles) {
+            const isNew = saveArticleToDb(article);
+            if (isNew) newCount++;
+        }
 
         res.json({
             success: true,
-            articlesCount: crawledArticles.length,
-            totalStoredArticles: articles.length,
+            message: `Crawl complete. Found ${crawledArticles.length} items.`,
+            newArticlesSaved: newCount,
             articles: crawledArticles.map(a => ({
                 id: a.id,
-                source: a.source,
                 title: a.title,
                 url: a.url,
-                excerpt: a.excerpt,
-                publishDate: a.publishDate,
-                crawledAt: a.crawledAt,
-            })),
-            errors: errors.length > 0 ? errors : undefined,
+                source: a.source
+            }))
         });
     } catch (error) {
         console.error('[API] Crawl failed:', error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Crawl failed',
-        });
+        res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Crawl failed' });
     }
-});
-
-/**
- * GET /api/content/sites
- * Get list of available sites to crawl
- */
-router.get('/sites', (req: Request, res: Response) => {
-    res.json({
-        success: true,
-        sites: crawlerManager.getAvailableSites(),
-    });
 });
 
 /**
  * GET /api/content/articles
- * Get all stored articles
-* - source?: string (filter by source)
- * - topics?: string (comma-separated topics)
  */
-router.get('/articles', (req: Request, res: Response) => {
-    const { source, topics } = req.query;
+router.get('/articles', async (req: Request, res: Response) => {
+    try {
+        // Use 'publish_date' (snake_case) for sorting
+        const rows = db.prepare('SELECT * FROM articles ORDER BY publish_date DESC').all();
+        const formattedArticles = rows.map(rowToArticle);
 
-    let filtered = [...articles];
-
-    if (source && typeof source === 'string') {
-        filtered = filtered.filter(a => a.source === source);
+        res.json({
+            success: true,
+            count: formattedArticles.length,
+            articles: formattedArticles
+        });
+    } catch (error) {
+        console.error('Database Error:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch articles from database' });
     }
-
-    if (topics && typeof topics === 'string') {
-        const topicArray = topics.split(',').map(t => t.trim());
-        filtered = filtered.filter(a =>
-            a.topics.some(t => topicArray.includes(t))
-        );
-    }
-
-    res.json({
-        success: true,
-        count: filtered.length,
-        totalCount: articles.length,
-        filters: { source, topics },
-        articles: articles.map(a => ({
-            id: a.id,
-            source: a.source,
-            title: a.title,
-            url: a.url,
-            excerpt: a.excerpt,
-            publishDate: a.publishDate,
-            crawledAt: a.crawledAt,
-            topics: a.topics,
-            organTypes: a.organTypes,
-            categories: a.categories,
-        })),
-    });
 });
 
 /**
  * GET /api/content/articles/filter
- * Filter articles by labels
- * Query params: topic, organ, category
  */
-router.get('/articles/filter', (req, res) => {
+router.get('/articles/filter', async (req, res) => {
     try {
         const { topic, organ, category } = req.query;
 
-        let filtered = articles.filter(a => a.topics && a.topics.length > 0);
+        let query = 'SELECT * FROM articles WHERE 1=1';
+        const params: string[] = [];
 
+        // Note: DB columns are 'topics', 'organs', 'categories'
         if (topic) {
-            filtered = filtered.filter(a =>
-                a.topics.includes(topic as string)
-            );
+            query += ' AND topics LIKE ?';
+            params.push(`%"${topic}"%`);
         }
-
         if (organ) {
-            filtered = filtered.filter(a =>
-                a.organTypes.includes(organ as string)
-            );
+            query += ' AND organs LIKE ?'; // 'organs' in DB
+            params.push(`%"${organ}"%`);
+        }
+        if (category) {
+            query += ' AND categories LIKE ?';
+            params.push(`%"${category}"%`);
         }
 
-        if (category) {
-            filtered = filtered.filter(a =>
-                a.categories.includes(category as string)
-            );
+        query += ' ORDER BY publish_date DESC';
+
+        const filtered = db.prepare(query).all(params);
+
+        res.json({
+            success: true,
+            articles: filtered.map(rowToArticle)
+        });
+    } catch (error) {
+        console.error('Error filtering articles:', error);
+        res.status(500).json({ success: false, error: 'Failed to filter articles' });
+    }
+});
+
+/**
+ * POST /api/content/label
+ */
+router.post('/label', async (req, res) => {
+    try {
+        const rows = db.prepare("SELECT * FROM articles WHERE topics IS NULL OR topics = '[]'").all();
+        const unlabeledArticles = rows.map(rowToArticle);
+
+        if (unlabeledArticles.length === 0) {
+            return res.json({ success: true, message: 'No unlabeled articles found', labeled: 0 });
+        }
+
+        console.log(`[API] Labeling ${unlabeledArticles.length} articles...`);
+        const labeledArticles = await topicLabeler.labelArticles(unlabeledArticles);
+
+        for (const art of labeledArticles) {
+            updateArticleLabelsInDb(art);
+            await articleMatcher.storeArticle(art);
         }
 
         res.json({
             success: true,
-            count: filtered.length,
-            articles: filtered.map(a => ({
-                id: a.id,
-                title: a.title,
-                url: a.url,
-                excerpt: a.excerpt,
-                publishDate: a.publishDate,
-                source: a.source,
-                topics: a.topics,
-                organTypes: a.organTypes,
-                categories: a.categories
-            }))
+            message: `Successfully labeled ${labeledArticles.length} articles`,
+            labeled: labeledArticles.length
         });
     } catch (error) {
-        console.error('Error filtering articles:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to filter articles'
-        });
+        console.error('Error in label endpoint:', error);
+        res.status(500).json({ success: false, error: 'Failed to label articles' });
     }
 });
 
 /**
  * GET /api/content/statistics
- * Get labeling statistics
  */
-router.get('/statistics', (req, res) => {
+router.get('/statistics', async (req, res) => {
     try {
-        const stats = topicLabeler.getStatistics(articles);
+        const rows = db.prepare('SELECT * FROM articles').all();
+        const allArticles = rows.map(rowToArticle);
+
+        const stats = topicLabeler.getStatistics(allArticles);
+
         res.json({
             success: true,
             statistics: stats
         });
     } catch (error) {
         console.error('Error getting statistics:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to get statistics'
-        });
-    }
-});
-
-/**
- * GET /api/content/articles/:id
- * Get full article content by ID
- */
-router.get('/articles/:id', (req: Request, res: Response) => {
-    const { id } = req.params;
-    const article = articles.find(a => a.id === id);
-
-    if (!article) {
-        return res.status(404).json({
-            success: false,
-            error: 'Article not found',
-        });
-    }
-
-    res.json({
-        success: true,
-        article,
-    });
-});
-
-/**
- * DELETE /api/content/articles
- * Clear all stored articles (useful for testing)
- */
-router.delete('/articles', (req: Request, res: Response) => {
-    const count = articles.length;
-    articles.length = 0;
-    crawlerManager.clearArticles();
-    articleMatcher.clearAll();
-    articlesIndexed = false;
-
-    res.json({
-        success: true,
-        message: `Cleared ${count} articles`,
-    });
-});
-
-/**
- * POST /api/content/label
- * Label all unlabeled articles
- */
-router.post('/label', async (req, res) => {
-    try {
-        const unlabeledArticles = articles.filter(a =>
-            !a.topics || a.topics.length === 0
-        );
-
-        if (unlabeledArticles.length === 0) {
-            return res.json({
-                success: true,
-                message: 'No unlabeled articles to process',
-                labeled: 0,
-                total: articles.length
-            });
-        }
-
-        console.log(`Labeling ${unlabeledArticles.length} articles...`);
-        const labeledArticles = await topicLabeler.labelArticles(unlabeledArticles);
-
-        // Update the articles array with labeled versions
-        labeledArticles.forEach(labeledArticle => {
-            const index = articles.findIndex(a => a.id === labeledArticle.id);
-            if (index == -1) {
-                articles[index] = labeledArticle;
-            }
-        });
-
-        // Mark articles as not indexed (need to re-index after labeling)
-        articlesIndexed = false;
-
-        res.json({
-            success: true,
-            message: `Successfully labeled ${labeledArticles.length} articles`,
-            labeled: labeledArticles.length,
-            total: articles.length
-        });
-    } catch (error) {
-        console.error('Error in label endpoint:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to label articles'
-        });
-    }
-});
-
-/**
- * POST /api/content/label/:id
- * Label a specific article by ID
- */
-router.post('/label/:id', async (req, res) => {
-    try {
-        const articleId = req.params.id;
-        const article = articles.find(a => a.id === articleId);
-
-        if (!article) {
-            return res.status(404).json({
-                success: false,
-                error: 'Article not found'
-            });
-        }
-
-        const labeledArticle = await topicLabeler.labelArticle(article);
-
-        // Update the article in the array
-        const index = articles.findIndex(a => a.id === articleId);
-        if (index !== -1) {
-            articles[index] = labeledArticle;
-        }
-
-        res.json({
-            success: true,
-            article: {
-                id: labeledArticle.id,
-                title: labeledArticle.title,
-                topics: labeledArticle.topics,
-                organTypes: labeledArticle.organTypes,
-                categories: labeledArticle.categories
-            }
-        });
-    } catch (error) {
-        console.error('Error labeling article:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to label article'
-        });
+        res.status(500).json({ success: false, error: 'Failed to get statistics' });
     }
 });
 
 /**
  * POST /api/content/search
- * Search articles using AI-powered semantic search
- * Request body:
- * - query: string (search query)
- * - topN?: number (number of results, default: 10)
- * - minSimilarity?: number (minimum similarity score 0-1, default: 0.3)
  */
 router.post('/search', async (req: Request, res: Response) => {
     try {
         const { query, topN = 10, minSimilarity = 0.3 } = req.body;
 
         if (!query || typeof query !== 'string') {
-            return res.status(400).json({
-                success: false,
-                error: 'Query parameter is required and must be a string'
-            });
+            return res.status(400).json({ success: false, error: 'Query required' });
         }
 
-        // Ensure articles are labeled before searching
-        const labeledArticles = articles.filter(a => a.topics && a.topics.length > 0);
-
-        if (labeledArticles.length === 0) {
-            return res.json({
-                success: true,
-                message: 'No labeled articles available. Please crawl and label articles first.',
-                query,
-                summary: 'No articles available to search. Please ensure articles have been crawled and labeled.',
-                matches: [],
-                queryAnalysis: {
-                    extractedOrgans: [],
-                    extractedTopics: [],
-                    intent: query
-                }
-            });
-        }
-
-        // Index articles if not already indexed or if articles have changed
-        if (!articlesIndexed) {
-            console.log(`[Search] Indexing ${labeledArticles.length} articles...`);
-            await articleMatcher.storeArticlesBatch(labeledArticles);
-            articlesIndexed = true;
-            console.log('[Search] ✓ Articles indexed successfully');
-        }
-
-        // Perform search
         const searchResult = await articleMatcher.searchArticles({
             query,
             topN,
@@ -404,52 +361,57 @@ router.post('/search', async (req: Request, res: Response) => {
                 query: searchResult.query,
                 summary: searchResult.summary,
                 matches: searchResult.matches.map(match => ({
-                    article: {
-                        id: match.article.id,
-                        title: match.article.title,
-                        url: match.article.url,
-                        excerpt: match.article.excerpt,
-                        source: match.article.source,
-                        publishDate: match.article.publishDate,
-                        topics: match.article.topics,
-                        organTypes: match.article.organTypes,
-                        categories: match.article.categories
-                    },
+                    article: match.article,
                     similarity: match.similarity,
-                    rank: match.rank,
-                    relevanceReason: match.relevanceReason
+                    rank: match.rank
                 })),
                 queryAnalysis: searchResult.queryAnalysis
             }
         });
     } catch (error) {
         console.error('[Search] Error:', error);
-        res.status(500).json({
-            success: false,
-            error: error instanceof Error ? error.message : 'Search failed'
-        });
+        res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Search failed' });
     }
 });
 
 /**
- * GET /api/content/search/status
- * Get search index status
+ * GET /api/content/sites
  */
-router.get('/search/status', (req: Request, res: Response) => {
-    const stats = articleMatcher.getStats();
-    const labeledArticles = articles.filter(a => a.topics && a.topics.length > 0);
+router.get('/sites', (req: Request, res: Response) => {
+    res.json({ success: true, sites: crawlerManager.getAvailableSites() });
+});
 
-    res.json({
-        success: true,
-        status: {
-            indexed: articlesIndexed,
-            totalArticles: articles.length,
-            labeledArticles: labeledArticles.length,
-            indexedArticles: stats.articleCount,
-            embeddingCount: stats.embeddingCount,
-            ready: articlesIndexed && stats.articleCount > 0
+/**
+ * GET /api/content/articles/:id
+ */
+router.get('/articles/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const row = db.prepare('SELECT * FROM articles WHERE id = ?').get(id);
+
+        if (!row) {
+            return res.status(404).json({ success: false, error: 'Article not found' });
         }
-    });
+
+        res.json({ success: true, article: rowToArticle(row) });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Failed to fetch article' });
+    }
+});
+
+/**
+ * DELETE /api/content/articles
+ */
+router.delete('/articles', async (req: Request, res: Response) => {
+    try {
+        db.prepare('DELETE FROM articles').run();
+        crawlerManager.clearArticles();
+        articleMatcher.clearAll();
+
+        res.json({ success: true, message: 'All articles deleted from database and index.' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Delete failed' });
+    }
 });
 
 export default router;

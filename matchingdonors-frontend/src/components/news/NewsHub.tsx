@@ -127,9 +127,9 @@ export const NewsHub: React.FC = () => {
             </div>
 
             {/* Article Search Section */}
-            {showSearch && (
+            <div style={{ display: showSearch ? 'block' : 'none' }}>
                 <ArticleSearchBox onSearch={handleSearchResults} />
-            )}
+            </div>
 
             {/* Toggle Search Button */}
             <div className="toggle-search-container">

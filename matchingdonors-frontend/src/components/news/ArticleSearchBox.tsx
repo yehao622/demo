@@ -16,7 +16,6 @@ interface ArticleMatch {
     };
     similarity: number;
     rank: number;
-    relevanceReason: string;
 }
 
 interface SearchResult {
@@ -238,10 +237,6 @@ export const ArticleSearchBox: React.FC<ArticleSearchBoxProps> = ({ onSearch }) 
                                                 </div>
                                             </div>
                                             <p className="match-excerpt">{match.article.excerpt}</p>
-                                            <div className="match-relevance">
-                                                <span className="relevance-label">Why relevant:</span>
-                                                <span className="relevance-reason">{match.relevanceReason}</span>
-                                            </div>
                                             {(match.article.topics.length > 0 || match.article.organTypes.length > 0) && (
                                                 <div className="match-labels">
                                                     {match.article.organTypes.length > 0 && (

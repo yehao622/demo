@@ -24,9 +24,10 @@ export function runMigrations() {
                 ADD COLUMN is_public BOOLEAN DEFAULT 1;
             `);
             console.log('✅ Migration complete: is_public column added');
-        } else {
-            console.log('✅ is_public column already exists');
         }
+        // else {
+        //     console.log('✅ is_public column already exists');
+        // }
     } catch (error) {
         console.error('❌ Migration failed:', error);
         throw error;

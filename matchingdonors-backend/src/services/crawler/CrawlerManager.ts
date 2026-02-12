@@ -4,6 +4,7 @@ import { DailyTransplantCrawler } from "./DailyTransplantCrawler";
 import { IrishTransplantCrawler } from "./IrishTransplantCrawler";
 import { MatchingDonorsCrawler } from "./MatchingDonorsCrawler";
 import { Article } from "../../models/Article";
+import db from "../../database/init";
 
 /**
  * CrawlerManager - Centralized management for all site crawlers
@@ -50,10 +51,27 @@ export class CrawlerManager {
         console.log(`[CrawlerManager] Found ${links.length} article links`);
 
         // Step 2. Crawl individual articles 
-        const articlesToCrawl = links.slice(0, maxArticles);
+        // const articlesToCrawl = links.slice(0, maxArticles);
         const articles: Article[] = [];
 
-        for (const link of articlesToCrawl) {
+        // Prepare DB statement for fast lookups
+        const checkStmt = db.prepare('SELECT id FROM articles WHERE url = ?');
+
+        let attempts = 0;
+
+        for (const link of links) {
+            // Stop if we've checked enough links to satisfy the limit
+            if (attempts >= maxArticles) break;
+
+            // Verify if this URL is already in our database
+            const existing = checkStmt.get(link);
+
+            if (existing) {
+                console.log(`[Crawler] ⏭️ Skipping existing article: ${link}`);
+                attempts++;
+                continue; // Skip the expensive fetch!
+            }
+
             try {
                 const article = await crawler.crawlArticle(link);
                 articles.push(article);
@@ -65,10 +83,12 @@ export class CrawlerManager {
                 const errorMessage = error instanceof Error ? error.message : String(error);
                 console.error(`[CrawlerManager] ✗ Failed to crawl ${link}:`, errorMessage);
             }
+
+            attempts++;
         }
 
         this.articles.push(...articles);
-        console.log(`[Crawler] Completed. Crawled ${articles.length}/${articlesToCrawl} articles from ${siteName}`);
+        console.log(`[Crawler] Completed. Found ${articles.length} NEW articles from ${siteName}`);
 
         return articles;
     }
@@ -88,7 +108,7 @@ export class CrawlerManager {
             try {
                 const articles = await this.crawlSite(siteName, maxArticlesPerSite);
                 allArticles.push(...articles);
-                await this.sleep(2000);
+                if (articles.length > 0) await this.sleep(2000);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : String(error);
                 console.error(`[CrawlerManager] Failed to crawl ${siteName}:`, errorMessage);
