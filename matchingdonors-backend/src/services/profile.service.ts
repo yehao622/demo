@@ -27,6 +27,7 @@ export interface ProfileData {
 
 export interface ProfileValidation {
     isValid: boolean;
+    intent?: string;
     roleMismatch?: {
         detected: boolean;
         message: string;
@@ -177,37 +178,29 @@ export class ProfileService {
         currentTab: 'profile_fill' | 'profile_match' | 'news_hub' | 'advertiser_chat'
     ): Promise<ProfileValidation> {
 
-        const prompt = `You are a medical platform assistant. Analyze the user's input for potential mismatches.
+        const prompt = `You are a medical platform assistant for MatchingDonors. Analyze the user's input.
 
 User Role: ${userRole}
 Current Tab: ${currentTab}
 User Input: "${userInput}"
 
-Analyze for:
-1. **Role Mismatch**: Does a PATIENT talk about donating organs? Or does a DONOR talk about needing organs?
-2. **Tab Mismatch**: Is the user asking for features from another tab?
-   - Profile Fill: Create/edit personal medical profile
-   - Profile Match: Find compatible donors/patients
-   - News Hub: Medical news and articles
-   - Advertiser Chat: Advertising inquiries
+ANALYSIS CRITERIA:
+1. **Role Mismatch**: 
+   - CRITICAL: If User Role is "patient" and they mention "donating", "giving", or "offering" an organ -> MISMATCH.
+   - CRITICAL: If User Role is "donor" and they mention "needing", "receiving", or "waiting for" an organ -> MISMATCH.
+2. **Tab Mismatch**: 
+   - Profile Fill: Describing oneself/personal story.
+   - Profile Match: Searching/asking to see a list of results.
+3. **Contact Intent**: Is the user asking to speak to a real person, a human, or the CEO?
+4. **Unrelated**: Is the input unrelated to medical matching or this platform (e.g., weather, sports)?
 
-Respond in JSON format:
+Respond in JSON:
 {
-  "roleMismatch": {
-    "detected": boolean,
-    "confidence": "high" | "medium" | "low",
-    "reason": "brief explanation",
-    "suggestedRole": "patient" | "donor" | null
-  },
-  "tabMismatch": {
-    "detected": boolean,
-    "confidence": "high" | "medium" | "low",
-    "reason": "brief explanation",
-    "suggestedTab": "profile_fill" | "profile_match" | "news_hub" | "advertiser_chat" | null
-  }
-}
-
-Only flag issues with "high" confidence. Be lenient with ambiguous statements.`;
+  "intent": "profile_fill" | "profile_match" | "news_hub" | "advertiser_chat" | "contact_person" | "unrelated",
+  "roleMismatch": { "detected": boolean, "suggestedRole": "patient" | "donor" | null, "confidence": "high" | "medium" | "low" },
+  "tabMismatch": { "detected": boolean, "suggestedTab": string | null, "confidence": "high" | "medium" | "low" },
+  "reason": "brief explanation"
+}`;
 
         try {
             const response = await google.models.generateContent({
@@ -232,10 +225,17 @@ Only flag issues with "high" confidence. Be lenient with ambiguous statements.`;
 
             const result: ProfileValidation = {
                 isValid: true,
+                intent: analysis.intent,
             };
 
+            // Explicitly mark as INVALID if intent is unrelated or contact_person
+            if (analysis.intent === 'unrelated' || analysis.intent === 'contact_person') {
+                result.isValid = false;
+            }
+
             // Check role mismatch
-            if (analysis.roleMismatch?.detected && analysis.roleMismatch.confidence === 'high') {
+            const roleConf = analysis.roleMismatch?.confidence;
+            if (analysis.roleMismatch?.detected && (roleConf === 'high' || roleConf === 'medium')) {
                 result.isValid = false;
                 result.roleMismatch = {
                     detected: true,
@@ -245,7 +245,8 @@ Only flag issues with "high" confidence. Be lenient with ambiguous statements.`;
             }
 
             // Check tab mismatch
-            if (analysis.tabMismatch?.detected && analysis.tabMismatch.confidence === 'high') {
+            const tabConf = analysis.tabMismatch?.confidence;
+            if (analysis.tabMismatch?.detected && (tabConf === 'high' || tabConf === 'medium')) {
                 result.isValid = false;
                 const tabNames: Record<string, string> = {
                     profile_fill: 'Profile Fill',

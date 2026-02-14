@@ -177,7 +177,7 @@ const runAutomatedCrawl = async () => {
 };
 
 // Schedule: Run every 2 hours
-const CRAWL_INTERVAL = 30 * 60 * 1000;//2 * 60 * 60 * 1000;
+const CRAWL_INTERVAL = 12 * 60 * 60 * 1000;
 setInterval(runAutomatedCrawl, CRAWL_INTERVAL);
 console.log(`[System] Auto-crawler scheduled (Interval: 2 hours)`);
 

@@ -5,6 +5,7 @@ import '../../styles/shared-voice-input.css';
 import { useAuth } from "../../contexts/AuthContext";
 import { AuthService } from "../../services/auth.service";
 import { ValidationModal } from "../common/ValidationModal";
+import { useNavigate } from "react-router-dom";
 
 type ProfileSuggestion = {
     summary: string;
@@ -14,6 +15,13 @@ type ProfileSuggestion = {
     location: string | null;
     personal_story: string;
     safety_flags: string[];
+};
+
+const tabRoutes: Record<string, string> = {
+    'Profile Fill': '/profile-fill',
+    'Profile Match': '/profile-match',
+    'News Hub': '/news-hub',
+    'Advertiser Chat': '/advertiser-chat'
 };
 
 // Check if browser supports MediaRecorder
@@ -27,6 +35,7 @@ export const ProfileAgent: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showSaveModal, setShowSaveModal] = useState(false);
+    const navigate = useNavigate();
 
     // Editable profile fields
     const [editableSummary, setEditableSummary] = useState("");
@@ -88,23 +97,47 @@ export const ProfileAgent: React.FC = () => {
                     setLoading(false);
 
                     // Show role mismatch
-                    if (validation.roleMismatch?.detected) {
+                    if (validation.roleMismatch?.detected || validation.tabMismatch?.detected) {
                         setValidationModal({
                             isOpen: true,
-                            type: 'role',
-                            message: validation.roleMismatch.message,
-                            suggestedAction: 'Go to Registration',
+                            type: validation.roleMismatch?.detected ? 'role' : 'tab',
+                            message: validation.roleMismatch?.message || validation.tabMismatch?.message,
+                            suggestedAction: validation.roleMismatch?.detected
+                                ? 'Go to Registration'
+                                : `Go to ${validation.tabMismatch?.suggestedTab}`,
                         });
                         return;
                     }
 
                     // Show tab mismatch
-                    if (validation.tabMismatch?.detected) {
+                    // if (validation.tabMismatch?.detected) {
+                    //     setValidationModal({
+                    //         isOpen: true,
+                    //         type: 'tab',
+                    //         message: validation.tabMismatch.message,
+                    //         suggestedAction: `Go to ${validation.tabMismatch.suggestedTab}`,
+                    //     });
+                    //     return;
+                    // }
+
+                    // Need tontact a real person
+                    if (validation.intent === 'contact_person') {
+                        setValidationModal({
+                            isOpen: true,
+                            type: 'tab', // Reusing modal UI
+                            message: "To speak with a real person, please contact: Paul Dooley (CEO & Founder) at ceo@matchingdonors.com or +1-781-821-2204 (ext. 1).",
+                            suggestedAction: 'Got it'
+                        });
+                        return;
+                    }
+
+                    // Query on unrelated content
+                    if (validation.intent === 'unrelated') {
                         setValidationModal({
                             isOpen: true,
                             type: 'tab',
-                            message: validation.tabMismatch.message,
-                            suggestedAction: `Go to ${validation.tabMismatch.suggestedTab}`,
+                            message: "The 'Profile Fill' tab is specifically for creating your medical matching biography. Please describe your situation, blood type, and location here.",
+                            suggestedAction: 'Got it'
                         });
                         return;
                     }
@@ -440,16 +473,25 @@ export const ProfileAgent: React.FC = () => {
 
             <ValidationModal
                 isOpen={validationModal.isOpen}
-                onClose={() => setValidationModal({ ...validationModal, isOpen: false })}
+                onClose={() => {
+                    setValidationModal({ ...validationModal, isOpen: false });
+                    setLoading(false);
+                }}
                 type={validationModal.type}
                 message={validationModal.message}
                 suggestedAction={validationModal.suggestedAction}
                 onActionClick={() => {
-                    // Extract suggested role from validation message
-                    const suggestedRole = validationModal.message.toLowerCase().includes('donor') ? 'donor' : 'patient';
-
-                    triggerRegistration(suggestedRole);
+                    if (validationModal.type === 'tab') {
+                        const route = tabRoutes[validationModal.suggestedAction?.replace('Go to ', '') || ''];
+                        if (route) {
+                            navigate(route);
+                        }
+                    } else if (validationModal.type === 'role') {
+                        const suggestedRole = validationModal.message.toLowerCase().includes('donor') ? 'donor' : 'patient';
+                        triggerRegistration(suggestedRole);
+                    }
                     setValidationModal({ ...validationModal, isOpen: false });
+                    setLoading(false);
                 }}
             />
         </div>

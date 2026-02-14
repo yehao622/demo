@@ -68,7 +68,7 @@ export class CrawlerManager {
 
             if (existing) {
                 console.log(`[Crawler] ⏭️ Skipping existing article: ${link}`);
-                attempts++;
+                // attempts++;
                 continue; // Skip the expensive fetch!
             }
 
@@ -76,6 +76,7 @@ export class CrawlerManager {
                 const article = await crawler.crawlArticle(link);
                 articles.push(article);
                 console.log(`[Crawler] crawled ${article.title}`);
+                attempts++;
 
                 // wait 5 second between request
                 await this.sleep(5000);
@@ -83,8 +84,6 @@ export class CrawlerManager {
                 const errorMessage = error instanceof Error ? error.message : String(error);
                 console.error(`[CrawlerManager] ✗ Failed to crawl ${link}:`, errorMessage);
             }
-
-            attempts++;
         }
 
         this.articles.push(...articles);
