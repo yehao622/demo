@@ -105,6 +105,19 @@ db.exec(`
     CREATE INDEX IF NOT EXISTS idx_articles_publish_date ON articles(publish_date);
 `);
 
+db.exec(`
+  CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    recipient_id INTEGER NOT NULL,
+    sender_id INTEGER,           -- Can be NULL if it's a system alert
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    type TEXT NOT NULL,          -- e.g., 'system' or 'message'
+    is_read INTEGER DEFAULT 0,   -- 0 for false, 1 for true
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 if (!isTest) {
     console.log('✅ Database initialized successfully at:', DB_PATH);
     import('./migrations').then(({ runMigrations }) => {

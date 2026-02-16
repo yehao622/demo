@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Profile, MatchResult, MatchRequest } from '../../types/profile.types';
+import { AuthService } from '../../services/auth.service';
 import { profileService } from '../../services/profileService';
 import { ProfileSearch } from './ProfileSearch';
 import { MatchResults } from './MatchResults';
 import { ProfileDetailModal } from './ProfileDetailModal';
+import { ValidationModal } from '../common/ValidationModal';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
 import './ProfileMatchingPage.css';
@@ -20,6 +22,13 @@ export const ProfileMatchingPage: React.FC = () => {
     const [useRealData, setUseRealData] = useState(false);
     const [dataMode, setDataMode] = useState<'demo' | 'real'>('demo');
     const [searchResults, setSearchResults] = useState<any[]>([]);
+
+    const [validationModal, setValidationModal] = useState<{
+        isOpen: boolean;
+        message: string;
+        suggestedAction?: string;
+        onConfirm?: () => void;
+    }>({ isOpen: false, message: '' });
 
     // State for selected filters
     const [activeFilters, setActiveFilters] = useState({
@@ -67,25 +76,16 @@ export const ProfileMatchingPage: React.FC = () => {
         }
     };
 
-    const handleSearch = async (request: MatchRequest) => {
-        if (!request.profileText || !request.profileText.trim()) {
-            alert('Please enter search criteria');
-            return;
-        }
-
-        setIsSearching(true);
-        setError(null);
-
-        // Reset filters when a new search begins
-        setActiveFilters({ bloodType: '', organType: '', ageRange: '', country: '', state: '' });
-
+    const executeSearch = async (request: MatchRequest) => {
         try {
-            let searcherType = 'patient';
-            if (currentUser) {
-                searcherType = currentUser.role;
+            let searcherType = currentUser ? currentUser.role : 'patient';
+
+            let profileId = undefined;
+            if (currentUser && currentUser.id) {
+                profileId = `user-${currentUser.role}-${currentUser.id}`;
             }
 
-            const searchRequest = { ...request, searcherType };
+            const searchRequest = { ...request, searcherType, profileId };
             const response = await profileService.findMatches(searchRequest);
 
             if (response.success) {
@@ -102,6 +102,68 @@ export const ProfileMatchingPage: React.FC = () => {
             console.error('❌ Error during search:', error);
             alert('Search failed: ' + (error instanceof Error ? error.message : 'Unknown error'));
         } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleSearch = async (request: MatchRequest) => {
+        if (!request.profileText || !request.profileText.trim()) {
+            alert('Please enter search criteria');
+            return;
+        }
+
+        setIsSearching(true);
+        setError(null);
+
+        // Reset filters when a new search begins
+        setActiveFilters({ bloodType: '', organType: '', ageRange: '', country: '', state: '' });
+
+        try {
+            // Check intent via AI
+            const validation = await AuthService.validateInput(request.profileText, 'profile_match');
+
+            // If it's NOT a valid match query (unrelated, news, profile fill, etc.)
+            if (!validation.isValid || validation.intent !== 'profile_match') {
+                setIsSearching(false);
+
+                // Fetch user profile to check for organ type
+                let userProfile: any = null;
+                try {
+                    const profileData = await AuthService.getProfile();
+                    userProfile = profileData.profile;
+                } catch (err) {
+                    console.log("Could not fetch user profile.");
+                }
+
+                // If no organ type in profile
+                if (!userProfile || !userProfile.organ_type) {
+                    setValidationModal({
+                        isOpen: true,
+                        message: `Warm Reminder: This tab is for finding medical matches. Please specify what organ you are looking for (or donating) in your query, or update your profile in the "Profile Fill" tab.`,
+                        suggestedAction: 'Got it'
+                    });
+                    return;
+                }
+
+                // If they DO have an organ type, offer to auto-search
+                setValidationModal({
+                    isOpen: true,
+                    message: `Warm Reminder: This tab is for finding matches. We will ignore your current question and search using your saved profile (Organ: ${userProfile.organ_type}) instead.`,
+                    suggestedAction: 'Help me match',
+                    onConfirm: () => {
+                        const profileBasedQuery = `Find matches for ${userProfile.organ_type} transplant. My blood type is ${userProfile.blood_type || 'not specified'}.`;
+                        setIsSearching(true);
+                        executeSearch({ ...request, profileText: profileBasedQuery });
+                    }
+                });
+                return;
+            }
+
+            // If it's a valid match query, process normally
+            await executeSearch(request);
+
+        } catch (error) {
+            console.error("Error validating search:", error);
             setIsSearching(false);
         }
     };
@@ -359,6 +421,20 @@ export const ProfileMatchingPage: React.FC = () => {
                 onClose={() => {
                     setSelectedProfile(null);
                     setSelectedMatchScore(undefined);
+                }}
+            />
+
+            <ValidationModal
+                isOpen={validationModal.isOpen}
+                onClose={() => setValidationModal({ isOpen: false, message: '' })}
+                type="tab" // Just using this for standard styling
+                message={validationModal.message}
+                suggestedAction={validationModal.suggestedAction || "Got it"}
+                onActionClick={() => {
+                    setValidationModal({ isOpen: false, message: '' });
+                    if (validationModal.onConfirm) {
+                        validationModal.onConfirm();
+                    }
                 }}
             />
         </div>

@@ -124,191 +124,6 @@ export class MatchingService {
         return denominator === 0 ? 0 : dotProduct / denominator;
     }
 
-    /**
-     * Store profile with its embedding
-     */
-    // async storeProfile(profile: Profile): Promise<void> {
-    //     try {
-    //         const profileText = this.buildProfileText(profile);
-    //         const embedding = await this.generateEmbedding(profileText);
-
-    //         this.profiles.set(profile.id, profile);
-    //         this.embeddings.set(profile.id, {
-    //             profileId: profile.id,
-    //             embedding,
-    //             timestamp: new Date()
-    //         });
-
-    //         console.log(`✓ Stored profile ${profile.id} with embedding dimension: ${embedding.length}`);
-    //     } catch (error) {
-    //         console.error(`Failed to store profile ${profile.id}:`, error);
-    //         throw error;
-    //     }
-    // }
-
-    /**
-     * Store multiple profiles with embeddings (batch)
-     */
-    // async storeProfilesBatch(profiles: Profile[]): Promise<void> {
-    //     try {
-    //         const profileTexts = profiles.map(p => this.buildProfileText(p));
-    //         const embeddings = await this.generateEmbeddingsBatch(profileTexts);
-
-    //         profiles.forEach((profile, index) => {
-    //             const embedding = embeddings[index];
-
-    //             if (!embedding) {
-    //                 throw new Error(`Missing embedding for profile ${profile.id} at index ${index}`);
-    //             }
-
-    //             this.profiles.set(profile.id, profile);
-    //             this.embeddings.set(profile.id, {
-    //                 profileId: profile.id,
-    //                 embedding,
-    //                 timestamp: new Date()
-    //             });
-    //         });
-
-    //         console.log(`✓ Stored ${profiles.length} profiles in batch`);
-    //     } catch (error) {
-    //         console.error('Failed to store profiles in batch:', error);
-    //         throw error;
-    //     }
-    // }
-
-    /**
-     * Find top N matching profiles
-     */
-    // async findTopMatches(request: MatchRequest): Promise<MatchResult[]> {
-    //     const { profileId, profileText, topN = 5, minSimilarity = 0.5, searcherType } = request;
-
-    //     // Get query embedding
-    //     let queryEmbedding: number[];
-    //     let queryText = profileText || '';
-    //     let queryProfile: Profile | undefined;
-
-    //     if (profileText) {
-    //         queryEmbedding = await this.generateEmbedding(profileText);
-    //     } else if (profileId) {
-    //         const embData = this.embeddings.get(profileId);
-
-    //         if (!embData) {
-    //             throw new Error(`Profile ${profileId} not found in embeddings`);
-    //         }
-
-    //         queryEmbedding = embData.embedding;
-    //         queryProfile = this.profiles.get(profileId);
-    //         if (queryProfile) {
-    //             queryText = this.buildProfileText(queryProfile);
-    //         }
-    //     } else {
-    //         throw new Error('Either profileId or profileText must be provided');
-    //     }
-
-
-    //     // Infer searcher type from query text if not provided
-    //     let inferredSearcherType = searcherType;
-    //     if (!inferredSearcherType && queryText) {
-    //         const lower = queryText.toLowerCase();
-    //         if (lower.includes('need') || lower.includes('seeking') || lower.includes('looking for') ||
-    //             lower.includes('require') || lower.includes('patient')) {
-    //             inferredSearcherType = 'patient';
-    //         } else if (lower.includes('donate') || lower.includes('donor') || lower.includes('willing to give')) {
-    //             inferredSearcherType = 'donor';
-    //         }
-    //     }
-
-    //     // Extract query info for hybrid scoring
-    //     const queryInfo = this.extractKeyInfo(queryText);
-    //     const queryProfileData: Partial<Profile> = {};
-
-    //     // Only assign properties if they have actual values (not undefined)
-    //     const bloodType = queryInfo.bloodType || queryProfile?.bloodType;
-    //     if (bloodType) {
-    //         queryProfileData.bloodType = bloodType;
-    //     }
-
-    //     const age = queryInfo.age ?? queryProfile?.age;
-    //     if (age !== null && age !== undefined) {
-    //         queryProfileData.age = age;
-    //     }
-
-    //     if (queryProfile?.country) {
-    //         queryProfileData.country = queryProfile.country;
-    //     }
-
-    //     if (queryProfile?.state) {
-    //         queryProfileData.state = queryProfile.state;
-    //     }
-
-    //     if (queryProfile?.city) {
-    //         queryProfileData.city = queryProfile.city;
-    //     }
-
-    //     const organType = queryInfo.organType || queryProfile?.organType;
-    //     if (organType) {
-    //         queryProfileData.organType = organType;
-    //     }
-
-    //     // Calculate similarities
-    //     const matches: MatchResult[] = [];
-
-    //     for (const [id, embData] of this.embeddings.entries()) {
-    //         // Skip self-matching
-    //         if (id === profileId) continue;
-
-    //         const profile = this.profiles.get(id);
-    //         if (!profile) continue;
-
-    //         // If searcher is a patient, only show donors. If searcher is a donor, only show patients.
-    //         if (inferredSearcherType) {
-    //             if (inferredSearcherType === 'patient' && profile.type !== 'donor') continue;
-    //             if (inferredSearcherType === 'donor' && profile.type !== 'patient') continue;
-    //         }
-
-    //         // HARD FILTER - Organ type must match if specified
-    //         const queryOrganType = queryInfo.organType || queryProfile?.organType;
-    //         if (queryOrganType && profile.organType) {
-    //             // Both have organ types specified - they must match
-    //             if (queryOrganType.toLowerCase() !== profile.organType.toLowerCase()) {
-    //                 continue; // Skip this profile - organ doesn't match
-    //             }
-    //         }
-
-    //         // AI similarity (cosine similarity)
-    //         const aiSimilarity = this.computeSimilarity(queryEmbedding, embData.embedding);
-
-    //         // Calculate hybrid score
-    //         const { hybridScore, breakdown } = this.calculateHybridScore(
-    //             aiSimilarity,
-    //             inferredSearcherType === 'patient' ? profile : queryProfileData as Profile,
-    //             inferredSearcherType === 'patient' ? queryProfileData as Profile : profile
-    //         );
-
-    //         if (hybridScore >= minSimilarity) {
-    //             // Generate match reason
-    //             const reason = this.generateMatchReason(profile, queryText);
-
-    //             matches.push({
-    //                 profileId: id,
-    //                 profile,
-    //                 similarity: hybridScore,
-    //                 rank: 0, // Will be set after sorting
-    //                 reason,
-    //                 hybridScore,
-    //                 scoreBreakdown: breakdown
-    //             });
-    //         }
-    //     }
-
-    //     // Sort by similarity (descending) and assign ranks
-    //     matches.sort((a, b) => b.similarity - a.similarity);
-    //     matches.forEach((match, index) => {
-    //         match.rank = index + 1;
-    //     });
-
-    //     return matches.slice(0, topN);
-    // }
 
     private extractKeyInfo(text: string): {
         bloodType: string | null;
@@ -404,32 +219,6 @@ export class MatchingService {
     `.trim();
     }
 
-    /**
-     * Get all stored profiles (for testing)
-     */
-    // getAllProfiles(): Profile[] {
-    //     return Array.from(this.profiles.values());
-    // }
-
-    /**
-     * Get embedding statistics
-     */
-    // getStats(): { profileCount: number; embeddingCount: number } {
-    //     return {
-    //         profileCount: this.profiles.size,
-    //         embeddingCount: this.embeddings.size
-    //     };
-    // }
-
-    /**
-     * Clear all stored data (for testing)
-     */
-    // clearAll(): void {
-    //     this.profiles.clear();
-    //     this.embeddings.clear();
-    //     console.log('✓ Cleared all profiles and embeddings');
-    // }
-
     // Convert ProfileData (from database) to Profile (matching format)
     private convertProfileDataToProfile(data: any): Profile {
         return {
@@ -500,76 +289,70 @@ export class MatchingService {
         maxResults: number = 10,
         minScore: number = 50
     ): Promise<MatchResult[]> {
-        console.log(`🔍 AI Search: "${searchCriteria}" for ${targetType}s`);
+        console.log(`🔍 Search: "${searchCriteria}" for ${targetType}s`);
 
-        // Load real profiles from database
+        // 1. Load public profiles we are searching against
         const profiles = await this.loadRealUserProfiles(targetType, excludeUserId);
-
-        // Get profiles of target type
-        // const profiles = Array.from(this.profiles.values())
-        //     .filter(p => p.type === targetType);
 
         if (profiles.length === 0) {
             console.log('⚠️  No profiles available for search');
             return [];
         }
 
-        // Generate embedding for search criteria
-        const searchEmbedding = await this.generateEmbedding(searchCriteria);
-
-        if (!searchEmbedding) {
-            console.log('⚠️  Failed to generate search embedding');
-            return [];
-        }
-
-        // Generate embeddings for all profiles (batch)
-        const profileTexts = profiles.map(p => this.buildProfileText(p));
-        const profileEmbeddings = await this.generateEmbeddingsBatch(profileTexts);
-
-        // Extract query info for hybrid scoring
+        // 2. Extract any specific filters the user typed in the search box
         const queryInfo = this.extractKeyInfo(searchCriteria);
         const queryProfileData: Partial<Profile> = {};
 
-        if (queryInfo.bloodType) {
-            queryProfileData.bloodType = queryInfo.bloodType;
-        }
-        if (queryInfo.age !== null) {
-            queryProfileData.age = queryInfo.age;
-        }
-        if (queryInfo.organType) {
-            queryProfileData.organType = queryInfo.organType;
+        if (queryInfo.bloodType) queryProfileData.bloodType = queryInfo.bloodType;
+        if (queryInfo.age !== null) queryProfileData.age = queryInfo.age;
+        if (queryInfo.organType) queryProfileData.organType = queryInfo.organType;
+
+        // 3. --- FIX: FETCH THE LOGGED-IN USER'S DB PROFILE ---
+        const { ProfileService } = await import('../services/profile.service');
+        const searcherType = targetType === 'patient' ? 'donor' : 'patient';
+        let currentSearcherProfile = null;
+
+        if (excludeUserId) {
+            // Fetch the user's actual saved data (B+, MA, Heart, etc.)
+            const dbProfile = ProfileService.getUserProfile(excludeUserId, searcherType);
+            if (dbProfile) {
+                currentSearcherProfile = this.convertProfileDataToProfile(dbProfile);
+            }
         }
 
-        // Calculate similarities
+        // 4. Merge the Database Profile with the Search Text Overrides
+        // (If they type a different organ, it overrides their DB organ for this search)
+        const finalSearcherProfile = {
+            ...(currentSearcherProfile || {}),
+            ...queryProfileData
+        } as Profile;
+
+
+        // 5. Calculate similarities
         const matches: MatchResult[] = [];
 
         for (let i = 0; i < profiles.length; i++) {
             const profile = profiles[i];
-            const embedding = profileEmbeddings[i];
+            if (!profile) continue;
 
-            if (!embedding || !profile) continue;
-
-            // HARD FILTER - Organ type must match if specified
-            const queryOrganType = queryInfo.organType;
+            // HARD FILTER - Organ type MUST match
+            const queryOrganType = finalSearcherProfile.organType;
             if (queryOrganType && profile.organType) {
                 if (queryOrganType.toLowerCase() !== profile.organType.toLowerCase()) {
-                    continue; // Skip this profile
+                    continue; // Skip this profile if organs don't match
                 }
             }
 
-            // AI similarity (cosine similarity)
-            const aiSimilarity = this.computeSimilarity(searchEmbedding, embedding);
-
-            // Calculate hybrid score
+            // Calculate hybrid score using the FULL profile (DB + Text)
             const { hybridScore, breakdown } = this.calculateHybridScore(
-                aiSimilarity,
-                targetType === 'donor' ? profile : queryProfileData as Profile,
-                targetType === 'donor' ? queryProfileData as Profile : profile
+                targetType === 'donor' ? profile : finalSearcherProfile,
+                targetType === 'donor' ? finalSearcherProfile : profile
             );
 
             const scorePercentage = Math.round(hybridScore * 100);
 
             if (scorePercentage >= minScore) {
+                // Generate a reason for the UI based on what actually matched
                 const reason = this.generateMatchReason(profile, searchCriteria);
 
                 matches.push({
@@ -584,7 +367,7 @@ export class MatchingService {
             }
         }
 
-        // Sort by similarity (descending) and assign ranks
+        // Sort by similarity (highest score first)
         matches.sort((a, b) => b.similarity - a.similarity);
         matches.forEach((match, index) => {
             match.rank = index + 1;
@@ -686,55 +469,59 @@ export class MatchingService {
      * Combines AI similarity with medical/geographic factors
      */
     private calculateHybridScore(
-        aiSimilarity: number,
         donorProfile: Profile,
         patientProfile: Profile
     ): {
         hybridScore: number;
-        breakdown: {
-            aiSimilarity: number;
-            bloodTypeScore: number;
-            locationScore: number;
-            ageScore: number;
-        }
+        breakdown: any;
     } {
-        // Calculate individual scores
-        const bloodTypeScore = this.calculateBloodTypeCompatibility(
-            donorProfile.bloodType,
-            patientProfile.bloodType
-        );
+        let score = 0;
 
-        const locationScore = this.calculateLocationScore(
-            donorProfile,
-            patientProfile
-        );
+        // 1. BASE SCORE (50 points)
+        // Note: The loop in searchRealProfiles already filters out mismatched organs, 
+        // so if they make it to this function, they get the base 50 points.
+        score += 50;
 
-        const ageScore = this.calculateAgeScore(
-            donorProfile.age,
-            patientProfile.age
-        );
+        // 2. BLOOD TYPE SCORE (15 / 1 / 0 points)
+        let bloodTypePoints = 0;
 
-        // Weighted combination (configurable)
-        const weights = {
-            ai: 0.2,           // 50% AI semantic similarity
-            bloodType: 0.5,    // 25% Blood type compatibility
-            location: 0.1,     // 1% Geographic proximity
-            age: 0.2           // 15% Age compatibility
-        };
+        // Check if either profile is missing blood type
+        if (!donorProfile.bloodType || donorProfile.bloodType === 'Not specified' ||
+            !patientProfile.bloodType || patientProfile.bloodType === 'Not specified') {
+            bloodTypePoints = 0;
+        } else {
+            // Reuse your existing compatibility function!
+            const compatScore = this.calculateBloodTypeCompatibility(donorProfile.bloodType, patientProfile.bloodType);
 
-        const hybridScore =
-            weights.ai * aiSimilarity +
-            weights.bloodType * bloodTypeScore +
-            weights.location * locationScore +
-            weights.age * ageScore;
+            if (compatScore >= 0.8) {
+                bloodTypePoints = 15; // Compatible (1.0, 0.99, 0.8)
+            } else {
+                bloodTypePoints = 1;  // Both filled it out, but incompatible (0.2)
+            }
+        }
+        score += bloodTypePoints;
+
+        // 3. LOCATION SCORE (Bonus points up to 10)
+        let locationPoints = 0;
+        if (donorProfile.state && patientProfile.state &&
+            donorProfile.state.toLowerCase() === patientProfile.state.toLowerCase()) {
+            locationPoints += 10;
+        } else if (donorProfile.country && patientProfile.country &&
+            donorProfile.country.toLowerCase() === patientProfile.country.toLowerCase()) {
+            locationPoints += 5;
+        }
+        score += locationPoints;
+
+        // 4. Cap at 100, and convert to decimal (e.g., 65 -> 0.65) for the frontend
+        const finalPercentage = Math.min(score, 100);
+        const hybridScore = finalPercentage / 100;
 
         return {
             hybridScore,
             breakdown: {
-                aiSimilarity,
-                bloodTypeScore,
-                locationScore,
-                ageScore
+                baseScore: 50,
+                bloodTypeScore: bloodTypePoints,
+                locationScore: locationPoints
             }
         };
     }

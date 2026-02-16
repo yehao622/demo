@@ -30,7 +30,7 @@ export const UserHeader: React.FC = () => {
         console.log('View Profile clicked'); // Debug log
         setShowProfileMenu(false);
         setShowViewModal(true);
-        navigate('/profile-fill');
+        // navigate('/profile-fill');
     };
 
     const handleEditProfile = async () => {
@@ -59,7 +59,7 @@ export const UserHeader: React.FC = () => {
             });
         }
 
-        navigate('/profile-fill');
+        // navigate('/profile-fill');
     };
 
     const handleLogout = () => {
