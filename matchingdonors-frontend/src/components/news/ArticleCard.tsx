@@ -5,9 +5,16 @@ import './ArticleCard.css';
 interface ArticleCardProps {
     article: Article;
     onLabelClick: (label: string, type: 'topic' | 'organ' | 'category') => void;
+    isFavorite: boolean;
+    onToggleFavorite: () => void;
 }
 
-export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onLabelClick }) => {
+export const ArticleCard: React.FC<ArticleCardProps> = ({
+    article,
+    onLabelClick,
+    isFavorite,
+    onToggleFavorite
+}) => {
     const getSourceBadgeColor = (source: string) => {
         const colors: Record<string, string> = {
             'matchingdonors': 'source-md',
@@ -35,6 +42,17 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onLabelClick 
 
     return (
         <div className="article-card">
+            <button
+                onClick={(e) => {
+                    e.preventDefault(); // Prevents accidental scrolling
+                    onToggleFavorite();
+                }}
+                className={`article-card-favorite-btn ${isFavorite ? 'active' : 'inactive'}`}
+                title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+            >
+                {isFavorite ? '★' : '☆'}
+            </button>
+
             <div className="article-card-header">
                 <a
                     href={article.url}
@@ -65,7 +83,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onLabelClick 
                                     key={`topic-${index}`}
                                     className="label-chip topic-chip"
                                     onClick={() => onLabelClick(topic, 'topic')}
-                                    title="Click to filter by this topic"
                                 >
                                     {topic}
                                 </button>
@@ -84,7 +101,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onLabelClick 
                                     key={`organ-${index}`}
                                     className="label-chip organ-chip"
                                     onClick={() => onLabelClick(organ, 'organ')}
-                                    title="Click to filter by this organ"
                                 >
                                     {organ}
                                 </button>
@@ -103,7 +119,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({ article, onLabelClick 
                                     key={`category-${index}`}
                                     className="label-chip category-chip"
                                     onClick={() => onLabelClick(category, 'category')}
-                                    title="Click to filter by this category"
                                 >
                                     {category}
                                 </button>

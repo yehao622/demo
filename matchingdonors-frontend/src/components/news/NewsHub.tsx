@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Article, LabelStatistics } from '../../types/article.types';
 import { contentService } from '../../services/contentService';
+import { NewsService } from '../../services/news.service';
 import { LabelCloud } from './LabelCloud';
 import { ArticleList } from './ArticleList';
 import { ArticleSearchBox } from './ArticleSearchBox';
@@ -17,9 +18,25 @@ export const NewsHub: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showSearch, setShowSearch] = useState(true);
+    const [recommendations, setRecommendations] = useState<Article[]>([]);
+    const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         loadData();
+        loadPersonalizedData();
+
+        // Listen for favorite changes from the Modal!
+        const handleSync = (e: any) => {
+            const { articleId, isFavorite } = e.detail;
+            setFavoriteIds(prev => {
+                const next = new Set(prev);
+                if (isFavorite) next.add(articleId);
+                else next.delete(articleId);
+                return next;
+            });
+        };
+        window.addEventListener('favoriteChanged', handleSync);
+        return () => window.removeEventListener('favoriteChanged', handleSync);
     }, []);
 
     const loadData = async () => {
@@ -47,6 +64,62 @@ export const NewsHub: React.FC = () => {
             setError(err.message || 'Failed to load articles');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    // FETCH PERSONALIZED AI DATA ---
+    const loadPersonalizedData = async () => {
+        try {
+            const [recs, favs] = await Promise.all([
+                NewsService.getRecommendations(),
+                NewsService.getFavorites()
+            ]);
+
+            const mapArticle = (item: any): Article => ({
+                ...item,
+                excerpt: item.summary || item.excerpt || '',
+                content: item.content || '',
+                crawledAt: item.created_at || item.crawledAt || new Date().toISOString(),
+                // Safely convert comma-separated strings into arrays for the UI
+                organTypes: typeof item.organs === 'string' ? item.organs.split(',').map((s: string) => s.trim()) : (item.organs || item.organTypes || []),
+                topics: typeof item.topics === 'string' ? item.topics.split(',').map((s: string) => s.trim()) : (item.topics || []),
+                categories: typeof item.categories === 'string' ? item.categories.split(',').map((s: string) => s.trim()) : (item.categories || [])
+            });
+
+            setRecommendations(recs.map(mapArticle));
+            // Store IDs in a Set for super fast O(1) lookup when rendering the star buttons
+            setFavoriteIds(new Set(favs.map(f => f.id)));
+        } catch (err) {
+            console.error("Failed to load personalized data", err);
+        }
+    };
+
+    // TOGGLE FAVORITE HANDLER ---
+    const handleToggleFavorite = async (articleId: string) => {
+        const isFav = favoriteIds.has(articleId);
+        try {
+            if (isFav) {
+                await NewsService.removeFavorite(articleId);
+                // setFavoriteIds(prev => {
+                //     const next = new Set(prev);
+                //     next.delete(articleId);
+                //     return next;
+                // });
+            } else {
+                await NewsService.addFavorite(articleId);
+                // setFavoriteIds(prev => {
+                //     const next = new Set(prev);
+                //     next.add(articleId);
+                //     return next;
+                // });
+            }
+
+            // Broadcast event so UI updates locally
+            window.dispatchEvent(new CustomEvent('favoriteChanged', {
+                detail: { articleId, isFavorite: !isFav }
+            }));
+        } catch (error) {
+            console.error("Failed to toggle favorite", error);
         }
     };
 
@@ -118,44 +191,77 @@ export const NewsHub: React.FC = () => {
     }
 
     return (
-        <div className="news-hub">
-            <div className="news-hub-header">
-                <h1 className="page-title">📰 News & Articles Hub</h1>
-                <p className="page-description">
-                    Browse medical news from trusted sources, organized by AI-labeled topics, organs, and categories
-                </p>
+        <div className="news-hub-layout">
+            <div className="news-hub-main">
+                <div className="news-hub-header">
+                    <h1 className="page-title">📰 News & Articles Hub</h1>
+                    <p className="page-description">
+                        Browse medical news from trusted sources, organized by AI.
+                    </p>
+                </div>
+
+                <div style={{ display: showSearch ? 'block' : 'none' }}>
+                    <ArticleSearchBox onSearch={(res) => console.log(res)} />
+                </div>
+                <div className="toggle-search-container">
+                    <button className="toggle-search-btn" onClick={() => setShowSearch(!showSearch)}>
+                        {showSearch ? '▲ Hide Search' : '▼ Show Search'}
+                    </button>
+                </div>
+
+                <LabelCloud statistics={statistics!} selectedLabel={selectedLabel} onLabelClick={handleLabelClick} />
+
+                <ArticleList
+                    articles={filteredArticles}
+                    selectedLabel={selectedLabel}
+                    labelType={selectedLabelType}
+                    onLabelClick={handleLabelClick}
+                    onClearFilter={handleClearFilter}
+                    favoriteIds={favoriteIds}
+                    onToggleFavorite={handleToggleFavorite}
+                />
             </div>
 
-            {/* Article Search Section */}
-            <div style={{ display: showSearch ? 'block' : 'none' }}>
-                <ArticleSearchBox onSearch={handleSearchResults} />
-            </div>
+            <aside className="news-hub-sidebar">
+                <h3 className="ai-sidebar-title">✨ AI Recommended</h3>
+                <p className="ai-sidebar-subtitle">Curated by Gemini based on your profile & favorites.</p>
 
-            {/* Toggle Search Button */}
-            <div className="toggle-search-container">
-                <button
-                    className="toggle-search-btn"
-                    onClick={() => setShowSearch(!showSearch)}
-                >
-                    {showSearch ? '▲ Hide Search' : '▼ Show Search'}
-                </button>
-            </div>
+                {recommendations.length === 0 ? (
+                    <div className="ai-sidebar-loading">Loading AI picks...</div>
+                ) : (
+                    <div className="ai-article-list">
+                        {recommendations.map(article => {
+                            const isFav = favoriteIds.has(article.id);
+                            return (
+                                <div key={article.id} className="ai-article-card">
+                                    <button
+                                        onClick={() => handleToggleFavorite(article.id)}
+                                        className={`ai-star-btn ${isFav ? 'active' : 'inactive'}`}
+                                        title="Toggle Favorite"
+                                    >
+                                        {isFav ? '★' : '☆'}
+                                    </button>
 
-            {/* Label Cloud Section */}
-            <LabelCloud
-                statistics={statistics}
-                selectedLabel={selectedLabel}
-                onLabelClick={handleLabelClick}
-            />
+                                    <h4 className="ai-article-title">
+                                        <a href={article.url} target="_blank" rel="noreferrer">
+                                            {article.title}
+                                        </a>
+                                    </h4>
 
-            {/* Article List Section */}
-            <ArticleList
-                articles={filteredArticles}
-                selectedLabel={selectedLabel}
-                labelType={selectedLabelType}
-                onLabelClick={handleLabelClick}
-                onClearFilter={handleClearFilter}
-            />
+                                    <div className="ai-article-tags">
+                                        {article.organTypes && article.organTypes.length > 0 && (
+                                            <span className="ai-tag-organ">{article.organTypes[0]}</span>
+                                        )}
+                                        {article.topics && article.topics.length > 0 && (
+                                            <span className="ai-tag-topic">{article.topics[0]}</span>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </aside>
         </div>
     );
 };

@@ -1,4 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
+import db from '../database/init';
+import { NotificationService } from '../services/notification.service';
 import { Profile, ProfileEmbedding, MatchResult, MatchRequest } from './matching.types';
 
 export class MatchingService {
@@ -494,9 +496,9 @@ export class MatchingService {
             const compatScore = this.calculateBloodTypeCompatibility(donorProfile.bloodType, patientProfile.bloodType);
 
             if (compatScore >= 0.8) {
-                bloodTypePoints = 15; // Compatible (1.0, 0.99, 0.8)
+                bloodTypePoints = 20; // Compatible (1.0, 0.99, 0.8)
             } else {
-                bloodTypePoints = 1;  // Both filled it out, but incompatible (0.2)
+                bloodTypePoints = 2;  // Both filled it out, but incompatible (0.2)
             }
         }
         score += bloodTypePoints;
@@ -505,14 +507,23 @@ export class MatchingService {
         let locationPoints = 0;
         if (donorProfile.state && patientProfile.state &&
             donorProfile.state.toLowerCase() === patientProfile.state.toLowerCase()) {
-            locationPoints += 10;
+            locationPoints += 15;
         } else if (donorProfile.country && patientProfile.country &&
             donorProfile.country.toLowerCase() === patientProfile.country.toLowerCase()) {
             locationPoints += 5;
         }
         score += locationPoints;
 
-        // 4. Cap at 100, and convert to decimal (e.g., 65 -> 0.65) for the frontend
+        // 4. AGE SCORE (Max 15 points)
+        let agePoints = 0;
+        if (donorProfile.age && patientProfile.age) {
+            const ageScore = this.calculateAgeScore(donorProfile.age, patientProfile.age);
+            // calculateAgeScore returns 0 to 1.0, so multiply by max points
+            agePoints = Math.round(ageScore * 15);
+        }
+        score += agePoints;
+
+        // 5. Cap at 100, and convert to decimal (e.g., 65 -> 0.65) for the frontend
         const finalPercentage = Math.min(score, 100);
         const hybridScore = finalPercentage / 100;
 
@@ -521,8 +532,57 @@ export class MatchingService {
             breakdown: {
                 baseScore: 50,
                 bloodTypeScore: bloodTypePoints,
-                locationScore: locationPoints
+                locationScore: locationPoints,
+                ageScore: agePoints
             }
         };
+    }
+
+    /**
+     * Automated Match Alerts
+     * Runs in the background to find high-compatibility matches and ping them in real-time.
+     */
+    async checkAndSendMatchAlerts(userId: number, userRole: 'patient' | 'donor') {
+        try {
+            console.log(`🔄 [Auto-Match] Scanning for high-compatibility matches for User ${userId}...`);
+
+            // 1. The person we want to search for is the OPPOSITE role
+            const targetTypeToSearch = userRole === 'patient' ? 'donor' : 'patient';
+
+            // 2. Run a silent search!
+            // We pass an empty string because searchRealProfiles will automatically fetch User ${userId}'s
+            // real medical data from the database to run the comparison!
+            const matches = await this.searchRealProfiles(
+                '',
+                targetTypeToSearch,
+                userId,
+                5,  // Max 5 alerts at a time to prevent spamming
+                80  // 🔥 Only alert if the match is 80% or higher!
+            );
+
+            if (matches.length === 0) {
+                console.log('💨 [Auto-Match] No matches above 80% found for alerts.');
+                return;
+            }
+
+            // 3. We found high-quality matches! Send them a real-time system notification!
+            for (const match of matches) {
+                // Look up the numeric user_id of the matched profile so we know whose inbox to send it to
+                const stmt = db.prepare('SELECT user_id FROM profiles WHERE id = ?');
+                const recipient = stmt.get(match.profileId) as any;
+
+                if (recipient && recipient.user_id) {
+                    NotificationService.createNotification(
+                        recipient.user_id, // The highly compatible user
+                        '🚨 High Compatibility Match Alert!',
+                        `Great news! A new ${userRole} with a ${Math.round(match.similarity * 100)}% compatibility score just registered on the platform. Check your Match tab to view their details!`,
+                        'system' // System alert, no sender_id
+                    );
+                    console.log(`✅ [Auto-Match] Real-time alert sent to User ${recipient.user_id}!`);
+                }
+            }
+        } catch (error) {
+            console.error('❌ [Auto-Match] Error sending match alerts:', error);
+        }
     }
 }

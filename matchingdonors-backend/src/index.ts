@@ -50,8 +50,3 @@ app.use("/api/content", contenRoutes);
 app.use("/api/advertiser", advertiseRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/news', newsRoutes);
-
-
-app.listen(port, () => {
-    console.log(`API listening on http://localhost:${port}`);
-});

@@ -262,3 +262,97 @@
 .delete-notif-btn:hover {
     color: #ff4757;
 }
+
+.favorites-modal-content {
+    max-width: 600px;
+}
+
+.favorites-modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.favorites-loading {
+    text-align: center;
+    padding: 20px;
+}
+
+.favorites-empty {
+    text-align: center;
+    padding: 30px;
+    color: #666;
+}
+
+.favorites-empty-sub {
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+.favorites-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.favorite-item-card {
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    position: relative;
+}
+
+.favorite-item-title {
+    margin: 0 0 8px 0;
+    padding-right: 30px;
+}
+
+.favorite-item-title a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+.favorite-item-title a:hover {
+    text-decoration: underline;
+}
+
+.favorite-item-summary {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0 0 10px 0;
+}
+
+.favorite-meta-tags {
+    display: flex;
+    gap: 10px;
+    font-size: 0.8rem;
+}
+
+.favorite-tag-source {
+    background: #e9ecef;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+.favorite-tag-organ {
+    background: #ffebee;
+    color: #c62828;
+    padding: 3px 8px;
+    border-radius: 12px;
+}
+
+.favorite-remove-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #ff4757;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: transform 0.2s;
+}
+
+.favorite-remove-btn:hover {
+    transform: scale(1.1);
+}

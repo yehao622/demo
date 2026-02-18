@@ -9,6 +9,8 @@ interface ArticleListProps {
     labelType: 'topic' | 'organ' | 'category' | null;
     onLabelClick: (label: string, type: 'topic' | 'organ' | 'category') => void;
     onClearFilter: () => void;
+    favoriteIds: Set<string>;
+    onToggleFavorite: (articleId: string) => void;
 }
 
 export const ArticleList: React.FC<ArticleListProps> = ({
@@ -16,7 +18,9 @@ export const ArticleList: React.FC<ArticleListProps> = ({
     selectedLabel,
     labelType,
     onLabelClick,
-    onClearFilter
+    onClearFilter,
+    favoriteIds,
+    onToggleFavorite
 }) => {
     if (!selectedLabel) {
         return (
@@ -74,6 +78,8 @@ export const ArticleList: React.FC<ArticleListProps> = ({
                         key={article.id}
                         article={article}
                         onLabelClick={onLabelClick}
+                        isFavorite={favoriteIds.has(article.id)}
+                        onToggleFavorite={() => onToggleFavorite(article.id)}
                     />
                 ))}
             </div>

@@ -2,11 +2,9 @@ import express, { Request, Response } from 'express';
 import { GoogleGenAI } from "@google/genai";
 import { authMiddleware } from '../middleware/auth.middleware';
 import { ProfileService } from '../services/profile.service';
-// import { parseGeminiResponse } from '../profile/parseGeminiProfileResponse';
+import { MatchingService } from '../matching/matching.service';
 import multer from 'multer';
-// import { ProfileAgent } from '../agents/ProfileAgent';
 import { TranscriptionService } from '../services/TranscriptionService';
-// import { buildProfilePrompt } from '../profile/buildProfilePrompt';
 
 const router = express.Router();
 
@@ -34,35 +32,6 @@ const upload = multer({
         }
     },
 });
-
-// Existing route: Generate profile suggestion
-// router.post('/suggest', async (req, res) => {
-//     try {
-//         const { text } = req.body;
-
-//         if (!text || text.trim().length < 20) {
-//             return res.status(400).json({
-//                 error: 'Please provide at least 20 characters of text'
-//             });
-//         }
-
-//         const prompt = buildProfilePrompt(text);
-//         const response = await ai.models.generateContent({
-//             model: 'gemini-2.5-flash',
-//             contents: prompt
-//         });
-
-//         // const suggestion = await profileAgent.generateSuggestion(text);
-//         // res.json({ suggestion });
-//         const suggestion = parseGeminiResponse(response.text?.trim());
-//         res.json({ success: true, suggestion });
-//     } catch (error: any) {
-//         console.error('Error generating suggestion:', error);
-//         res.status(500).json({
-//             error: 'Failed to generate suggestion. Please try again.'
-//         });
-//     }
-// });
 
 // Get current user's profile (protected route)
 router.get('/me', authMiddleware, async (req: Request, res: Response) => {
@@ -129,12 +98,6 @@ router.post('/save', authMiddleware, async (req: Request, res: Response) => {
             is_public,
         } = req.body;
 
-        // Parse location
-        // const locationParts = (location || '').split(',').map((s: string) => s.trim());
-        // const city = locationParts[0] || '';
-        // const state = locationParts[1] || '';
-        // const country = locationParts[2] || locationParts[1] || 'USA';
-
         // Get user's name
         const userName = `${req.user!.firstName} ${req.user!.lastName}`;
 
@@ -155,6 +118,12 @@ router.post('/save', authMiddleware, async (req: Request, res: Response) => {
         };
 
         const savedProfile = ProfileService.saveProfile(profileData);
+
+        // Trigger Background Match Scanner
+        const matchingService = new MatchingService();
+        // Note: We deliberately do NOT use 'await' here. 
+        // This lets the HTTP response finish instantly while the AI search runs silently in the background!
+        matchingService.checkAndSendMatchAlerts(userId, userRole).catch(err => console.error("Scanner Error:", err));
 
         res.json({
             success: true,
@@ -252,6 +221,10 @@ router.put('/update', authMiddleware, async (req: Request, res: Response) => {
         };
 
         const updatedProfile = ProfileService.saveProfile(profileData);
+
+        // Trigger Background Match Scanner ---
+        const matchingService = new MatchingService();
+        matchingService.checkAndSendMatchAlerts(userId, userRole).catch(err => console.error("Scanner Error:", err));
 
         res.json({
             success: true,

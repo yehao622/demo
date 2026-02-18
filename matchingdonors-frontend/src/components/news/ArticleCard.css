@@ -8,6 +8,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    position: relative;
 }
 
 .article-card:hover {
@@ -18,6 +19,31 @@
 
 .article-card-header {
     margin-bottom: 1rem;
+}
+
+.article-card-favorite-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    z-index: 10;
+    transition: transform 0.2s ease;
+    padding: 5px;
+}
+
+.article-card-favorite-btn:hover {
+    transform: scale(1.2);
+}
+
+.article-card-favorite-btn.active {
+    color: #ffc107;
+}
+
+.article-card-favorite-btn.inactive {
+    color: #e0e0e0;
 }
 
 .article-title-link {

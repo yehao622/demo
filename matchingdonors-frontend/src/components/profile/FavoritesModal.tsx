@@ -34,8 +34,11 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose 
     const handleRemoveFavorite = async (articleId: string) => {
         try {
             await NewsService.removeFavorite(articleId);
-            // Instantly remove it from the UI
             setFavorites(prev => prev.filter(article => article.id !== articleId));
+            // Broadcast an event so the NewsHub knows to update its stars instantly!
+            window.dispatchEvent(new CustomEvent('favoriteChanged', {
+                detail: { articleId, isFavorite: false }
+            }));
         } catch (err: any) {
             console.error("Failed to remove favorite:", err);
             alert("Failed to remove article.");
@@ -46,36 +49,42 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({ isOpen, onClose 
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <div className="modal-content favorites-modal-content" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <span className="modal-icon">⭐</span>
                     <h3>My Favorite Articles</h3>
-                    <button className="close-button" onClick={onClose}>✕</button>
                 </div>
 
-                <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                <div className="modal-body favorites-modal-body">
                     {isLoading ? (
-                        <div style={{ textAlign: 'center', padding: '20px' }}>Loading favorites...</div>
+                        <div className="favorites-loading">Loading favorites...</div>
                     ) : error ? (
                         <div className="error-message">❌ {error}</div>
                     ) : favorites.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '30px', color: '#666' }}>
+                        <div className="favorites-empty">
                             <p>You haven't saved any articles yet.</p>
-                            <p style={{ fontSize: '0.9rem' }}>Go to the News Hub to find articles related to your profile!</p>
+                            <p className="favorites-empty-sub">Go to the News Hub to find articles related to your profile!</p>
                         </div>
                     ) : (
-                        <div className="favorites-list" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div className="favorites-list">
                             {favorites.map(article => (
-                                <div key={article.id} style={{ padding: '15px', border: '1px solid #eee', borderRadius: '8px', position: 'relative' }}>
-                                    <h4 style={{ margin: '0 0 8px 0', color: '#333', paddingRight: '30px' }}>{article.title}</h4>
-                                    <p style={{ fontSize: '0.85rem', color: '#666', margin: '0 0 10px 0' }}>{article.summary}</p>
-                                    <div style={{ display: 'flex', gap: '10px', fontSize: '0.8rem' }}>
-                                        <span style={{ background: '#e9ecef', padding: '3px 8px', borderRadius: '12px' }}>{article.source}</span>
-                                        {article.organs && <span style={{ background: '#ffebee', color: '#c62828', padding: '3px 8px', borderRadius: '12px' }}>{article.organs}</span>}
+                                <div key={article.id} className="favorite-item-card">
+                                    <h4 className="favorite-item-title">
+                                        {/* FIX 2: Added Hyperlink */}
+                                        <a href={article.url} target="_blank" rel="noreferrer">
+                                            {article.title}
+                                        </a>
+                                    </h4>
+                                    <p className="favorite-item-summary">{article.summary}</p>
+                                    <div className="favorite-meta-tags">
+                                        <span className="favorite-tag-source">{article.source}</span>
+                                        {article.organs && (
+                                            <span className="favorite-tag-organ">{article.organs}</span>
+                                        )}
                                     </div>
                                     <button
                                         onClick={() => handleRemoveFavorite(article.id)}
-                                        style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#ff4757', cursor: 'pointer', fontSize: '1.2rem' }}
+                                        className="favorite-remove-btn"
                                         title="Remove from favorites"
                                     >
                                         ★

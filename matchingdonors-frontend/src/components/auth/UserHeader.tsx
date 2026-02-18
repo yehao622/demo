@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { ViewProfileModal } from '../profile/ViewProfileModal';
 import { EditProfileModal } from '../profile/EditProfileModal';
@@ -12,7 +11,6 @@ import '../../styles/UserHeader.css';
 
 export const UserHeader: React.FC = () => {
     const { user, logout } = useAuth();
-    const navigate = useNavigate();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showInbox, setShowInbox] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
@@ -112,7 +110,6 @@ export const UserHeader: React.FC = () => {
         console.log('View Profile clicked'); // Debug log
         setShowProfileMenu(false);
         setShowViewModal(true);
-        // navigate('/profile-fill');
     };
 
     const handleEditProfile = async () => {
@@ -140,8 +137,6 @@ export const UserHeader: React.FC = () => {
                 type: 'error'
             });
         }
-
-        // navigate('/profile-fill');
     };
 
     const handleLogout = () => {
