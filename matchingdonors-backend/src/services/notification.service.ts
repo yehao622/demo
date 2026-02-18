@@ -1,4 +1,5 @@
 import db from '../database/init';
+import { getIO } from '../socket';
 
 export interface Notification {
     id: string;
@@ -29,7 +30,15 @@ export class NotificationService {
 
         stmt.run(id, recipientId, senderId || null, title, content, type);
 
-        return this.getNotificationById(id)!;
+        const newNotification = this.getNotificationById(id)!;
+        // --- NEW: FIRE THE REAL-TIME EVENT ---
+        try {
+            getIO().to(`user_${recipientId}`).emit('new_notification', newNotification);
+        } catch (err) {
+            console.error("Socket emission failed:", err);
+        }
+
+        return newNotification;
     }
 
     // 2. Fetch all notifications for a specific user

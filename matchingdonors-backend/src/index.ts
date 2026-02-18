@@ -10,10 +10,22 @@ import matchingRoutes from './matching/matching.routes'
 import contenRoutes from './routes/content'
 import advertiseRoutes from './routes/advertiser'
 import authRoutes from './routes/auth.routes';
+import notificationRoutes from './routes/notification.routes';
+import newsRoutes from './routes/news.routes';
 import './database/init';
+
+import http from 'http';
+import { initSocket } from './socket';
 
 const app = express();
 const port = process.env.PORT || 8080;
+
+const server = http.createServer(app);
+initSocket(server);
+
+server.listen(port, () => {
+    console.log(`🚀 Server & Socket.IO running on port ${port}`);
+});
 
 app.use(cors({
     origin: ['http://localhost:3000'],
@@ -36,6 +48,9 @@ app.use("/api/profile", suggestRoutes);
 app.use("/api/matching", matchingRoutes);
 app.use("/api/content", contenRoutes);
 app.use("/api/advertiser", advertiseRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/news', newsRoutes);
+
 
 app.listen(port, () => {
     console.log(`API listening on http://localhost:${port}`);

@@ -118,6 +118,21 @@ db.exec(`
   )
 `);
 
+// Create favorite_articles table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS favorite_articles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    article_id TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
+    UNIQUE(user_id, article_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_fav_user ON favorite_articles(user_id);
+`);
+
 if (!isTest) {
     console.log('✅ Database initialized successfully at:', DB_PATH);
     import('./migrations').then(({ runMigrations }) => {
