@@ -133,6 +133,30 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_fav_user ON favorite_articles(user_id);
 `);
 
+db.exec(`
+    CREATE TABLE IF NOT EXISTS chat_rooms (
+      id TEXT PRIMARY KEY,               -- A unique UUID for the room
+      user_id TEXT NOT NULL,             -- The ID of the logged-in patient/donor
+      advertiser_id TEXT NOT NULL,       -- The ID or identifier of the advertiser
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+`);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS messages (
+      id TEXT PRIMARY KEY,               -- A unique UUID for the message
+      room_id TEXT NOT NULL,             -- Links the message to a specific chat room
+      sender_id TEXT NOT NULL,           -- The ID of whoever sent the message
+      sender_type TEXT CHECK(sender_type IN ('user', 'advertiser', 'system')) NOT NULL, -- Identifies if the sender is a user, advertiser, or automated system
+      content TEXT NOT NULL,             -- The actual text of the message
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (room_id) REFERENCES chat_rooms(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_messages_room_id ON messages(room_id);
+`);
+
 if (!isTest) {
     console.log('✅ Database initialized successfully at:', DB_PATH);
     import('./migrations').then(({ runMigrations }) => {
