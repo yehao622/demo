@@ -2,11 +2,19 @@ import React from 'react';
 import { Profile } from '../../types/profile.types';
 import './ProfileCard.css';
 
+interface ScoreBreakdown {
+    baseScore: number;
+    bloodTypeScore: number;
+    locationScore: number;
+    ageScore: number;
+}
+
 interface ProfileCardProps {
     profile: Profile;
     matchScore?: number;
     rank?: number;
     reason?: string;
+    scoreBreakdown?: ScoreBreakdown;
     onViewDetails: (profile: Profile) => void;
 }
 
@@ -15,6 +23,7 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     matchScore,
     rank,
     reason,
+    scoreBreakdown,
     onViewDetails
 }) => {
     const getTypeColor = (type: string) => {
@@ -51,6 +60,27 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                     </div>
                     <div className="match-label">{getMatchLabel(matchScore)}</div>
                     {rank !== undefined && <div className="match-rank">#{rank}</div>}
+                </div>
+            )}
+
+            {scoreBreakdown && (
+                <div className="score-breakdown">
+                    <div className="breakdown-item" title="Organ Match (Base)">
+                        <span className="breakdown-label">🫀 Organ</span>
+                        <span className="breakdown-value">{scoreBreakdown.baseScore}</span>
+                    </div>
+                    <div className="breakdown-item" title="Blood Compatibility">
+                        <span className="breakdown-label">🩸 Blood</span>
+                        <span className="breakdown-value">+{scoreBreakdown.bloodTypeScore}</span>
+                    </div>
+                    <div className="breakdown-item" title="Location Proximity">
+                        <span className="breakdown-label">📍 Loc</span>
+                        <span className="breakdown-value">+{scoreBreakdown.locationScore}</span>
+                    </div>
+                    <div className="breakdown-item" title="Age Compatibility">
+                        <span className="breakdown-label">🎂 Age</span>
+                        <span className="breakdown-value">+{scoreBreakdown.ageScore}</span>
+                    </div>
                 </div>
             )}
 

@@ -3,7 +3,6 @@ import { Profile, MatchResult, MatchRequest } from '../../types/profile.types';
 import { AuthService } from '../../services/auth.service';
 import { profileService } from '../../services/profileService';
 import { ProfileSearch } from './ProfileSearch';
-import { MatchResults } from './MatchResults';
 import { ProfileDetailModal } from './ProfileDetailModal';
 import { ValidationModal } from '../common/ValidationModal';
 import { LoadingSpinner } from '../common/LoadingSpinner';
@@ -362,6 +361,24 @@ export const ProfileMatchingPage: React.FC = () => {
                                                 <p>📍 {profile.city}, {profile.state}</p>
                                                 <p>💉 {profile.organType || 'Not specified'}</p>
                                             </div>
+
+                                            {match.scoreBreakdown && (
+                                                <div className="score-breakdown-inline">
+                                                    <span className="breakdown-pill pill-base">
+                                                        🫀 Organ: {match.scoreBreakdown.baseScore}
+                                                    </span>
+                                                    <span className="breakdown-pill pill-blood">
+                                                        🩸 Blood: +{match.scoreBreakdown.bloodTypeScore}
+                                                    </span>
+                                                    <span className="breakdown-pill pill-age">
+                                                        🎂 Age: +{match.scoreBreakdown.ageScore}
+                                                    </span>
+                                                    <span className="breakdown-pill pill-loc">
+                                                        📍 Loc: +{match.scoreBreakdown.locationScore}
+                                                    </span>
+                                                </div>
+                                            )}
+
                                             <p className="description-simple">{profile.description?.substring(0, 100)}...</p>
                                             <button className="view-btn-simple" onClick={() => handleViewDetails(profile, match.similarity)}>
                                                 View Details

@@ -27,7 +27,7 @@ export interface MatchResult {
     reason?: string;
     hybridScore?: number;
     scoreBreakdown?: {
-        aiSimilarity: number;         // 0-1
+        baseScore: number;         // 0-1
         bloodTypeScore: number;       // 0-1
         locationScore: number;        // 0-1
         ageScore: number;             // 0-1

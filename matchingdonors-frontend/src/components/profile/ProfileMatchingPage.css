@@ -421,3 +421,39 @@ button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+.score-breakdown-inline {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin: 12px 0;
+    flex-wrap: wrap;
+}
+
+.breakdown-pill {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.pill-base {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.pill-blood {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.pill-age {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.pill-loc {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+}
