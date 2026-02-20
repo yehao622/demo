@@ -21,6 +21,12 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const checkProfile = async () => {
       if (user && !profileCheckDone) {
+        // Skip the medical profile check completely for Sponsors! ---
+        if (user.role === 'sponsor') {
+          setProfileCheckDone(true);
+          return;
+        }
+
         try {
           const { isComplete } = await AuthService.checkProfileCompletion();
           if (!isComplete) {

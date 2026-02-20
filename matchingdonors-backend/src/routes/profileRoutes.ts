@@ -41,7 +41,7 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
         }
 
         const userId = req.user.id;
-        const userRole = req.user.role;
+        const userRole = req.user.role as 'patient' | 'donor';
 
         const profile = ProfileService.getUserProfile(userId, userRole);
         const hasComplete = ProfileService.hasCompleteProfile(userId, userRole);
@@ -83,7 +83,7 @@ router.post('/save', authMiddleware, async (req: Request, res: Response) => {
         }
 
         const userId = req.user.id;
-        const userRole = req.user.role;
+        const userRole = req.user.role as 'patient' | 'donor';
         const {
             name,
             age,
@@ -147,7 +147,7 @@ router.post('/validate', authMiddleware, async (req: Request, res: Response) => 
         }
 
         const { text, currentTab } = req.body;
-        const userRole = req.user.role;
+        const userRole = req.user.role as 'patient' | 'donor';
 
         if (!text || !currentTab) {
             return res.status(400).json({
@@ -179,7 +179,7 @@ router.put('/update', authMiddleware, async (req: Request, res: Response) => {
         }
 
         const userId = req.user.id;
-        const userRole = req.user.role;
+        const userRole = req.user.role as 'patient' | 'donor';
         // console.log('📝 Received Update Payload:', req.body);
         const { summary, organType, age, bloodType, location, personalStory, isPublic,
             description, organ_type, blood_type, medical_info, is_public, preferences,
@@ -248,7 +248,7 @@ router.delete('/me', authMiddleware, async (req: Request, res: Response) => {
         }
 
         const userId = req.user.id;
-        const userRole = req.user.role;
+        const userRole = req.user.role as 'patient' | 'donor';
 
         const deleted = ProfileService.deleteProfile(userId, userRole);
 
@@ -309,7 +309,7 @@ router.get('/all', authMiddleware, async (req: Request, res: Response) => {
         }
 
         const currentUserId = req.user.id;
-        const currentUserRole = req.user.role;
+        const currentUserRole = req.user.role as 'patient' | 'donor';
         const useRealData = req.query.useRealData === 'true';
 
         let profiles;
@@ -344,7 +344,7 @@ router.patch('/visibility', authMiddleware, async (req: Request, res: Response) 
         }
 
         const userId = req.user.id;
-        const userRole = req.user.role;
+        const userRole = req.user.role as 'patient' | 'donor';
         const { isPublic } = req.body;
 
         if (typeof isPublic !== 'boolean') {

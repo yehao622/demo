@@ -1,4 +1,4 @@
-export type UserRole = 'patient' | 'donor';
+export type UserRole = 'patient' | 'donor' | 'sponsor';
 
 export interface User {
     id: number;
@@ -26,11 +26,11 @@ export interface AuthContextType {
     token: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (email: string, password: string, role: 'patient' | 'donor') => Promise<void>;
+    login: (email: string, password: string, role: UserRole) => Promise<void>;
     register: (data: RegisterData) => Promise<void>;
     logout: () => void;
     refreshUser: () => Promise<void>;
-    pendingRegistration: { role: 'patient' | 'donor' } | null;
-    triggerRegistration: (role: 'patient' | 'donor') => void;
+    pendingRegistration: { role: UserRole } | null;
+    triggerRegistration: (role: UserRole) => void;
     clearPendingRegistration: () => void;
 }

@@ -2,8 +2,18 @@ import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
 import crypto from 'crypto';
 import db from './database/init';
+import nodemailer from 'nodemailer';
 
 let io: Server;
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
 
 export const initSocket = (httpServer: HttpServer) => {
     io = new Server(httpServer, {
@@ -52,6 +62,24 @@ export const initSocket = (httpServer: HttpServer) => {
 
                 // Broadcast the message to everyone in that specific room
                 io.to(roomId).emit('receive_advertiser_message', savedMessage);
+
+                // We only send an email if the 'user' (the sponsor) sent the message
+                if (senderType === 'user') {
+                    const mailOptions = {
+                        from: process.env.EMAIL_USER,
+                        to: process.env.EMAIL_USER, // Sending to yourself for the demo
+                        subject: `New Sponsor Message from User ID: ${senderId}`,
+                        text: `You have received a new message from a sponsor on the platform.\n\nMessage: "${content}"\n\nChat Room ID: ${roomId}\nLog in to the database to reply.`
+                    };
+
+                    transporter.sendMail(mailOptions, (error, info) => {
+                        if (error) {
+                            console.error("Error sending email notification:", error);
+                        } else {
+                            console.log("Email notification sent successfully:", info.response);
+                        }
+                    });
+                }
 
             } catch (error) {
                 console.error("Error saving/sending chat message:", error);

@@ -1,11 +1,12 @@
 import React from 'react';
 import './ProfileCompletionModal.css';
+import { UserRole } from '../../types/auth.types';
 
 interface ProfileCompletionModalProps {
     isOpen: boolean;
     onClose: () => void;
     onComplete: () => void;
-    userRole: 'patient' | 'donor';
+    userRole: UserRole;
 }
 
 export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
@@ -21,6 +22,13 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
         onClose();
     };
 
+    // Helper to determine the matched role
+    const getMatchTarget = () => {
+        if (userRole === 'patient') return 'donors';
+        if (userRole === 'donor') return 'patients';
+        return 'opportunities'; // For sponsors
+    };
+
     return (
         <div className="modal-overlay">
             <div className="modal-content profile-completion-modal">
@@ -30,8 +38,8 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
 
                 <div className="modal-body">
                     <p>
-                        To get started as a <strong>{userRole}</strong>, please complete your medical profile.
-                        This helps us match you with compatible {userRole === 'patient' ? 'donors' : 'patients'}.
+                        To get started as a <strong>{userRole}</strong>, please complete your profile.
+                        This helps us match you with compatible {getMatchTarget()}.
                     </p>
 
                     <div className="required-info">

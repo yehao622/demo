@@ -57,7 +57,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ role, onClose, onSwitchT
                 <button className="modal-close" onClick={onClose}>×</button>
 
                 <div className="modal-header">
-                    <h2>Welcome Back, {role === 'patient' ? 'Patient' : 'Donor'}! 👋</h2>
+                    <h2>Welcome Back, {role === 'patient' ? 'Patient' : (role === 'donor' ? 'Donor' : 'Sponsor')}! 👋</h2>
                     <p>Sign in to continue</p>
                 </div>
 

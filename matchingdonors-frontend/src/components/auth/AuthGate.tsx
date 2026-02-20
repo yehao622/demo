@@ -10,7 +10,7 @@ interface AuthGateProps {
     requiredRoles?: UserRole[];
 }
 
-export const AuthGate: React.FC<AuthGateProps> = ({ children, requiredRoles = ['patient', 'donor'] }) => {
+export const AuthGate: React.FC<AuthGateProps> = ({ children, requiredRoles = ['patient', 'donor', 'sponsor'] }) => {
     const { isAuthenticated, user, isLoading, pendingRegistration, clearPendingRegistration } = useAuth();
     const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
     const [showLogin, setShowLogin] = useState(false);
@@ -80,6 +80,19 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, requiredRoles = ['
                         <div className="role-icon">❤️</div>
                         <h2>I'm a Donor</h2>
                         <p>Ready to help save lives</p>
+                    </button>
+
+                    <button
+                        className="role-card sponsor-card"
+                        onClick={() => {
+                            setSelectedRole('sponsor');
+                            setShowLogin(true);
+                        }}
+                        style={{ backgroundColor: '#f0f4f8', border: '2px solid #cbd5e1' }} // Added inline style to distinguish it quickly, you can move this to AuthGate.css later!
+                    >
+                        <div className="role-icon">🤝</div>
+                        <h2>I'm a Sponsor</h2>
+                        <p>Interested in collaboration</p>
                     </button>
                 </div>
             </div>

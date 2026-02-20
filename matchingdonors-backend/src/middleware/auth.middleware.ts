@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 interface JWTPayload {
     id: number;
     email: string;
-    role: 'patient' | 'donor';
+    role: 'patient' | 'donor' | 'sponsor';
     firstName: string;
     lastName: string;
 }
@@ -40,7 +40,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 };
 
 // Middleware to check user role
-export const authorizeRole = (...allowedRoles: Array<'patient' | 'donor'>) => {
+export const authorizeRole = (...allowedRoles: Array<'patient' | 'donor' | 'sponsor'>) => {
     return (req: Request, res: Response, next: NextFunction): void => {
         if (!req.user) {
             res.status(401).json({ error: 'Authentication required' });

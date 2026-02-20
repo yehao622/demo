@@ -78,13 +78,13 @@ export class AuthService {
     }
 
     // Login user
-    static async login(data: LoginRequest & { role: 'patient' | 'donor' }): Promise<AuthResponse> {
+    static async login(data: LoginRequest & { role: 'patient' | 'donor' | 'sponsor' }): Promise<AuthResponse> {
         // Find user by email
         const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(data.email, data.role) as User;
 
         if (!user) {
             // Check if user exists with different role
-            const userWithDifferentRole = db.prepare('SELECT role FROM users WHERE email = ?').get(data.email) as { role: 'patient' | 'donor' } | undefined;
+            const userWithDifferentRole = db.prepare('SELECT role FROM users WHERE email = ?').get(data.email) as { role: 'patient' | 'donor' | 'sponsor' } | undefined;
 
             if (userWithDifferentRole) {
                 const article = userWithDifferentRole.role === 'donor' ? 'a' : 'a';
@@ -112,12 +112,12 @@ export class AuthService {
     }
 
     // Verify JWT token
-    static verifyToken(token: string): { id: number; email: string; role: 'patient' | 'donor'; firstName: string; lastName: string } {
+    static verifyToken(token: string): { id: number; email: string; role: 'patient' | 'donor' | 'sponsor'; firstName: string; lastName: string } {
         try {
             const decoded = jwt.verify(token, JWT_SECRET) as {
                 id: number;
                 email: string;
-                role: 'patient' | 'donor';
+                role: 'patient' | 'donor' | 'sponsor';
                 firstName: string;
                 lastName: string;
             };
@@ -134,7 +134,7 @@ export class AuthService {
     }
 
     // Generate password reset code
-    static async generatePasswordResetCode(email: string, role: 'patient' | 'donor'): Promise<{ code: string; expiresAt: Date }> {
+    static async generatePasswordResetCode(email: string, role: 'patient' | 'donor' | 'sponsor'): Promise<{ code: string; expiresAt: Date }> {
         // Find user
         const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(email, role) as User;
 
@@ -173,7 +173,7 @@ export class AuthService {
     }
 
     // Verify password reset code
-    static verifyPasswordResetCode(email: string, code: string, role: 'patient' | 'donor'): { valid: boolean; userId?: number } {
+    static verifyPasswordResetCode(email: string, code: string, role: 'patient' | 'donor' | 'sponsor'): { valid: boolean; userId?: number } {
         // Find user
         const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(email, role) as User;
 
@@ -200,7 +200,7 @@ export class AuthService {
     }
 
     // reset password with code
-    static async resetPassword(email: string, code: string, newPassword: string, role: 'patient' | 'donor'): Promise<boolean> {
+    static async resetPassword(email: string, code: string, newPassword: string, role: 'patient' | 'donor' | 'sponsor'): Promise<boolean> {
         // Verify code
         const verification = this.verifyPasswordResetCode(email, code, role);
 

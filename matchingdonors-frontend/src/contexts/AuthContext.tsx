@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { AuthService } from '../services/auth.service';
-import { User, RegisterData, AuthContextType } from '../types/auth.types';
+import { User, RegisterData, AuthContextType, UserRole } from '../types/auth.types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -12,7 +12,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [pendingRegistration, setPendingRegistration] = useState<{ role: 'patient' | 'donor' } | null>(null);
+    const [pendingRegistration, setPendingRegistration] = useState<{ role: UserRole } | null>(null);
 
     // Load auth data from localStorage on mount
     useEffect(() => {
@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setIsLoading(false);
     }, []);
 
-    const login = async (email: string, password: string, role: 'patient' | 'donor'): Promise<void> => {
+    const login = async (email: string, password: string, role: UserRole): Promise<void> => {
         try {
             const response = await AuthService.login(email, password, role);
             setToken(response.token);
@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout,
         refreshUser,
         pendingRegistration,
-        triggerRegistration: (role: 'patient' | 'donor') => {
+        triggerRegistration: (role: UserRole) => {
             logout();
             setPendingRegistration({ role });
         },

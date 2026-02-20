@@ -9,7 +9,7 @@ interface RegisterModalProps {
     onSwitchToLogin: () => void;
 }
 
-export const RegisterModal: React.FC<RegisterModalProps> = ({ role, onClose, onSwitchToLogin }) => {
+export const RegisterModal: React.FC<RegisterModalProps> = ({ role: initialRole, onClose, onSwitchToLogin }) => {
     const { register } = useAuth();
     const [formData, setFormData] = useState({
         firstName: '',
@@ -17,11 +17,12 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ role, onClose, onS
         email: '',
         password: '',
         confirmPassword: '',
+        role: initialRole,
     });
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
@@ -50,7 +51,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ role, onClose, onS
             await register({
                 email: formData.email,
                 password: formData.password,
-                role,
+                role: formData.role as UserRole,
                 firstName: formData.firstName,
                 lastName: formData.lastName,
             });
@@ -62,18 +63,40 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({ role, onClose, onS
         }
     };
 
+    // Helper to format the title nicely
+    const getRoleDisplayTitle = (currentRole: string) => {
+        if (currentRole === 'patient') return 'Patient';
+        if (currentRole === 'donor') return 'Donor';
+        return 'Sponsor';
+    };
+
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <button className="modal-close" onClick={onClose}>×</button>
 
                 <div className="modal-header">
-                    <h2>Create Your {role === 'patient' ? 'Patient' : 'Donor'} Account 🎉</h2>
+                    <h2>{getRoleDisplayTitle(formData.role)} Account 🎉</h2>
                     <p>Join our community today</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     {error && <div className="error-message">{error}</div>}
+
+                    <div className="form-group">
+                        <label htmlFor="role">Account Type</label>
+                        <select
+                            id="role"
+                            name="role"
+                            value={formData.role}
+                            onChange={handleChange}
+                            disabled={isLoading}
+                        >
+                            <option value="patient">Patient</option>
+                            <option value="donor">Donor</option>
+                            <option value="sponsor">Sponsor / Donation</option>
+                        </select>
+                    </div>
 
                     <div className="form-row">
                         <div className="form-group">

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AuthResponse, RegisterData, User } from '../types/auth.types';
+import { AuthResponse, RegisterData, User, UserRole } from '../types/auth.types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
@@ -43,7 +43,7 @@ export class AuthService {
     }
 
     // Login user
-    static async login(email: string, password: string, role: 'patient' | 'donor'): Promise<AuthResponse> {
+    static async login(email: string, password: string, role: UserRole): Promise<AuthResponse> {
         const response = await authApi.post('/login', {
             email,
             password,
@@ -64,19 +64,19 @@ export class AuthService {
     }
 
     // Request password reset code
-    static async forgotPassword(email: string, role: 'patient' | 'donor'): Promise<{ message: string; code?: string; expiresAt?: string }> {
+    static async forgotPassword(email: string, role: UserRole): Promise<{ message: string; code?: string; expiresAt?: string }> {
         const response = await authApi.post('/forgot-password', { email, role });
         return response.data;
     }
 
     // Verify password reset code
-    static async verifyResetCode(email: string, code: string, role: 'patient' | 'donor'): Promise<{ valid: boolean; message?: string }> {
+    static async verifyResetCode(email: string, code: string, role: UserRole): Promise<{ valid: boolean; message?: string }> {
         const response = await authApi.post('/verify-code', { email, code, role });
         return response.data;
     }
 
     // Reset password with code
-    static async resetPassword(email: string, code: string, newPassword: string, role: 'patient' | 'donor'): Promise<{ message: string }> {
+    static async resetPassword(email: string, code: string, newPassword: string, role: UserRole): Promise<{ message: string }> {
         const response = await authApi.post('/reset-password', { email, code, newPassword, role });
         return response.data;
     }
@@ -172,10 +172,6 @@ export class AuthService {
             throw new Error('Not authenticated');
         }
 
-        // const response = await api.post('/profile/validate',
-        //     { text, currentTab },
-        //     { headers: { Authorization: `Bearer ${token}` } }
-        // );
         const response = await axios.post(`${API_BASE_URL}/api/profile/validate`,
             { text, currentTab },
             { headers: { Authorization: `Bearer ${token}` } }

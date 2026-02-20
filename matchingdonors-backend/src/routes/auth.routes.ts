@@ -19,8 +19,8 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        if (data.role !== 'patient' && data.role !== 'donor') {
-            res.status(400).json({ error: 'Role must be either "patient" or "donor"' });
+        if (data.role !== 'patient' && data.role !== 'donor' && data.role !== 'sponsor') {
+            res.status(400).json({ error: 'Role must be either "patient", "donor" or "sponsor"' });
             return;
         }
 
@@ -48,9 +48,9 @@ router.post('/login', async (req: Request, res: Response) => {
         }
 
         // Validate role
-        if (role !== 'patient' && role !== 'donor') {
+        if (role !== 'patient' && role !== 'donor' && role !== 'sponsor') {
             return res.status(400).json({
-                error: 'Role must be either patient or donor'
+                error: 'Role must be either patient, donor or sponsor'
             });
         }
 
@@ -100,8 +100,8 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
             return;
         }
 
-        if (role !== 'patient' && role !== 'donor') {
-            return res.status(400).json({ error: 'Role must be either patient or donor' });
+        if (role !== 'patient' && role !== 'donor' && role !== 'sponsor') {
+            return res.status(400).json({ error: 'Role must be either patient, donor or sponsor' });
         }
 
         const result = await AuthService.generatePasswordResetCode(email, role);

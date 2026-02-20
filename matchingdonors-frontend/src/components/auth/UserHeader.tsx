@@ -167,6 +167,9 @@ export const UserHeader: React.FC = () => {
         setToast({ ...toast, show: false });
     };
 
+    // Helper to format the role nicely
+    const displayRole = user.role === 'patient' ? 'Patient' : user.role === 'donor' ? 'Donor' : 'Sponsor';
+
     return (
         <>
             <div className="user-header">
@@ -227,7 +230,7 @@ export const UserHeader: React.FC = () => {
                         {user.firstName}
                     </button>
                     <span className={`user-role ${user.role}`}>
-                        {user.role === 'patient' ? 'Patient' : 'Donor'}
+                        {displayRole}
                     </span>
                 </div>
 
