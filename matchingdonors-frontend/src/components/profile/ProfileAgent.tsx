@@ -109,17 +109,6 @@ export const ProfileAgent: React.FC = () => {
                         return;
                     }
 
-                    // Show tab mismatch
-                    // if (validation.tabMismatch?.detected) {
-                    //     setValidationModal({
-                    //         isOpen: true,
-                    //         type: 'tab',
-                    //         message: validation.tabMismatch.message,
-                    //         suggestedAction: `Go to ${validation.tabMismatch.suggestedTab}`,
-                    //     });
-                    //     return;
-                    // }
-
                     // Need tontact a real person
                     if (validation.intent === 'contact_person') {
                         setValidationModal({
@@ -251,193 +240,207 @@ export const ProfileAgent: React.FC = () => {
                 </div>
 
                 <div className="profile-agent-content">
-                    {!suggestion ? (
-                        <form onSubmit={handleSubmit} className="profile-form">
-                            <div className="form-section">
-                                <div className="form-label-with-actions">
-                                    <label className="form-label" htmlFor="profile-input">
-                                        Describe Your Situation
-                                    </label>
-                                    {isMediaRecorderSupported() && (
-                                        <button
-                                            type="button"
-                                            className={`audio-button ${isRecording ? 'recording' : ''}`}
-                                            onClick={handleVoiceInput}
-                                            disabled={loading || isTranscribing}
-                                            title={isRecording ? 'Click to stop recording' : 'Click to start recording'}
-                                        >
-                                            {isRecording ? (
-                                                <>
-                                                    <span className="recording-pulse"></span>
-                                                    🎤 Recording...
-                                                </>
-                                            ) : isTranscribing ? (
-                                                '🔄 Transcribing...'
-                                            ) : (
-                                                '🎤 Voice Input'
-                                            )}
-                                        </button>
-                                    )}
-                                </div>
-                                <textarea
-                                    id="profile-input"
-                                    className="profile-textarea"
-                                    rows={10}
-                                    value={text}
-                                    onChange={(e) => setText(e.target.value)}
-                                    placeholder="Example: My name is Tom, 34 years old with A blood type, and I need a kidney to maintain my health for the rest of 20 years. I live in Boston, MA, USA. If there is potential donor, I'm willing to consult and travel..."
-                                    disabled={loading}
-                                />
-                                <div
-                                    className={`character-count ${characterCount > maxCharacters
-                                        ? "error"
-                                        : characterCount < minCharacters
-                                            ? "warning"
-                                            : ""
-                                        }`}
-                                >
-                                    {characterCount} / {maxCharacters} characters
-                                    {characterCount < minCharacters &&
-                                        ` (minimum ${minCharacters})`}
-                                </div>
-                            </div>
-
-                            {isRecording && (
-                                <div className="success-message">
-                                    ✅ Recording... Speak clearly. Click the button again when done.
-                                </div>
-                            )}
-
-                            {isTranscribing && (
-                                <div className="info-message">
-                                    🔄 Transcribing your audio with AI... Please wait.
-                                </div>
-                            )}
-
-                            {voiceError && (
-                                <div className="error-message">
-                                    ❌ {voiceError}
-                                </div>
-                            )}
-
-                            {error && <div className="error-message">❌ {error}</div>}
-
-                            <button
-                                type="submit"
-                                className="submit-button"
-                                disabled={loading || !isValid || isTranscribing}
-                            >
-                                {loading ? "Generating Profile..." : "Generate Profile Suggestion"}
-                            </button>
-
-                            {loading && (
-                                <div className="loading-container">
-                                    <div className="loading-spinner"></div>
-                                    <span className="loading-text">
-                                        Analyzing your information with AI...
-                                    </span>
-                                </div>
-                            )}
-                        </form>
+                    {user?.role === 'sponsor' ? (
+                        <div className="sponsor-notice-container">
+                            <div className="sponsor-notice-icon">🤝</div>
+                            <h3 className="sponsor-notice-title">Sponsor Account Detected</h3>
+                            <p className="sponsor-notice-text">
+                                <strong>You do not need to fill out a medical profile.</strong>
+                                <br />
+                                This tool is designed for Patients and Donors to describe their medical history.
+                                <br /><br />
+                                To manage your organization's details, please click your name in the top right corner and select <strong>"Edit Profile"</strong>.
+                            </p>
+                        </div>
                     ) : (
-                        <div className="suggestion-container">
-                            <div className="suggestion-header">
-                                <span className="suggestion-icon">✨</span>
-                                <h3>Edit Your Profile</h3>
-                                <p className="edit-hint">Review and modify the AI-generated profile below</p>
-                            </div>
-
-                            <div className="suggestion-content">
-                                <div className="editable-form">
-                                    <div className="form-group">
-                                        <label className="edit-label">Summary:</label>
-                                        <textarea
-                                            className="edit-input edit-textarea"
-                                            value={editableSummary}
-                                            onChange={(e) => setEditableSummary(e.target.value)}
-                                            rows={2}
-                                        />
+                        !suggestion ? (
+                            <form onSubmit={handleSubmit} className="profile-form">
+                                <div className="form-section">
+                                    <div className="form-label-with-actions">
+                                        <label className="form-label" htmlFor="profile-input">
+                                            Describe Your Situation
+                                        </label>
+                                        {isMediaRecorderSupported() && (
+                                            <button
+                                                type="button"
+                                                className={`audio-button ${isRecording ? 'recording' : ''}`}
+                                                onClick={handleVoiceInput}
+                                                disabled={loading || isTranscribing}
+                                                title={isRecording ? 'Click to stop recording' : 'Click to start recording'}
+                                            >
+                                                {isRecording ? (
+                                                    <>
+                                                        <span className="recording-pulse"></span>
+                                                        🎤 Recording...
+                                                    </>
+                                                ) : isTranscribing ? (
+                                                    '🔄 Transcribing...'
+                                                ) : (
+                                                    '🎤 Voice Input'
+                                                )}
+                                            </button>
+                                        )}
                                     </div>
-
-                                    <div className="form-row">
-                                        <div className="form-group">
-                                            <label className="edit-label">Organ Type:</label>
-                                            <input
-                                                type="text"
-                                                className="edit-input"
-                                                value={editableOrganType}
-                                                onChange={(e) => setEditableOrganType(e.target.value)}
-                                                placeholder="e.g., kidney, liver, heart"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="edit-label">Age:</label>
-                                            <input
-                                                type="text"
-                                                className="edit-input"
-                                                value={editableAge}
-                                                onChange={(e) => setEditableAge(e.target.value)}
-                                                placeholder="e.g., 34"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="form-row">
-                                        <div className="form-group">
-                                            <label className="edit-label">Blood Type:</label>
-                                            <input
-                                                type="text"
-                                                className="edit-input"
-                                                value={editableBloodType}
-                                                onChange={(e) => setEditableBloodType(e.target.value)}
-                                                placeholder="e.g., A+, O-, AB+"
-                                            />
-                                        </div>
-                                        <div className="form-group">
-                                            <label className="edit-label">Location:</label>
-                                            <input
-                                                type="text"
-                                                className="edit-input"
-                                                value={editableLocation}
-                                                onChange={(e) => setEditableLocation(e.target.value)}
-                                                placeholder="e.g., Boston, MA, USA"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="edit-label">📝 Personal Story:</label>
-                                        <textarea
-                                            className="edit-input edit-textarea"
-                                            value={editableStory}
-                                            onChange={(e) => setEditableStory(e.target.value)}
-                                            rows={4}
-                                        />
+                                    <textarea
+                                        id="profile-input"
+                                        className="profile-textarea"
+                                        rows={10}
+                                        value={text}
+                                        onChange={(e) => setText(e.target.value)}
+                                        placeholder="Example: My name is Tom, 34 years old with A blood type, and I need a kidney to maintain my health for the rest of 20 years. I live in Boston, MA, USA. If there is potential donor, I'm willing to consult and travel..."
+                                        disabled={loading}
+                                    />
+                                    <div
+                                        className={`character-count ${characterCount > maxCharacters
+                                            ? "error"
+                                            : characterCount < minCharacters
+                                                ? "warning"
+                                                : ""
+                                            }`}
+                                    >
+                                        {characterCount} / {maxCharacters} characters
+                                        {characterCount < minCharacters &&
+                                            ` (minimum ${minCharacters})`}
                                     </div>
                                 </div>
 
-                                {suggestion.safety_flags.length > 0 && (
-                                    <div className="safety-flags">
-                                        <div className="safety-flags-label">
-                                            <span>⚠️</span>
-                                            <strong>Safety Considerations:</strong>
-                                        </div>
-                                        <p className="safety-flags-list">
-                                            {suggestion.safety_flags.join(", ")}
-                                        </p>
+                                {isRecording && (
+                                    <div className="success-message">
+                                        ✅ Recording... Speak clearly. Click the button again when done.
                                     </div>
                                 )}
-                            </div>
 
-                            <div className="action-buttons">
-                                <button className="btn btn-success" onClick={handleSaveProfile}>
-                                    💾 Save Profile
+                                {isTranscribing && (
+                                    <div className="info-message">
+                                        🔄 Transcribing your audio with AI... Please wait.
+                                    </div>
+                                )}
+
+                                {voiceError && (
+                                    <div className="error-message">
+                                        ❌ {voiceError}
+                                    </div>
+                                )}
+
+                                {error && <div className="error-message">❌ {error}</div>}
+
+                                <button
+                                    type="submit"
+                                    className="submit-button"
+                                    disabled={loading || !isValid || isTranscribing}
+                                >
+                                    {loading ? "Generating Profile..." : "Generate Profile Suggestion"}
                                 </button>
-                                <button className="btn btn-secondary" onClick={handleNewProfile}>
-                                    ➕ Create New Profile
-                                </button>
+
+                                {loading && (
+                                    <div className="loading-container">
+                                        <div className="loading-spinner"></div>
+                                        <span className="loading-text">
+                                            Analyzing your information with AI...
+                                        </span>
+                                    </div>
+                                )}
+                            </form>
+                        ) : (
+                            <div className="suggestion-container">
+                                <div className="suggestion-header">
+                                    <span className="suggestion-icon">✨</span>
+                                    <h3>Edit Your Profile</h3>
+                                    <p className="edit-hint">Review and modify the AI-generated profile below</p>
+                                </div>
+
+                                <div className="suggestion-content">
+                                    <div className="editable-form">
+                                        <div className="form-group">
+                                            <label className="edit-label">Summary:</label>
+                                            <textarea
+                                                className="edit-input edit-textarea"
+                                                value={editableSummary}
+                                                onChange={(e) => setEditableSummary(e.target.value)}
+                                                rows={2}
+                                            />
+                                        </div>
+
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label className="edit-label">Organ Type:</label>
+                                                <input
+                                                    type="text"
+                                                    className="edit-input"
+                                                    value={editableOrganType}
+                                                    onChange={(e) => setEditableOrganType(e.target.value)}
+                                                    placeholder="e.g., kidney, liver, heart"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="edit-label">Age:</label>
+                                                <input
+                                                    type="text"
+                                                    className="edit-input"
+                                                    value={editableAge}
+                                                    onChange={(e) => setEditableAge(e.target.value)}
+                                                    placeholder="e.g., 34"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label className="edit-label">Blood Type:</label>
+                                                <input
+                                                    type="text"
+                                                    className="edit-input"
+                                                    value={editableBloodType}
+                                                    onChange={(e) => setEditableBloodType(e.target.value)}
+                                                    placeholder="e.g., A+, O-, AB+"
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="edit-label">Location:</label>
+                                                <input
+                                                    type="text"
+                                                    className="edit-input"
+                                                    value={editableLocation}
+                                                    onChange={(e) => setEditableLocation(e.target.value)}
+                                                    placeholder="e.g., Boston, MA, USA"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label className="edit-label">📝 Personal Story:</label>
+                                            <textarea
+                                                className="edit-input edit-textarea"
+                                                value={editableStory}
+                                                onChange={(e) => setEditableStory(e.target.value)}
+                                                rows={4}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {suggestion.safety_flags.length > 0 && (
+                                        <div className="safety-flags">
+                                            <div className="safety-flags-label">
+                                                <span>⚠️</span>
+                                                <strong>Safety Considerations:</strong>
+                                            </div>
+                                            <p className="safety-flags-list">
+                                                {suggestion.safety_flags.join(", ")}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="action-buttons">
+                                    <button className="btn btn-success" onClick={handleSaveProfile}>
+                                        💾 Save Profile
+                                    </button>
+                                    <button className="btn btn-secondary" onClick={handleNewProfile}>
+                                        ➕ Create New Profile
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )
                     )}
                 </div>
             </div>

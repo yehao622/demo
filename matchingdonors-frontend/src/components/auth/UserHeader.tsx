@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { ViewProfileModal } from '../profile/ViewProfileModal';
 import { EditProfileModal } from '../profile/EditProfileModal';
+import { SponsorProfileModal } from '../profile/SponsorProfileModal';
+import { SponsorProfileService, SponsorProfileData } from '../../services/sponsorProfile.service';
+import { ViewSponsorProfileModal } from '../profile/ViewSponsorProfileModal';
 import { FavoritesModal } from '../profile/FavoritesModal';
 import { Toast } from '../common/Toast';
 import { AuthService } from '../../services/auth.service';
@@ -15,6 +18,9 @@ export const UserHeader: React.FC = () => {
     const [showInbox, setShowInbox] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showSponsorModal, setShowSponsorModal] = useState(false);
+    const [showSponsorViewModal, setShowSponsorViewModal] = useState(false);
+    const [sponsorData, setSponsorData] = useState<SponsorProfileData | null>(null);
     const [showFavoritesModal, setShowFavoritesModal] = useState(false);
     const [profileData, setProfileData] = useState<any>(null);
     const [toast, setToast] = useState<{
@@ -107,35 +113,50 @@ export const UserHeader: React.FC = () => {
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
     const handleViewProfile = () => {
-        console.log('View Profile clicked'); // Debug log
+        // console.log('View Profile clicked'); // Debug log
         setShowProfileMenu(false);
-        setShowViewModal(true);
+        if (user.role === 'sponsor') {
+            setShowSponsorViewModal(true);
+        } else {
+            setShowViewModal(true);
+        }
     };
 
     const handleEditProfile = async () => {
-        console.log('Edit Profile clicked'); // Debug log
+        // console.log('Edit Profile clicked'); // Debug log
         setShowProfileMenu(false);
 
-        try {
-            // Load profile data before opening edit modal
-            const response = await AuthService.getProfile();
-            if (response.success && response.profile) {
-                setProfileData(response.profile);
-                setShowEditModal(true);
-            } else {
+        if (user.role === 'sponsor') {
+            // --- SPONSOR FLOW ---
+            try {
+                const response = await SponsorProfileService.getProfile();
+                setSponsorData(response.profile || null);
+                setShowSponsorModal(true);
+            } catch (error: any) {
+                setToast({ show: true, message: 'Failed to load sponsor profile.', type: 'error' });
+            }
+        } else {
+            try {
+                // Load profile data before opening edit modal
+                const response = await AuthService.getProfile();
+                if (response.success && response.profile) {
+                    setProfileData(response.profile);
+                    setShowEditModal(true);
+                } else {
+                    setToast({
+                        show: true,
+                        message: 'No profile found. Please complete your profile first.',
+                        type: 'error'
+                    });
+                }
+            } catch (error: any) {
+                console.error('Failed to load profile:', error);
                 setToast({
                     show: true,
-                    message: 'No profile found. Please complete your profile first.',
+                    message: 'Failed to load profile: ' + error.message,
                     type: 'error'
                 });
             }
-        } catch (error: any) {
-            console.error('Failed to load profile:', error);
-            setToast({
-                show: true,
-                message: 'Failed to load profile: ' + error.message,
-                type: 'error'
-            });
         }
     };
 
@@ -160,6 +181,16 @@ export const UserHeader: React.FC = () => {
                 message: 'Failed to save profile: ' + error.message,
                 type: 'error'
             });
+        }
+    };
+
+    const handleSaveSponsorProfile = async (updatedData: SponsorProfileData) => {
+        try {
+            await SponsorProfileService.saveProfile(updatedData);
+            setToast({ show: true, message: 'Sponsor profile saved successfully!', type: 'success' });
+            setShowSponsorModal(false);
+        } catch (error: any) {
+            setToast({ show: true, message: 'Failed to save sponsor profile.', type: 'error' });
         }
     };
 
@@ -295,6 +326,18 @@ export const UserHeader: React.FC = () => {
                     onSave={handleSaveProfile}
                 />
             )}
+
+            <SponsorProfileModal
+                isOpen={showSponsorModal}
+                onClose={() => setShowSponsorModal(false)}
+                profileData={sponsorData}
+                onSave={handleSaveSponsorProfile}
+            />
+
+            <ViewSponsorProfileModal
+                isOpen={showSponsorViewModal}
+                onClose={() => setShowSponsorViewModal(false)}
+            />
 
             <FavoritesModal
                 isOpen={showFavoritesModal}

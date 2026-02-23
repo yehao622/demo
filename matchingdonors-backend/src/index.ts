@@ -13,6 +13,7 @@ import authRoutes from './routes/auth.routes';
 import notificationRoutes from './routes/notification.routes';
 import newsRoutes from './routes/news.routes';
 import chatRoutes from './routes/chat.routes';
+import sponsorProfileRoutes from './routes/sponsorProfile.routes';
 import './database/init';
 
 import http from 'http';
@@ -52,3 +53,4 @@ app.use("/api/advertiser", advertiseRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/sponsor-profile', sponsorProfileRoutes);

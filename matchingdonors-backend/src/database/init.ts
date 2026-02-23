@@ -157,6 +157,25 @@ db.exec(`
     CREATE INDEX IF NOT EXISTS idx_messages_room_id ON messages(room_id);
 `);
 
+// Create Sponsor Profiles table
+db.exec(`
+      CREATE TABLE IF NOT EXISTS sponsor_profiles (
+          id TEXT PRIMARY KEY,
+          user_id INTEGER NOT NULL UNIQUE,
+          organization_name TEXT,           -- Nullable, in case they are an individual
+          contact_phone TEXT,
+          website TEXT,
+          sponsor_type TEXT CHECK(sponsor_type IN ('individual', 'organization')) DEFAULT 'organization',
+          interests TEXT,                   -- We will store a comma-separated list like "advertising,property_donation"
+          additional_notes TEXT,            -- For any extra details they want to provide
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_sponsor_profiles_user_id ON sponsor_profiles(user_id);
+  `);
+
 if (!isTest) {
     console.log('✅ Database initialized successfully at:', DB_PATH);
     import('./migrations').then(({ runMigrations }) => {

@@ -712,3 +712,32 @@
     font-size: 0.85rem;
   }
 }
+
+.sponsor-notice-container {
+  text-align: center;
+  padding: 60px 20px;
+  color: #555;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #e2e8f0;
+  margin-top: 20px;
+}
+
+.sponsor-notice-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.sponsor-notice-title {
+  margin-bottom: 10px;
+  color: #333;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+
+.sponsor-notice-text {
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.6;
+  font-size: 1rem;
+}
