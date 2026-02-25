@@ -45,7 +45,7 @@ export const ProfileAgent: React.FC = () => {
     const [editableLocation, setEditableLocation] = useState("");
     const [editableStory, setEditableStory] = useState("");
     const [isPublic, setIsPublic] = useState(true);
-    const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
+    // const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
 
     const { isRecording, isTranscribing, error: voiceError, handleVoiceInput } = useVoiceInput(
         (transcript) => setText(prev => prev ? prev + ' ' + transcript : transcript)
@@ -173,24 +173,24 @@ export const ProfileAgent: React.FC = () => {
     };
 
     // Add this new handler
-    const handleToggleVisibility = async (newValue: boolean) => {
-        setIsTogglingVisibility(true);
-        try {
-            await AuthService.toggleProfileVisibility(newValue);
-            setIsPublic(newValue);
-            // Show success message
-            const message = newValue
-                ? '✅ Profile is now public and visible to others'
-                : '✅ Profile is now private';
-            console.log(message);
-        } catch (err: any) {
-            setError('Failed to update visibility: ' + err.message);
-            // Revert toggle if failed
-            setIsPublic(!newValue);
-        } finally {
-            setIsTogglingVisibility(false);
-        }
-    };
+    // const handleToggleVisibility = async (newValue: boolean) => {
+    //     setIsTogglingVisibility(true);
+    //     try {
+    //         await AuthService.toggleProfileVisibility(newValue);
+    //         setIsPublic(newValue);
+    //         // Show success message
+    //         const message = newValue
+    //             ? '✅ Profile is now public and visible to others'
+    //             : '✅ Profile is now private';
+    //         console.log(message);
+    //     } catch (err: any) {
+    //         setError('Failed to update visibility: ' + err.message);
+    //         // Revert toggle if failed
+    //         setIsPublic(!newValue);
+    //     } finally {
+    //         setIsTogglingVisibility(false);
+    //     }
+    // };
 
     const handleSaveProfile = async () => {
         try {

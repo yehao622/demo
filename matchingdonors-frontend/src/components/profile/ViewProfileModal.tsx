@@ -26,7 +26,7 @@ export const ViewProfileModal: React.FC<ViewProfileModalProps> = ({ isOpen, onCl
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showEditModal, setShowEditModal] = useState(false);
+    // const [showEditModal, setShowEditModal] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -38,55 +38,29 @@ export const ViewProfileModal: React.FC<ViewProfileModalProps> = ({ isOpen, onCl
         setLoading(true);
         setError(null);
         try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch('http://localhost:8080/api/profile/me', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+            const response = await AuthService.getProfile();
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch profile');
-            }
-
-            const data = await response.json();
-            if (data.success && data.profile) {
-                setProfile(data.profile);
+            if (response.success && response.profile) {
+                setProfile(response.profile);
             } else {
-                setError('No profile found. Please complete your profile first.');
+                setProfile(null);
             }
         } catch (err: any) {
             console.error('Error fetching profile:', err);
-            setError(err.message || 'Failed to load profile');
+
+            // FIX: If 404 or "not found", show the specific user instruction
+            const isNotFoundError =
+                (err.response && err.response.status === 404) ||
+                (err.message && err.message.toLowerCase().includes('not found'));
+
+            if (isNotFoundError) {
+                // Show the specific message requested
+                setError('Please edit your profile first if your profile is incomplete.');
+            } else {
+                setError(err.message || 'Failed to load profile');
+            }
         } finally {
             setLoading(false);
-        }
-    };
-
-    // Handle opening edit modal
-    const handleEdit = () => {
-        setShowEditModal(true);
-    };
-
-    // Handle closing edit modal
-    const handleCloseEdit = () => {
-        setShowEditModal(false);
-        // Reload profile after edit
-        fetchProfile();
-    };
-
-    // Handle saving profile from edit modal
-    const handleSaveProfile = async (updatedData: any) => {
-        try {
-            await AuthService.updateProfile(updatedData);
-            setShowEditModal(false);
-            // Reload the profile
-            await fetchProfile();
-            alert('✅ Profile updated successfully!');
-        } catch (err: any) {
-            console.error('Failed to save profile:', err);
-            alert('❌ Failed to save profile: ' + err.message);
         }
     };
 

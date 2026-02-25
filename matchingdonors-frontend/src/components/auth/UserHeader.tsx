@@ -113,7 +113,6 @@ export const UserHeader: React.FC = () => {
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
     const handleViewProfile = () => {
-        // console.log('View Profile clicked'); // Debug log
         setShowProfileMenu(false);
         if (user.role === 'sponsor') {
             setShowSponsorViewModal(true);
@@ -133,29 +132,51 @@ export const UserHeader: React.FC = () => {
                 setSponsorData(response.profile || null);
                 setShowSponsorModal(true);
             } catch (error: any) {
-                setToast({ show: true, message: 'Failed to load sponsor profile.', type: 'error' });
+                // If sponsor profile missing, just open empty modal
+                setSponsorData(null);
+                setShowSponsorModal(true);
             }
         } else {
             try {
                 // Load profile data before opening edit modal
                 const response = await AuthService.getProfile();
+
                 if (response.success && response.profile) {
                     setProfileData(response.profile);
                     setShowEditModal(true);
+                }
+            } catch (error: any) {
+                // We initialize an empty profile object and open the modal anyway.
+                const isNotFoundError =
+                    (error.response && error.response.status === 404) ||
+                    (error.message && error.message.toLowerCase().includes('not found'));
+
+                if (isNotFoundError) {
+                    console.log("No profile found, initializing empty form.");
+                    setProfileData({
+                        name: user.firstName + ' ' + user.lastName,
+                        type: user.role,
+                        age: '',
+                        blood_type: '',
+                        organ_type: '',
+                        city: '',
+                        state: '',
+                        country: '',
+                        description: '',
+                        medical_info: '',
+                        preferences: '',
+                        is_public: true
+                    });
+                    setShowEditModal(true);
                 } else {
+                    // Actual system errors (server down, 500, etc)
+                    console.error('Failed to load profile:', error);
                     setToast({
                         show: true,
-                        message: 'No profile found. Please complete your profile first.',
+                        message: 'Failed to load profile: ' + (error.message || 'Unknown error'),
                         type: 'error'
                     });
                 }
-            } catch (error: any) {
-                console.error('Failed to load profile:', error);
-                setToast({
-                    show: true,
-                    message: 'Failed to load profile: ' + error.message,
-                    type: 'error'
-                });
             }
         }
     };

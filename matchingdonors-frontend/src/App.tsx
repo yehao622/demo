@@ -8,6 +8,8 @@ import { ProfileAgent } from './components/profile/ProfileAgent';
 import { ProfileMatchingPage } from './components/profile/ProfileMatchingPage';
 import { ProfileCompletionModal } from './components/profile/ProfileCompletionModal';
 import { NewsHub } from './components/news/NewsHub';
+import { EditProfileModal } from './components/profile/EditProfileModal';
+import { Toast } from './components/common/Toast';
 import AdvertiserChatPage from './pages/AdvertiserChatPage';
 import './App.css';
 
@@ -15,8 +17,16 @@ import './App.css';
 const AppContent: React.FC = () => {
   const { user } = useAuth();
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<any>(null);
   const [profileCheckDone, setProfileCheckDone] = useState(false);
-  const navigate = useNavigate();
+
+  // Toast state
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
+    show: false, message: '', type: 'success'
+  });
+
+  // const navigate = useNavigate();
 
   useEffect(() => {
     const checkProfile = async () => {
@@ -39,10 +49,10 @@ const AppContent: React.FC = () => {
           setProfileCheckDone(true);
 
           // Only show modal if it's not a 404 error
-          if (error?.response?.status !== 404) {
-            console.log('Profile endpoint not found, showing modal for safety');
-            setShowProfileModal(true);
-          }
+          // if (error?.response?.status !== 404) {
+          console.log('Profile endpoint not found, showing modal for safety');
+          setShowProfileModal(true);
+          // }
         }
       }
     };
@@ -52,7 +62,35 @@ const AppContent: React.FC = () => {
 
   const handleCompleteProfile = () => {
     setShowProfileModal(false);
-    navigate('/profile-fill');
+
+    // Initialize empty profile for the user
+    if (user) {
+      setEditingProfile({
+        name: user.firstName + ' ' + user.lastName,
+        type: user.role,
+        age: '',
+        blood_type: '',
+        organ_type: '',
+        city: '',
+        state: '',
+        country: '',
+        description: '',
+        medical_info: '',
+        preferences: '',
+        is_public: true
+      });
+      setShowEditModal(true);
+    }
+  };
+
+  const handleSaveProfile = async (updatedData: any) => {
+    try {
+      await AuthService.updateProfile(updatedData);
+      setToast({ show: true, message: 'Profile saved successfully!', type: 'success' });
+      setShowEditModal(false);
+    } catch (error: any) {
+      setToast({ show: true, message: 'Failed to save profile: ' + error.message, type: 'error' });
+    }
   };
 
   const handleCloseModal = () => {
@@ -86,12 +124,14 @@ const AppContent: React.FC = () => {
           >
             📰 News Hub
           </NavLink>
-          <NavLink
-            to="/advertiser-chat"
-            className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
-          >
-            💬 Advertiser Chat
-          </NavLink>
+          {user?.role === 'sponsor' && (
+            <NavLink
+              to="/advertiser-chat"
+              className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+            >
+              💬 Advertiser Chat
+            </NavLink>
+          )}
         </div>
         <UserHeader />
       </nav>
@@ -111,6 +151,22 @@ const AppContent: React.FC = () => {
         onClose={handleCloseModal}
         onComplete={handleCompleteProfile}
         userRole={user?.role || 'patient'}
+      />
+
+      {editingProfile && (
+        <EditProfileModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          profileData={editingProfile}
+          onSave={handleSaveProfile}
+        />
+      )}
+
+      <Toast
+        isVisible={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
       />
     </div>
   );
