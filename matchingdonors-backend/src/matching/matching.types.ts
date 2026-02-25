@@ -1,17 +1,4 @@
-export interface Profile {
-    id: string;
-    name: string;
-    type: 'patient' | 'donor';
-    description: string;
-    medicalInfo: string;
-    preferences?: string;
-    bloodType?: string;
-    age?: number;
-    country?: string;
-    state?: string;
-    city?: string;
-    organType: string;
-}
+import { BaseProfile } from "../models/profile.model";
 
 export interface ProfileEmbedding {
     profileId: string;
@@ -21,7 +8,7 @@ export interface ProfileEmbedding {
 
 export interface MatchResult {
     profileId: string;
-    profile: Profile;
+    profile: BaseProfile;
     similarity: number;
     rank: number;
     reason?: string;

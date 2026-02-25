@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { AuthService } from "../services/auth.service";
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -26,7 +25,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
         const authHeader = req.headers.authorization;
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ error: 'No token provided' });
+            return res.status(401).json({ error: 'Need authentication token provided' });
         }
 
         const token = authHeader.substring(7);
@@ -42,16 +41,10 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 // Middleware to check user role
 export const authorizeRole = (...allowedRoles: Array<'patient' | 'donor' | 'sponsor'>) => {
     return (req: Request, res: Response, next: NextFunction): void => {
-        if (!req.user) {
-            res.status(401).json({ error: 'Authentication required' });
+        if (!req.user || !allowedRoles.includes(req.user.role)) {
+            res.status(401).json({ error: 'Insufficient permissions for this role' });
             return;
         }
-
-        if (!allowedRoles.includes(req.user.role)) {
-            res.status(403).json({ error: 'Insufficient permissions' });
-            return;
-        }
-
         next();
     };
 };
