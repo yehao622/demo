@@ -35,30 +35,43 @@ export const UserHeader: React.FC = () => {
 
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
+    // 🚀 FIX 1: Moved this function ABOVE the useEffect so it doesn't fail silently
+    const loadNotifications = async () => {
+        try {
+            console.log("Fetching notifications from database...");
+            const data = await NotificationService.getNotifications();
+            console.log("📥 Inbox data loaded:", data);
+            setNotifications(data || []);
+        } catch (error) {
+            console.error("❌ Failed to load notifications", error);
+        }
+    };
+
     // Fetch notifications on mount
     useEffect(() => {
-        if (!user) return;
+        // 🚀 FIX 2: Check for user.id specifically to prevent Strict Mode infinite loops
+        if (!user?.id) return;
 
         // 1. Load initial inbox from database
         loadNotifications();
 
-        // 2. Connect to the WebSocket server
-        const socket = io('http://localhost:8080');
+        // 2. Connect to the WebSocket server dynamically
+        const socketUrl = process.env.REACT_APP_API_URL?.replace(/\/$/, '') || 'http://localhost:8080';
+
+        const socket = io(socketUrl, {
+            transports: ['websocket', 'polling'],
+            withCredentials: true
+        });
 
         socket.on('connect', () => {
-            console.log('Connected to real-time notifications!');
-            // Tell the server who we are so we only get our own messages
+            console.log('✅ Connected to real-time notifications at:', socketUrl);
             socket.emit('join', user.id);
         });
 
         // 3. Listen for incoming live notifications
         socket.on('new_notification', (newNotif: AppNotification) => {
             console.log('🔔 Live Notification Received:', newNotif);
-
-            // Add the new notification to the TOP of the inbox list
             setNotifications(prev => [newNotif, ...prev]);
-
-            // Optional: Pop a visual toast alert!
             setToast({
                 show: true,
                 message: `New message: ${newNotif.title}`,
@@ -66,22 +79,15 @@ export const UserHeader: React.FC = () => {
             });
         });
 
-        // Cleanup function: disconnect when the component unmounts
+        // Cleanup function
         return () => {
+            console.log('🔌 Disconnecting socket...');
             socket.disconnect();
         };
-    }, [user]);
+        // 🚀 FIX 3: Dependency array only watches user.id now
+    }, [user?.id]);
 
     if (!user) return null;
-
-    const loadNotifications = async () => {
-        try {
-            const data = await NotificationService.getNotifications();
-            setNotifications(data);
-        } catch (error) {
-            console.error("Failed to load notifications", error);
-        }
-    };
 
     const handleMarkAsRead = async (id: string) => {
         try {
@@ -122,37 +128,30 @@ export const UserHeader: React.FC = () => {
     };
 
     const handleEditProfile = async () => {
-        // console.log('Edit Profile clicked'); // Debug log
         setShowProfileMenu(false);
 
         if (user.role === 'sponsor') {
-            // --- SPONSOR FLOW ---
             try {
                 const response = await SponsorProfileService.getProfile();
                 setSponsorData(response.profile || null);
                 setShowSponsorModal(true);
             } catch (error: any) {
-                // If sponsor profile missing, just open empty modal
                 setSponsorData(null);
                 setShowSponsorModal(true);
             }
         } else {
             try {
-                // Load profile data before opening edit modal
                 const response = await AuthService.getProfile();
-
                 if (response.success && response.profile) {
                     setProfileData(response.profile);
                     setShowEditModal(true);
                 }
             } catch (error: any) {
-                // We initialize an empty profile object and open the modal anyway.
                 const isNotFoundError =
                     (error.response && error.response.status === 404) ||
                     (error.message && error.message.toLowerCase().includes('not found'));
 
                 if (isNotFoundError) {
-                    console.log("No profile found, initializing empty form.");
                     setProfileData({
                         name: user.firstName + ' ' + user.lastName,
                         type: user.role,
@@ -169,7 +168,6 @@ export const UserHeader: React.FC = () => {
                     });
                     setShowEditModal(true);
                 } else {
-                    // Actual system errors (server down, 500, etc)
                     console.error('Failed to load profile:', error);
                     setToast({
                         show: true,
@@ -182,7 +180,6 @@ export const UserHeader: React.FC = () => {
     };
 
     const handleLogout = () => {
-        console.log('Logout clicked'); // Debug log
         setShowProfileMenu(false);
         logout();
     };
@@ -219,13 +216,11 @@ export const UserHeader: React.FC = () => {
         setToast({ ...toast, show: false });
     };
 
-    // Helper to format the role nicely
     const displayRole = user.role === 'patient' ? 'Patient' : user.role === 'donor' ? 'Donor' : 'Sponsor';
 
     return (
         <>
             <div className="user-header">
-                {/* --- NEW: Notification Bell --- */}
                 <div className="notification-wrapper">
                     <button
                         className="bell-button"
@@ -238,7 +233,6 @@ export const UserHeader: React.FC = () => {
                         {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
                     </button>
 
-                    {/* Inbox Dropdown */}
                     {showInbox && (
                         <>
                             <div className="inbox-dropdown">
@@ -286,59 +280,30 @@ export const UserHeader: React.FC = () => {
                     </span>
                 </div>
 
-                {/* Dropdown Menu */}
                 {showProfileMenu && (
                     <>
                         <div className="profile-menu">
-                            <button
-                                className="menu-item"
-                                onClick={handleViewProfile}
-                                type="button"
-                            >
+                            <button className="menu-item" onClick={handleViewProfile} type="button">
                                 👤 View Profile
                             </button>
-                            <button
-                                className="menu-item"
-                                onClick={handleEditProfile}
-                                type="button"
-                            >
+                            <button className="menu-item" onClick={handleEditProfile} type="button">
                                 ✏️ Edit Profile
                             </button>
-                            <button
-                                className="menu-item"
-                                onClick={() => {
-                                    setShowProfileMenu(false);
-                                    setShowFavoritesModal(true);
-                                }}
-                                type="button"
-                            >
+                            <button className="menu-item" onClick={() => { setShowProfileMenu(false); setShowFavoritesModal(true); }} type="button">
                                 ⭐ My Favorites
                             </button>
                             <div className="menu-divider"></div>
-                            <button
-                                className="menu-item logout"
-                                onClick={handleLogout}
-                                type="button"
-                            >
+                            <button className="menu-item logout" onClick={handleLogout} type="button">
                                 🚪 Logout
                             </button>
                         </div>
-
-                        {/* Backdrop to close menu when clicking outside */}
-                        <div
-                            className="menu-backdrop"
-                            onClick={() => setShowProfileMenu(false)}
-                        />
+                        <div className="menu-backdrop" onClick={() => setShowProfileMenu(false)} />
                     </>
                 )}
             </div>
 
-            <ViewProfileModal
-                isOpen={showViewModal}
-                onClose={() => setShowViewModal(false)}
-            />
+            <ViewProfileModal isOpen={showViewModal} onClose={() => setShowViewModal(false)} />
 
-            {/* Only render EditProfileModal when profileData is loaded */}
             {profileData && (
                 <EditProfileModal
                     isOpen={showEditModal}
@@ -355,22 +320,11 @@ export const UserHeader: React.FC = () => {
                 onSave={handleSaveSponsorProfile}
             />
 
-            <ViewSponsorProfileModal
-                isOpen={showSponsorViewModal}
-                onClose={() => setShowSponsorViewModal(false)}
-            />
+            <ViewSponsorProfileModal isOpen={showSponsorViewModal} onClose={() => setShowSponsorViewModal(false)} />
 
-            <FavoritesModal
-                isOpen={showFavoritesModal}
-                onClose={() => setShowFavoritesModal(false)}
-            />
+            <FavoritesModal isOpen={showFavoritesModal} onClose={() => setShowFavoritesModal(false)} />
 
-            <Toast
-                message={toast.message}
-                type={toast.type}
-                isVisible={toast.show}
-                onClose={closeToast}
-            />
+            <Toast message={toast.message} type={toast.type} isVisible={toast.show} onClose={closeToast} />
         </>
     );
 };

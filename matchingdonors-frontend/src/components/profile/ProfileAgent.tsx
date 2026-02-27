@@ -6,6 +6,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { AuthService } from "../../services/auth.service";
 import { ValidationModal } from "../common/ValidationModal";
 import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
 
 type ProfileSuggestion = {
     summary: string;
@@ -133,25 +134,16 @@ export const ProfileAgent: React.FC = () => {
                 }
             }
 
-            const res = await fetch("http://localhost:8080/api/profile/suggest", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text }),
-            });
+            const response = await api.post("/api/profile/suggest", { text });
 
-            const data = await res.json();
-            if (!res.ok) {
-                setError(data.error || "Request failed");
-            } else {
-                setSuggestion(data.suggestion);
-                // Populate editable fields
-                setEditableSummary(data.suggestion.summary);
-                setEditableOrganType(data.suggestion.organ_type || "");
-                setEditableAge(data.suggestion.age?.toString() || "");
-                setEditableBloodType(data.suggestion.blood_type || "");
-                setEditableLocation(data.suggestion.location || "");
-                setEditableStory(data.suggestion.personal_story);
-            }
+            const data = response.data;
+            setSuggestion(data.suggestion);
+            setEditableSummary(data.suggestion.summary);
+            setEditableOrganType(data.suggestion.organ_type || "");
+            setEditableAge(data.suggestion.age?.toString() || "");
+            setEditableBloodType(data.suggestion.blood_type || "");
+            setEditableLocation(data.suggestion.location || "");
+            setEditableStory(data.suggestion.personal_story);
         } catch (err: any) {
             setError("Unable to connect to the server. Please check if the backend is running.");
         } finally {

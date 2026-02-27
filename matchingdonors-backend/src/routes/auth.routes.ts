@@ -1,9 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { authMiddleware } from '../middleware/auth.middleware';
-import { RegisterRequest, LoginRequest } from '../models/user.model';
+import { RegisterRequest } from '../models/user.model';
 
 const router = Router();
+const VALID_ROLES = ['patient', 'donor', 'sponsor'];
 
 /**
  * POST /api/auth/register
@@ -19,7 +20,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        if (data.role !== 'patient' && data.role !== 'donor' && data.role !== 'sponsor') {
+        if (!VALID_ROLES.includes(data.role)) {
             res.status(400).json({ error: 'Role must be either "patient", "donor" or "sponsor"' });
             return;
         }
@@ -48,14 +49,13 @@ router.post('/login', async (req: Request, res: Response) => {
         }
 
         // Validate role
-        if (role !== 'patient' && role !== 'donor' && role !== 'sponsor') {
+        if (!VALID_ROLES.includes(role)) {
             return res.status(400).json({
                 error: 'Role must be either patient, donor or sponsor'
             });
         }
 
         const result = await AuthService.login({ email, password, role });
-
         res.json(result);
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Login failed';
@@ -69,12 +69,7 @@ router.post('/login', async (req: Request, res: Response) => {
  */
 router.get('/me', authMiddleware, (req: Request, res: Response): void => {
     try {
-        if (!req.user) {
-            res.status(401).json({ error: 'Not authenticated' });
-            return;
-        }
-
-        const user = AuthService.getUserById(req.user.id);
+        const user = AuthService.getUserById(req.user!.id);
 
         if (!user) {
             res.status(404).json({ error: 'User not found' });
@@ -100,7 +95,7 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
             return;
         }
 
-        if (role !== 'patient' && role !== 'donor' && role !== 'sponsor') {
+        if (!VALID_ROLES.includes(role)) {
             return res.status(400).json({ error: 'Role must be either patient, donor or sponsor' });
         }
 

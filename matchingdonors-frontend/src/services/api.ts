@@ -7,13 +7,17 @@ export const api: AxiosInstance = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
-    timeout: 20000, // 30 seconds for AI operations
+    timeout: 20000, // 20 seconds for AI operations
 });
 
 // Request interceptor for debugging
 api.interceptors.request.use(
     (config) => {
-        console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        if (token && config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        // console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
         return config;
     },
     (error) => {
@@ -25,7 +29,7 @@ api.interceptors.request.use(
 // Response interceptor for error handling
 api.interceptors.response.use(
     (response) => {
-        console.log(`[API] Response from ${response.config.url}:`, response.status);
+        // console.log(`[API] Response from ${response.config.url}:`, response.status);
         return response;
     },
     (error) => {

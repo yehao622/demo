@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import api from '../services/api';
 
 export const useVoiceInput = (onTranscript: (text: string) => void) => {
     const [isRecording, setIsRecording] = useState(false);
@@ -50,19 +51,14 @@ export const useVoiceInput = (onTranscript: (text: string) => void) => {
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.webm');
 
-            const response = await fetch('http://localhost:8080/api/profile/transcribe', {
-                method: 'POST',
-                body: formData,
+            const response = await api.post('/api/profile/transcribe', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
             });
 
-            if (!response.ok) {
-                throw new Error(`Transcription failed: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (data.transcript) {
-                onTranscript(data.transcript);
+            if (response.data?.transcript) {
+                onTranscript(response.data.transcript);
             } else {
                 setError('No speech detected in recording.');
             }

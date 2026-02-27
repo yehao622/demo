@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import { Profile, MatchResult, MatchRequest } from '../../types/profile.types';
 import { AuthService } from '../../services/auth.service';
 import { profileService } from '../../services/profileService';
@@ -39,8 +40,7 @@ export const ProfileMatchingPage: React.FC = () => {
     });
 
     // Get current user for filtering
-    const authUser = localStorage.getItem('auth_user');
-    const currentUser = authUser ? JSON.parse(authUser) : null;
+    const { user: currentUser } = useAuth();
     const isSponsor = currentUser?.role === 'sponsor';
 
     // Load all profiles on mount

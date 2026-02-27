@@ -18,7 +18,7 @@ interface ProfileData {
     country: string;
     description: string;
     medical_info: string;
-    is_public?: boolean | number;
+    is_public?: boolean;
     preferences: string;
 }
 
@@ -26,7 +26,6 @@ export const ViewProfileModal: React.FC<ViewProfileModalProps> = ({ isOpen, onCl
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    // const [showEditModal, setShowEditModal] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -39,22 +38,10 @@ export const ViewProfileModal: React.FC<ViewProfileModalProps> = ({ isOpen, onCl
         setError(null);
         try {
             const response = await AuthService.getProfile();
-
-            if (response.success && response.profile) {
-                setProfile(response.profile);
-            } else {
-                setProfile(null);
-            }
+            setProfile(response.profile);
         } catch (err: any) {
             console.error('Error fetching profile:', err);
-
-            // FIX: If 404 or "not found", show the specific user instruction
-            const isNotFoundError =
-                (err.response && err.response.status === 404) ||
-                (err.message && err.message.toLowerCase().includes('not found'));
-
-            if (isNotFoundError) {
-                // Show the specific message requested
+            if (err.message.toLowerCase().includes('not found')) {
                 setError('Please edit your profile first if your profile is incomplete.');
             } else {
                 setError(err.message || 'Failed to load profile');
@@ -90,10 +77,10 @@ export const ViewProfileModal: React.FC<ViewProfileModalProps> = ({ isOpen, onCl
                                 {/* Visibility Status Badge */}
                                 <div className="visibility-badge">
                                     <span className="visibility-icon-small">
-                                        {profile.is_public === 1 || profile.is_public === true ? '🌐' : '🔒'}
+                                        {profile.is_public ? '🌐' : '🔒'}
                                     </span>
                                     <span className="visibility-text-small">
-                                        {profile.is_public === 1 || profile.is_public === true ? 'Public Profile' : 'Private Profile'}
+                                        {profile.is_public ? 'Public Profile' : 'Private Profile'}
                                     </span>
                                 </div>
 

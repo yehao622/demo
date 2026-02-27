@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AuthService } from '../../services/auth.service';
 import './EditProfileModal.css';
 
 interface EditProfileModalProps {
@@ -25,7 +26,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     onSave
 }) => {
     // const { user } = useAuth();
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -39,64 +40,77 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         preferences: '',
     });
     const [isPublic, setIsPublic] = useState(true);
-    // const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
 
     useEffect(() => {
-        if (isOpen) {
-            fetchProfile();
+        if (isOpen && profileData) {
+            // Map incoming data directly without needing another fetch
+            setFormData({
+                summary: profileData.description || '',
+                organType: profileData.organ_type || '',
+                age: profileData.age ? String(profileData.age) : '',
+                bloodType: profileData.blood_type || '',
+                location: profileData.city && profileData.state
+                    ? `${profileData.city}, ${profileData.state}, ${profileData.country || 'USA'}`
+                    : '',
+                personalStory: profileData.medical_info || '',
+                preferences: profileData.preferences || '',
+            });
+
+            // Simplified visibility setting
+            setIsPublic(!!profileData.is_public);
         }
-    }, [isOpen, profileData]); //, profileData]);
+    }, [isOpen, profileData]);
 
     // Add this handler function
     const handleToggleVisibility = async (newValue: boolean) => {
         setIsPublic(newValue);
     };
 
-    const fetchProfile = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const token = localStorage.getItem('auth_token');
-            const response = await fetch('http://localhost:8080/api/profile/me', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+    // const fetchProfile = async () => {
+    //     setLoading(true);
+    //     setError(null);
+    //     try {
+    //         const token = localStorage.getItem('auth_token');
+    //         const response = await fetch('http://localhost:8080/api/profile/me', {
+    //             headers: {
+    //                 'Authorization': `Bearer ${token}`,
+    //                 'Content-Type': 'application/json'
+    //             }
+    //         });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch profile');
-            }
+    //         if (!response.ok) {
+    //             throw new Error('Failed to fetch profile');
+    //         }
 
-            const data = await response.json();
-            if (data.success && data.profile) {
-                const profile = data.profile;
-                setFormData({
-                    summary: profile.description || '',
-                    organType: profile.organ_type || '',
-                    age: profile.age ? String(profile.age) : '',
-                    bloodType: profile.blood_type || '',
-                    location: profile.city && profile.state
-                        ? `${profile.city}, ${profile.state}, ${profile.country || 'USA'}`
-                        : '',
-                    personalStory: profile.medical_info || '',
-                    preferences: profile.preferences || '',
-                });
+    //         const data = await response.json();
+    //         if (data.success && data.profile) {
+    //             const profile = data.profile;
+    //             setFormData({
+    //                 summary: profile.description || '',
+    //                 organType: profile.organ_type || '',
+    //                 age: profile.age ? String(profile.age) : '',
+    //                 bloodType: profile.blood_type || '',
+    //                 location: profile.city && profile.state
+    //                     ? `${profile.city}, ${profile.state}, ${profile.country || 'USA'}`
+    //                     : '',
+    //                 personalStory: profile.medical_info || '',
+    //                 preferences: profile.preferences || '',
+    //             });
 
-                // Set visibility from DB
-                if (typeof profile.is_public === 'boolean') {
-                    setIsPublic(profile.is_public);
-                } else if (typeof profile.is_public === 'number') {
-                    setIsPublic(profile.is_public === 1);
-                }
-            }
-        } catch (err: any) {
-            console.error('Error fetching profile:', err);
-            setError(err.message || 'Failed to load profile');
-        } finally {
-            setLoading(false);
-        }
-    };
+    //             // Set visibility from DB
+    //             if (typeof profile.is_public === 'boolean') {
+    //                 setIsPublic(profile.is_public);
+    //             } else if (typeof profile.is_public === 'number') {
+    //                 setIsPublic(profile.is_public === 1);
+    //             }
+    //         }
+    //     } catch (err: any) {
+    //         console.error('Error fetching profile:', err);
+    //         setError(err.message || 'Failed to load profile');
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -108,40 +122,22 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         setError(null);
 
         try {
-            const token = localStorage.getItem('auth_token');
+            // const token = localStorage.getItem('auth_token');
 
             // Send data using keys that match the Backend route's expectations
             // Backend expects: { summary, organType, age, bloodType, location, personalStory, isPublic }
             const payload = {
-                summary: formData.summary,
-                organType: formData.organType,
-                age: formData.age,
-                bloodType: formData.bloodType,
-                location: formData.location,
-                personalStory: formData.personalStory,
-                preferences: formData.preferences,
-                isPublic: isPublic // Send visibility status here!
+                ...formData,
+                isPublic
             };
 
-            const response = await fetch('http://localhost:8080/api/profile/update', {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
+            const response = await AuthService.updateProfile(payload);
 
-            if (!response.ok) {
-                throw new Error('Failed to update profile');
-            }
-
-            const data = await response.json();
-            if (data.success) {
-                onSave(data.profile);
+            if (response.success) {
+                onSave(response.profile);
                 onClose();
             } else {
-                throw new Error(data.error || 'Failed to update profile');
+                throw new Error(response.error || 'Failed to update profile');
             }
         } catch (err: any) {
             console.error('Error saving profile:', err);

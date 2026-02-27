@@ -255,23 +255,55 @@ export class MatchingService {
 
     // Background Match Scanner (Simplified)
     async checkAndSendMatchAlerts(userId: number, userRole: 'patient' | 'donor') {
+        console.log(`\n🔄 [Auto-Match] Waking up scanner for User ${userId} (${userRole})...`);
         const { ProfileService } = await import('../services/profile.service');
+        const { NotificationService } = await import('../services/notification.service');
+        const db = (await import('../database/init')).default;
 
         // 1. Get current user profile to use as search query
         const myProfile = ProfileService.getUserProfile(userId, userRole);
-        if (!myProfile) return;
+        if (!myProfile) {
+            console.log(`⚠️ [Auto-Match] Aborted: Could not find profile for User ${userId}`);
+            return;
+        }
 
         // 2. Search for opposite role
         const targetType = userRole === 'patient' ? 'donor' : 'patient';
 
         // 3. Use my profile description as the search criteria
-        const searchCriteria = `${myProfile.organ_type} ${myProfile.blood_type} ${myProfile.description}`;
+        const searchCriteria = `Blood type ${myProfile.blood_type} Age ${myProfile.age} Organ ${myProfile.organ_type}. ${myProfile.description}`;
 
         const matches = await this.searchRealProfiles(searchCriteria, targetType, userId, 5, 80);
 
         if (matches.length > 0) {
-            // ... (Notification logic remains the same)
             console.log(`✅ [Auto-Match] Found ${matches.length} matches for User ${userId}`);
+            // Send real-time system notifications [Restored Logic]
+            for (const match of matches) {
+                // Look up the numeric user_id of the matched profile
+                const stmt = db.prepare('SELECT user_id FROM profiles WHERE id = ?');
+                const recipient = stmt.get(match.profileId) as any;
+
+                if (recipient && recipient.user_id) {
+                    // Alert the person who was matched WITH
+                    NotificationService.createNotification(
+                        recipient.user_id,
+                        '🚨 High Compatibility Match Alert!',
+                        `Great news! A new ${userRole} with a ${Math.round(match.similarity * 100)}% compatibility score just registered on the platform. Check your Match tab to view their details!`,
+                        'system'
+                    );
+                    console.log(`📬 [Auto-Match] Real-time alert sent to matched User ${recipient.user_id}!`);
+                }
+            }
+
+            // Also alert the current user (the one who just saved their profile)
+            // NotificationService.createNotification(
+            //     userId,
+            //     '🚨 High Compatibility Match Found!',
+            //     `Great news! We found ${matches.length} highly compatible ${targetType}(s) for you. Check your Match tab!`,
+            //     'system'
+            // );
+        } else {
+            console.log(`💨 [Auto-Match] Finished: No matches above 80% found right now.`);
         }
     }
 }

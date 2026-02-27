@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import db from '../database';
-import { User, UserResponse, RegisterRequest, LoginRequest, AuthResponse } from '../models/user.model';
+import { User, UserResponse, RegisterRequest, LoginRequest, AuthResponse, UserRole } from '../models/user.model';
 
 const SALT_ROUNDS = 10;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-fallback-secret-change-in-production';
@@ -78,16 +78,16 @@ export class AuthService {
     }
 
     // Login user
-    static async login(data: LoginRequest & { role: 'patient' | 'donor' | 'sponsor' }): Promise<AuthResponse> {
+    static async login(data: LoginRequest & { role: UserRole }): Promise<AuthResponse> {
         // Find user by email
         const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(data.email, data.role) as User;
 
         if (!user) {
             // Check if user exists with different role
-            const userWithDifferentRole = db.prepare('SELECT role FROM users WHERE email = ?').get(data.email) as { role: 'patient' | 'donor' | 'sponsor' } | undefined;
+            const userWithDifferentRole = db.prepare('SELECT role FROM users WHERE email = ?').get(data.email) as { role: UserRole } | undefined;
 
             if (userWithDifferentRole) {
-                const article = userWithDifferentRole.role === 'donor' ? 'a' : 'a';
+                const article = userWithDifferentRole.role === 'sponsor' ? 'a' : 'a';
                 throw new Error(
                     `This email is registered as ${article} ${userWithDifferentRole.role}. Please login as a ${userWithDifferentRole.role}.`
                 );
@@ -112,12 +112,12 @@ export class AuthService {
     }
 
     // Verify JWT token
-    static verifyToken(token: string): { id: number; email: string; role: 'patient' | 'donor' | 'sponsor'; firstName: string; lastName: string } {
+    static verifyToken(token: string): { id: number; email: string; role: UserRole; firstName: string; lastName: string } {
         try {
             const decoded = jwt.verify(token, JWT_SECRET) as {
                 id: number;
                 email: string;
-                role: 'patient' | 'donor' | 'sponsor';
+                role: UserRole;
                 firstName: string;
                 lastName: string;
             };
@@ -134,7 +134,7 @@ export class AuthService {
     }
 
     // Generate password reset code
-    static async generatePasswordResetCode(email: string, role: 'patient' | 'donor' | 'sponsor'): Promise<{ code: string; expiresAt: Date }> {
+    static async generatePasswordResetCode(email: string, role: UserRole): Promise<{ code: string; expiresAt: Date }> {
         // Find user
         const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(email, role) as User;
 
@@ -173,7 +173,7 @@ export class AuthService {
     }
 
     // Verify password reset code
-    static verifyPasswordResetCode(email: string, code: string, role: 'patient' | 'donor' | 'sponsor'): { valid: boolean; userId?: number } {
+    static verifyPasswordResetCode(email: string, code: string, role: UserRole): { valid: boolean; userId?: number } {
         // Find user
         const user = db.prepare('SELECT * FROM users WHERE email = ? AND role = ?').get(email, role) as User;
 
@@ -200,10 +200,9 @@ export class AuthService {
     }
 
     // reset password with code
-    static async resetPassword(email: string, code: string, newPassword: string, role: 'patient' | 'donor' | 'sponsor'): Promise<boolean> {
+    static async resetPassword(email: string, code: string, newPassword: string, role: UserRole): Promise<boolean> {
         // Verify code
         const verification = this.verifyPasswordResetCode(email, code, role);
-
         if (!verification.valid || !verification.userId) {
             throw new Error('Invalid or expired reset code');
         }

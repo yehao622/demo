@@ -22,12 +22,7 @@ export const profileService = {
     }): Promise<any> {
         try {
             const url = `/api/matching/find`;  // Always use real data
-            // console.log('🌐 API Request:', url, request);
-
             const response = await api.post(url, request);
-            // console.log('🌐 API Response:', response.data);
-
-            // Return the full response object
             return response.data;
         } catch (error: any) {
             console.error('❌ Error in findMatches:', error);
@@ -38,20 +33,8 @@ export const profileService = {
 
     // Get all stored profiles (for browsing)
     async getAllProfiles(useRealData: boolean = false): Promise<Profile[]> {
-        const token = localStorage.getItem('auth_token');
-
-        const response = await fetch(`http://localhost:8080/api/profile/all?useRealData=${useRealData}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch profiles');
-        }
-
-        const data = await response.json();
+        const response = await api.get(`/api/profile/all?useRealData=${useRealData}`);
+        const data = response.data;
 
         return (data.profiles || []).map((p: any) => ({
             ...p,

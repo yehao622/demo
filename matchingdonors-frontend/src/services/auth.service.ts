@@ -1,83 +1,45 @@
-import axios from 'axios';
+import api from './api';
 import { AuthResponse, RegisterData, User, UserRole } from '../types/auth.types';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
-
-const authApi = axios.create({
-    baseURL: `${API_BASE_URL}/api/auth`,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-const api = axios.create({
-    baseURL: `${API_BASE_URL}/api`,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-// Add token to requests if available
-authApi.interceptors.request.use((config) => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
-
-// Add token to api requests (THIS IS THE MISSING PART)
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
 
 export class AuthService {
     // Register a new user
     static async register(data: RegisterData): Promise<AuthResponse> {
-        const response = await authApi.post('/register', data);
+        const response = await api.post('/api/auth/register', data);
         return response.data;
     }
 
     // Login user
     static async login(email: string, password: string, role: UserRole): Promise<AuthResponse> {
-        const response = await authApi.post('/login', {
+        const response = await api.post('/api/auth/login', {
             email,
             password,
             role
         });
-
-        if (response.data.token) {
-            this.storeAuthData(response.data.token, response.data.user);
-        }
 
         return response.data;
     }
 
     // Get current user info
     static async getCurrentUser(): Promise<User> {
-        const response = await authApi.get('/me');
+        const response = await api.get('/api/auth/me');
         return response.data;
     }
 
     // Request password reset code
     static async forgotPassword(email: string, role: UserRole): Promise<{ message: string; code?: string; expiresAt?: string }> {
-        const response = await authApi.post('/forgot-password', { email, role });
+        const response = await api.post('/api/auth/forgot-password', { email, role });
         return response.data;
     }
 
     // Verify password reset code
     static async verifyResetCode(email: string, code: string, role: UserRole): Promise<{ valid: boolean; message?: string }> {
-        const response = await authApi.post('/verify-code', { email, code, role });
+        const response = await api.post('/api/auth/verify-code', { email, code, role });
         return response.data;
     }
 
     // Reset password with code
     static async resetPassword(email: string, code: string, newPassword: string, role: UserRole): Promise<{ message: string }> {
-        const response = await authApi.post('/reset-password', { email, code, newPassword, role });
+        const response = await api.post('/api/auth/reset-password', { email, code, newPassword, role });
         return response.data;
     }
 
@@ -106,15 +68,7 @@ export class AuthService {
         isComplete: boolean;
         profile: any | null;
     }> {
-        const { token } = this.getStoredAuthData();
-        if (!token) {
-            throw new Error('Not authenticated');
-        }
-
-        const response = await axios.get(`${API_BASE_URL}/api/profile/me`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-
+        const response = await api.get('api/profile/me');
         // Backend returns { success, profile, hasCompleteProfile }
         const data = response.data;
 
@@ -134,11 +88,6 @@ export class AuthService {
         personalStory: string;
         isPublic: boolean;
     }): Promise<any> {
-        const { token } = this.getStoredAuthData();
-        if (!token) {
-            throw new Error('Not authenticated');
-        }
-
         // Parse location
         const locationParts = (profileData.location || '').split(',').map((s: string) => s.trim());
         const city = locationParts[0] || '';
@@ -159,31 +108,24 @@ export class AuthService {
             is_public: profileData.isPublic,
         };
 
-        const response = await axios.post(`${API_BASE_URL}/api/profile/save`, payload, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-
+        const response = await api.post('/api/profile/save', payload);
         return response.data;
     }
 
+    // static async validateInput(text: string, currentTab: string): Promise<any> {
+    //     const response = await api.post('/api/profile/validate');
+    //     return response.data.validation;
+    // }
+
     static async validateInput(text: string, currentTab: string): Promise<any> {
-        const { token } = this.getStoredAuthData();
-        if (!token) {
-            throw new Error('Not authenticated');
-        }
-
-        const response = await axios.post(`${API_BASE_URL}/api/profile/validate`,
-            { text, currentTab },
-            { headers: { Authorization: `Bearer ${token}` } }
-        );
-
+        const response = await api.post('/api/profile/validate', { text, currentTab });
         return response.data.validation;
     }
 
     // Add this method to the AuthService class or object
     static async toggleProfileVisibility(isPublic: boolean): Promise<any> {
         try {
-            const response = await api.patch('/profile/visibility', { isPublic });
+            const response = await api.patch('/api/profile/visibility', { isPublic });
             return response.data;
         } catch (error: any) {
             throw new Error(error.response?.data?.error || 'Failed to update visibility');
@@ -192,26 +134,15 @@ export class AuthService {
 
     static async getProfile(): Promise<any> {
         try {
-            const response = await api.get('/profile/me');
+            const response = await api.get('/api/profile/me');
             return response.data;
         } catch (error: any) {
             throw new Error(error.response?.data?.error || 'Failed to load profile');
         }
     }
 
-    static async updateProfile(data: {
-        summary?: string;
-        organType?: string;
-        age?: string;
-        bloodType?: string;
-        location?: string;
-        personalStory?: string;
-    }): Promise<any> {
-        try {
-            const response = await api.put('/profile/update', data);
-            return response.data;
-        } catch (error: any) {
-            throw new Error(error.response?.data?.error || 'Failed to update profile');
-        }
+    static async updateProfile(data: any): Promise<any> {
+        const response = await api.put('/api/profile/update', data);
+        return response.data;
     }
 }

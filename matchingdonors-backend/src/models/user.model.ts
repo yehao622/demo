@@ -1,8 +1,10 @@
+export type UserRole = 'patient' | 'donor' | 'sponsor';
+
 export interface User {
     id: number;
     email: string;
     password_hash: string;
-    role: 'patient' | 'donor' | 'sponsor';
+    role: UserRole;
     first_name: string;
     last_name: string;
     created_at: string;
@@ -12,7 +14,7 @@ export interface User {
 export interface UserResponse {
     id: number;
     email: string;
-    role: 'patient' | 'donor' | 'sponsor';
+    role: UserRole;
     firstName: string;
     lastName: string;
 }
@@ -20,7 +22,7 @@ export interface UserResponse {
 export interface RegisterRequest {
     email: string;
     password: string;
-    role: 'patient' | 'donor' | 'sponsor';
+    role: UserRole;
     firstName: string;
     lastName: string;
 }
