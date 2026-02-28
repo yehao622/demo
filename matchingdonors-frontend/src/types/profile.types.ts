@@ -31,6 +31,7 @@ export interface MatchResult {
         bloodTypeScore: number;       // 0-1
         locationScore: number;        // 0-1
         ageScore: number;             // 0-1
+        organScore: number;
     };
 }
 

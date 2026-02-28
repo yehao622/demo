@@ -142,7 +142,13 @@ const AppContent: React.FC = () => {
           <Route path="/profile-fill" element={<ProfileAgent />} />
           <Route path="/profile-match" element={<ProfileMatchingPage />} />
           <Route path="/news-hub" element={<NewsHub />} />
-          <Route path="/advertiser-chat" element={<AdvertiserChatPage />} />
+          <Route path="/advertiser-chat"
+            element={
+              <AuthGate requiredRoles={['sponsor']}>
+                <AdvertiserChatPage />
+              </AuthGate>
+            }
+          />
         </Routes>
       </div>
 

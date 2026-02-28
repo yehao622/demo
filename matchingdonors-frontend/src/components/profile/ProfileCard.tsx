@@ -4,9 +4,11 @@ import './ProfileCard.css';
 
 interface ScoreBreakdown {
     baseScore: number;
+    aiSimilarity?: number;
     bloodTypeScore: number;
     locationScore: number;
     ageScore: number;
+    organScore?: number;
 }
 
 interface ProfileCardProps {
@@ -65,20 +67,22 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
 
             {scoreBreakdown && (
                 <div className="score-breakdown">
-                    <div className="breakdown-item" title="Organ Match (Base)">
-                        <span className="breakdown-label">🫀 Organ</span>
-                        <span className="breakdown-value">{scoreBreakdown.baseScore}</span>
-                    </div>
+                    {scoreBreakdown.organScore !== undefined && (
+                        <div className="breakdown-item" title="Organ Match (Base)">
+                            <span className="breakdown-label"> Organ</span>
+                            <span className="breakdown-value">{scoreBreakdown.organScore}</span>
+                        </div>
+                    )}
                     <div className="breakdown-item" title="Blood Compatibility">
-                        <span className="breakdown-label">🩸 Blood</span>
+                        <span className="breakdown-label"> Blood</span>
                         <span className="breakdown-value">+{scoreBreakdown.bloodTypeScore}</span>
                     </div>
                     <div className="breakdown-item" title="Location Proximity">
-                        <span className="breakdown-label">📍 Loc</span>
+                        <span className="breakdown-label"> Loc</span>
                         <span className="breakdown-value">+{scoreBreakdown.locationScore}</span>
                     </div>
                     <div className="breakdown-item" title="Age Compatibility">
-                        <span className="breakdown-label">🎂 Age</span>
+                        <span className="breakdown-label"> Age</span>
                         <span className="breakdown-value">+{scoreBreakdown.ageScore}</span>
                     </div>
                 </div>
@@ -100,9 +104,11 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
                 <div className="detail-section">
                     <strong>Medical Info:</strong>
                     <p>
-                        {profile.medicalInfo.length > 150
-                            ? `${profile.medicalInfo.substring(0, 150)}...`
-                            : profile.medicalInfo}
+                        {(() => {
+                            // Safely check for either naming convention and provide a fallback string
+                            const medInfo = profile.medicalInfo || (profile as any).medical_info || 'No medical information provided.';
+                            return medInfo.length > 150 ? `${medInfo.substring(0, 150)}...` : medInfo;
+                        })()}
                     </p>
                 </div>
 

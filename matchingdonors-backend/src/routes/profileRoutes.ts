@@ -5,6 +5,7 @@ import { ProfileService } from '../services/profile.service';
 import { MatchingService } from '../matching/matching.service';
 import multer from 'multer';
 import { TranscriptionService } from '../services/TranscriptionService';
+import { BaseProfile } from '../models/profile.model';
 
 const router = express.Router();
 
@@ -115,7 +116,7 @@ router.post('/save', authMiddleware, async (req: Request, res: Response) => {
             medical_info: medical_info || '',
             preferences: preferences || '',
             is_public: is_public !== undefined ? is_public : true,
-        };
+        } as unknown as BaseProfile;
 
         const savedProfile = ProfileService.saveProfile(profileData);
 
@@ -218,7 +219,7 @@ router.put('/update', authMiddleware, async (req: Request, res: Response) => {
 
             preferences: preferences || '',
             is_public: real_is_public !== undefined ? real_is_public : true,
-        };
+        } as unknown as BaseProfile;
 
         const updatedProfile = ProfileService.saveProfile(profileData);
 

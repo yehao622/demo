@@ -16,7 +16,7 @@ export class NewsService {
     // 1. Fetch AI Personalized Recommendations
     static async getRecommendations(): Promise<Article[]> {
         const res = await api.get('/api/news/recommendations');
-        return res.data;
+        return Array.isArray(res.data?.recommendations) ? res.data.recommendations : [];
     }
 
     // 2. Fetch User's Favorites

@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { profileService } from '../../services/profileService';
 import { ProfileSearch } from './ProfileSearch';
 import { ProfileDetailModal } from './ProfileDetailModal';
+import { ProfileCard } from './ProfileCard';
 import { ValidationModal } from '../common/ValidationModal';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
@@ -282,8 +283,6 @@ export const ProfileMatchingPage: React.FC = () => {
 
                     <ProfileSearch onSearch={handleSearch} isSearching={isSearching} />
 
-
-
                     {error && <ErrorMessage message={error} onRetry={loadProfiles} />}
 
                     {/* --- Dynamic Filter Bar --- */}
@@ -351,52 +350,24 @@ export const ProfileMatchingPage: React.FC = () => {
                             <div className="profiles-grid">
                                 {filteredMatches.length > 0 ? (
                                     filteredMatches.map((match) => {
-                                        // --- HYDRATION FIX STARTS HERE ---
                                         // Try to find the FRESH profile from allProfiles (Source of Truth)
                                         // If found, use it. If not (e.g. vector match not in current view), fallback to match.profile
                                         const freshProfile = allProfiles.find(p => p.id === match.profile.id);
                                         const profile = freshProfile || match.profile;
                                         // --------------------------------
 
-                                        const score = Math.round(match.similarity * 100);
+                                        // const score = Math.round(match.similarity * 100);
                                         return (
-                                            <div key={profile.id} className="profile-card-wrapper">
-                                                <div className="profile-card-simple">
-                                                    <div className="match-score-badge">{score}%</div>
-                                                    <div className="profile-header-simple">
-                                                        <h3>{profile.name}</h3>
-                                                        <span className={`badge-simple ${profile.type}`}>{profile.type}</span>
-                                                    </div>
-                                                    <div className="profile-details-simple">
-                                                        <p>🩸 {profile.bloodType || 'Not specified'}</p>
-                                                        <p>🎂 {profile.age || 'N/A'} years</p>
-                                                        <p>📍 {profile.city}, {profile.state}</p>
-                                                        <p>💉 {profile.organType || 'Not specified'}</p>
-                                                    </div>
-
-                                                    {match.scoreBreakdown && (
-                                                        <div className="score-breakdown-inline">
-                                                            <span className="breakdown-pill pill-base">
-                                                                🫀 Organ: {match.scoreBreakdown.baseScore}
-                                                            </span>
-                                                            <span className="breakdown-pill pill-blood">
-                                                                🩸 Blood: +{match.scoreBreakdown.bloodTypeScore}
-                                                            </span>
-                                                            <span className="breakdown-pill pill-age">
-                                                                🎂 Age: +{match.scoreBreakdown.ageScore}
-                                                            </span>
-                                                            <span className="breakdown-pill pill-loc">
-                                                                📍 Loc: +{match.scoreBreakdown.locationScore}
-                                                            </span>
-                                                        </div>
-                                                    )}
-
-                                                    <p className="description-simple">{profile.description?.substring(0, 100)}...</p>
-                                                    <button className="view-btn-simple" onClick={() => handleViewDetails(profile, match.similarity)}>
-                                                        View Details
-                                                    </button>
-                                                </div>
-                                            </div>
+                                            <ProfileCard
+                                                key={profile.id}
+                                                profile={profile}
+                                                matchScore={match.similarity}
+                                                rank={match.rank}
+                                                reason={match.reason}
+                                                scoreBreakdown={match.scoreBreakdown}
+                                                // Pass match.similarity to maintain your existing modal logic
+                                                onViewDetails={() => handleViewDetails(profile, match.similarity)}
+                                            />
                                         );
                                     })
                                 ) : (

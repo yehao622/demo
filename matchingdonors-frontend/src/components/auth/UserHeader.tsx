@@ -38,9 +38,9 @@ export const UserHeader: React.FC = () => {
     // 🚀 FIX 1: Moved this function ABOVE the useEffect so it doesn't fail silently
     const loadNotifications = async () => {
         try {
-            console.log("Fetching notifications from database...");
+            // console.log("Fetching notifications from database...");
             const data = await NotificationService.getNotifications();
-            console.log("📥 Inbox data loaded:", data);
+            // console.log("📥 Inbox data loaded:", data);
             setNotifications(data || []);
         } catch (error) {
             console.error("❌ Failed to load notifications", error);

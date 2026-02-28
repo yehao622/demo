@@ -3,6 +3,7 @@ import { UserRole } from '../../types/auth.types';
 import { LoginModal } from './LoginModal';
 import { RegisterModal } from './RegisterModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
 import '../../styles/AuthGate.css';
 
 interface AuthGateProps {
@@ -39,14 +40,12 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, requiredRoles = ['
         if (requiredRoles.includes(user.role)) {
             return <>{children}</>;
         } else {
-            return (
-                <div className="auth-gate-unauthorized">
-                    <h2>⚠️ Unauthorized Access</h2>
-                    <p>You don't have permission to access this feature.</p>
-                    <p>Required role: {requiredRoles.join(' or ')}</p>
-                    <p>Your role: {user.role}</p>
-                </div>
-            );
+            // Bounce them to their proper home page instead of trapping them!
+            if (user.role === 'sponsor') {
+                return <Navigate to="/advertiser-chat" replace />;
+            } else {
+                return <Navigate to="/profile-fill" replace />;
+            }
         }
     }
 

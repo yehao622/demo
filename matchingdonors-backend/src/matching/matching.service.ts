@@ -179,14 +179,21 @@ export class MatchingService {
      */
     private calculateHybridScore(
         profile: BaseProfile,
-        filters: { blood_type: string | null; age: number | null },
+        filters: { organ_type: string | null, blood_type: string | null; age: number | null },
         aiSimilarity: number,
         searcherLocation?: { country: string, state: string }
     ) {
         let score = 0;
 
         // AI Score (0-30 points)
-        score += aiSimilarity * 30;
+        score += aiSimilarity * 20;
+
+        // Organ match score
+        let organScore = 0;
+        if (filters.organ_type?.toLowerCase() === profile.organ_type.toLowerCase()) {
+            organScore = 30;
+        }
+        score += organScore;
 
         // Blood Type Score (0-30 points)
         let bloodScore = 0;
@@ -210,7 +217,7 @@ export class MatchingService {
         score += ageScore;
 
         // Location Score (5 / 10 / 20 points)
-        let locationScore = 5; // Default: Different country / Unknown
+        let locationScore = 10; // Default: Different country / Unknown
 
         if (searcherLocation && profile.country) {
             const pCountry = profile.country.trim().toLowerCase();
@@ -218,14 +225,14 @@ export class MatchingService {
 
             if (pCountry === sCountry) {
                 // Same Country - check State
-                locationScore = 10;
+                locationScore = 20;
 
                 if (profile.state && searcherLocation.state) {
                     const pState = profile.state.trim().toLowerCase();
                     const sState = searcherLocation.state.trim().toLowerCase();
 
                     if (pState === sState) {
-                        locationScore = 20; // Same Province/State
+                        locationScore = 40; // Same Province/State
                     }
                 }
             }
@@ -240,7 +247,8 @@ export class MatchingService {
                 aiSimilarity: aiSimilarity * 100,
                 bloodTypeScore: bloodScore,
                 ageScore: ageScore,
-                locationScore: locationScore
+                locationScore: locationScore,
+                organScore: organScore
             }
         };
     }

@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { MatchingService } from "./matching.service";
-import { Profile, MatchRequest } from "./matching.types";
-import { parse } from "node:path";
+import { MatchRequest } from "./matching.types";
 
 const matchingService = new MatchingService();
 
@@ -141,8 +140,9 @@ export class MatchingController {
                 return;
             }
 
-            // Load profiles from database
-            const profiles = await matchingService.loadRealUserProfiles(userType, excludeUserId);
+            // Dynamically import and use ProfileService directly
+            const { ProfileService } = await import('../services/profile.service');
+            const profiles = ProfileService.getAllCompleteProfiles(userType, excludeUserId);
 
             res.json({
                 success: true,
