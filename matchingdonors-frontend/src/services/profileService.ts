@@ -1,5 +1,5 @@
 import api from './api';
-import { Profile, MatchRequest, MatchResult } from '../types/profile.types';
+import { Profile } from '../types/profile.types';
 
 export const profileService = {
     // Store a new profile with AI embedding generation

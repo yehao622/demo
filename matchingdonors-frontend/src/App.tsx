@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AuthGate } from './components/auth/AuthGate';
 import { AuthService } from './services/auth.service';
@@ -12,6 +12,36 @@ import { EditProfileModal } from './components/profile/EditProfileModal';
 import { Toast } from './components/common/Toast';
 import AdvertiserChatPage from './pages/AdvertiserChatPage';
 import './App.css';
+
+// Disclaimer for Demo only
+const DisclaimerModal: React.FC<{ onAccept: () => void }> = ({ onAccept }) => {
+  return (
+    <div className="disclaimer-overlay">
+      <div className="disclaimer-content">
+        <h2 className="disclaimer-title">⚠️ Demo Application Disclaimer</h2>
+        <p className="disclaimer-text">
+          Welcome! Please note that this website is strictly a <strong>technical demonstration</strong> and is not affiliated with the live operations of MatchingDonors Inc.
+          <br /><br />
+          All user data, medical profiles, and matches within this application are randomly generated for testing purposes. Any actions or registrations taken here <strong>will not</strong> take effect on the official MatchingDonors platform.
+        </p>
+        <div className="disclaimer-actions">
+          <button
+            className="disclaimer-btn-secondary"
+            onClick={() => window.location.href = 'https://www.matchingdonors.com/life'}
+          >
+            Go to Official Site
+          </button>
+          <button
+            className="disclaimer-btn-primary"
+            onClick={onAccept}
+          >
+            I Understand (Proceed to Demo)
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Main content component (only shown when authenticated)
 const AppContent: React.FC = () => {
@@ -180,9 +210,21 @@ const AppContent: React.FC = () => {
 
 // Main App component
 const App: React.FC = () => {
+  // Check localStorage to see if they've already accepted the disclaimer
+  const [showDisclaimer, setShowDisclaimer] = useState(() => {
+    return localStorage.getItem('demoDisclaimerAccepted') !== 'true';
+  });
+
+  const handleAcceptDisclaimer = () => {
+    localStorage.setItem('demoDisclaimerAccepted', 'true');
+    setShowDisclaimer(false);
+  };
+
   return (
     <AuthProvider>
       <Router>
+        {showDisclaimer && <DisclaimerModal onAccept={handleAcceptDisclaimer} />}
+
         <AuthGate>
           <AppContent />
         </AuthGate>

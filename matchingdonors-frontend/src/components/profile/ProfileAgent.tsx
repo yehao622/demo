@@ -45,6 +45,7 @@ export const ProfileAgent: React.FC = () => {
     const [editableBloodType, setEditableBloodType] = useState("");
     const [editableLocation, setEditableLocation] = useState("");
     const [editableStory, setEditableStory] = useState("");
+    const [existingProfile, setExistingProfile] = useState<any>(null);
     const [isPublic, setIsPublic] = useState(true);
     // const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
 
@@ -71,6 +72,7 @@ export const ProfileAgent: React.FC = () => {
                         if (typeof profileData.profile.is_public === 'boolean') {
                             setIsPublic(profileData.profile.is_public);
                         }
+                        setExistingProfile(profileData.profile);
                     }
                 } catch (err) {
                     console.log('No existing profile found');
@@ -138,12 +140,21 @@ export const ProfileAgent: React.FC = () => {
 
             const data = response.data;
             setSuggestion(data.suggestion);
-            setEditableSummary(data.suggestion.summary);
-            setEditableOrganType(data.suggestion.organ_type || "");
-            setEditableAge(data.suggestion.age?.toString() || "");
-            setEditableBloodType(data.suggestion.blood_type || "");
-            setEditableLocation(data.suggestion.location || "");
-            setEditableStory(data.suggestion.personal_story);
+
+            // Extract existing database fields (handling both camel and snake case)
+            const safeBlood = existingProfile?.blood_type || "";
+            const safeOrgan = existingProfile?.organ_type || "";
+            const safeStory = existingProfile?.medical_info || "";
+            const safeDesc = existingProfile?.description || "";
+            const safeAge = existingProfile?.age?.toString() || "";
+            const savedLoc = existingProfile?.city ? `${existingProfile.city}, ${existingProfile.state}` : "";
+
+            setEditableSummary(safeDesc + '\n' + data.suggestion.summary);
+            setEditableOrganType(data.suggestion.organ_type || safeOrgan);
+            setEditableAge(data.suggestion.age?.toString() || safeAge);
+            setEditableBloodType(data.suggestion.blood_type || safeBlood);
+            setEditableLocation(data.suggestion.location || savedLoc);
+            setEditableStory(safeStory + '\n' + data.suggestion.personal_story);
         } catch (err: any) {
             setError("Unable to connect to the server. Please check if the backend is running.");
         } finally {
@@ -163,26 +174,6 @@ export const ProfileAgent: React.FC = () => {
         setEditableLocation("");
         setEditableStory("");
     };
-
-    // Add this new handler
-    // const handleToggleVisibility = async (newValue: boolean) => {
-    //     setIsTogglingVisibility(true);
-    //     try {
-    //         await AuthService.toggleProfileVisibility(newValue);
-    //         setIsPublic(newValue);
-    //         // Show success message
-    //         const message = newValue
-    //             ? '✅ Profile is now public and visible to others'
-    //             : '✅ Profile is now private';
-    //         console.log(message);
-    //     } catch (err: any) {
-    //         setError('Failed to update visibility: ' + err.message);
-    //         // Revert toggle if failed
-    //         setIsPublic(!newValue);
-    //     } finally {
-    //         setIsTogglingVisibility(false);
-    //     }
-    // };
 
     const handleSaveProfile = async () => {
         try {

@@ -23,7 +23,7 @@ export const ProfileMatchingPage: React.FC = () => {
     const [filterType, setFilterType] = useState<'all' | 'patient' | 'donor'>('all');
     const [useRealData, setUseRealData] = useState(false);
     const [dataMode, setDataMode] = useState<'demo' | 'real'>('demo');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
+    // const [searchResults, setSearchResults] = useState<any[]>([]);
 
     const navigate = useNavigate();
 
@@ -50,6 +50,7 @@ export const ProfileMatchingPage: React.FC = () => {
     // Load all profiles on mount
     useEffect(() => {
         loadProfiles();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Reload profiles when data mode changes
@@ -64,6 +65,7 @@ export const ProfileMatchingPage: React.FC = () => {
         } else {
             setFilterType('all');
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [useRealData]);
 
     const loadProfiles = async () => {
@@ -108,7 +110,7 @@ export const ProfileMatchingPage: React.FC = () => {
             if (response.success) {
                 const results = response.matches || [];
                 setMatches(results);
-                setSearchResults(results);
+                // setSearchResults(results);
                 if (results.length === 0) {
                     alert('No matches found. Try adjusting your search criteria.');
                 }

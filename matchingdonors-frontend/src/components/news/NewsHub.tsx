@@ -155,12 +155,6 @@ export const NewsHub: React.FC = () => {
         setFilteredArticles([]);
     };
 
-    const handleSearchResults = (results: any) => {
-        // Optionally handle search results
-        // For now, the search component displays its own results
-        console.log('Search results:', results);
-    };
-
     if (isLoading) {
         return <LoadingSpinner message="Loading news articles..." />;
     }

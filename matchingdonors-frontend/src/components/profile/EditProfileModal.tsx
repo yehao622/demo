@@ -26,7 +26,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     onSave
 }) => {
     // const { user } = useAuth();
-    const [loading, setLoading] = useState(false);
+    const [loading,] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -65,52 +65,6 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     const handleToggleVisibility = async (newValue: boolean) => {
         setIsPublic(newValue);
     };
-
-    // const fetchProfile = async () => {
-    //     setLoading(true);
-    //     setError(null);
-    //     try {
-    //         const token = localStorage.getItem('auth_token');
-    //         const response = await fetch('http://localhost:8080/api/profile/me', {
-    //             headers: {
-    //                 'Authorization': `Bearer ${token}`,
-    //                 'Content-Type': 'application/json'
-    //             }
-    //         });
-
-    //         if (!response.ok) {
-    //             throw new Error('Failed to fetch profile');
-    //         }
-
-    //         const data = await response.json();
-    //         if (data.success && data.profile) {
-    //             const profile = data.profile;
-    //             setFormData({
-    //                 summary: profile.description || '',
-    //                 organType: profile.organ_type || '',
-    //                 age: profile.age ? String(profile.age) : '',
-    //                 bloodType: profile.blood_type || '',
-    //                 location: profile.city && profile.state
-    //                     ? `${profile.city}, ${profile.state}, ${profile.country || 'USA'}`
-    //                     : '',
-    //                 personalStory: profile.medical_info || '',
-    //                 preferences: profile.preferences || '',
-    //             });
-
-    //             // Set visibility from DB
-    //             if (typeof profile.is_public === 'boolean') {
-    //                 setIsPublic(profile.is_public);
-    //             } else if (typeof profile.is_public === 'number') {
-    //                 setIsPublic(profile.is_public === 1);
-    //             }
-    //         }
-    //     } catch (err: any) {
-    //         console.error('Error fetching profile:', err);
-    //         setError(err.message || 'Failed to load profile');
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
