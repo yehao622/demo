@@ -3,7 +3,7 @@ import { Profile } from '../../types/profile.types';
 import './ProfileCard.css';
 
 interface ScoreBreakdown {
-    baseScore: number;
+    baseScore?: number;
     aiSimilarity?: number;
     bloodTypeScore: number;
     locationScore: number;
@@ -28,6 +28,11 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
     scoreBreakdown,
     onViewDetails
 }) => {
+    // Safely map all possible database snake_case variables
+    const bloodType = profile.bloodType || (profile as any).blood_type || 'Not specified';
+    const organType = profile.organType || (profile as any).organ_type || 'Not specified';
+    // const medicalInfo = profile.medicalInfo || (profile as any).medical_info || 'No medical information provided.';
+
     const getTypeColor = (type: string) => {
         return type === 'donor' ? 'donor-badge' : 'patient-badge';
     };
@@ -39,92 +44,80 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({
         return 'score-low';
     };
 
-    const getMatchLabel = (score?: number) => {
-        if (!score) return '';
-        if (score >= 0.8) return 'Excellent Match';
-        if (score >= 0.6) return 'Good Match';
-        return 'Potential Match';
-    };
-
     return (
         <div className="profile-card">
             <div className="profile-card-header">
-                <h3 className="profile-name">{profile.name}</h3>
-                <span className={`profile-type-badge ${getTypeColor(profile.type)}`}>
-                    {profile.type.toUpperCase()}
-                </span>
+                <div className="profile-info">
+                    <h3 className="profile-name">{profile.name}</h3>
+                    <span className={`type-badge ${getTypeColor(profile.type)}`}>
+                        {profile.type === 'patient' ? '🏥 Patient' : '❤️ Donor'}
+                    </span>
+                </div>
+                {matchScore !== undefined && (
+                    <div className={`match-score ${getMatchScoreClass(matchScore)}`}>
+                        {Math.round(matchScore * 100)}% Match
+                    </div>
+                )}
             </div>
 
-            {matchScore !== undefined && (
-                <div className="match-score-container">
-                    <div className={`match-score ${getMatchScoreClass(matchScore)}`}>
-                        {Math.round(matchScore * 100)}%
-                    </div>
-                    <div className="match-label">{getMatchLabel(matchScore)}</div>
-                    {rank !== undefined && <div className="match-rank">#{rank}</div>}
-                </div>
-            )}
-
-            {scoreBreakdown && (
-                <div className="score-breakdown">
-                    {scoreBreakdown.organScore !== undefined && (
-                        <div className="breakdown-item" title="Organ Match (Base)">
-                            <span className="breakdown-label"> Organ</span>
-                            <span className="breakdown-value">{scoreBreakdown.organScore}</span>
-                        </div>
-                    )}
-                    <div className="breakdown-item" title="Blood Compatibility">
-                        <span className="breakdown-label"> Blood</span>
-                        <span className="breakdown-value">+{scoreBreakdown.bloodTypeScore}</span>
-                    </div>
-                    <div className="breakdown-item" title="Location Proximity">
-                        <span className="breakdown-label"> Loc</span>
-                        <span className="breakdown-value">+{scoreBreakdown.locationScore}</span>
-                    </div>
-                    <div className="breakdown-item" title="Age Compatibility">
-                        <span className="breakdown-label"> Age</span>
-                        <span className="breakdown-value">+{scoreBreakdown.ageScore}</span>
-                    </div>
-                </div>
-            )}
+            <div className="profile-quick-stats">
+                <div>Blood: <strong>{bloodType}</strong></div>
+                <div>Organ: <strong>{organType}</strong></div>
+                <div>Loc: <strong>{profile.city}, {profile.state}</strong></div>
+                <div>Age: <strong>{profile.age || 'N/A'}</strong></div>
+            </div>
 
             {reason && (
-                <div className="match-reason">
+                <div className="match-reason-card">
                     <div className="reason-icon">✓</div>
                     <p className="reason-text">{reason}</p>
                 </div>
             )}
 
-            <div className="profile-details">
-                <div className="detail-section">
-                    <strong>Description:</strong>
-                    <p>{profile.description}</p>
-                </div>
+            {scoreBreakdown && (
+                <div className="score-breakdown">
 
+                    {scoreBreakdown.organScore !== undefined && (
+                        <div className="breakdown-item">
+                            <span className="breakdown-label">Organ</span>
+                            <span className="breakdown-value">+{scoreBreakdown.organScore}</span>
+                        </div>
+                    )}
+
+                    <div className="breakdown-item">
+                        <span className="breakdown-label">Blood Type</span>
+                        <span className="breakdown-value">+{scoreBreakdown.bloodTypeScore}</span>
+                    </div>
+
+                    <div className="breakdown-item">
+                        <span className="breakdown-label">Location</span>
+                        <span className="breakdown-value">+{scoreBreakdown.locationScore}</span>
+                    </div>
+
+                    <div className="breakdown-item">
+                        <span className="breakdown-label">Age</span>
+                        <span className="breakdown-value">+{scoreBreakdown.ageScore}</span>
+                    </div>
+
+                    <div className="breakdown-item">
+                        <span className="breakdown-label">AI Similarity</span>
+                        <span className="breakdown-value">+{Math.round((scoreBreakdown.aiSimilarity || scoreBreakdown.baseScore || 0))}</span>
+                    </div>
+                </div>
+            )}
+
+            {/* <div className="profile-details">
                 <div className="detail-section">
                     <strong>Medical Info:</strong>
                     <p>
-                        {(() => {
-                            // Safely check for either naming convention and provide a fallback string
-                            const medInfo = profile.medicalInfo || (profile as any).medical_info || 'No medical information provided.';
-                            return medInfo.length > 150 ? `${medInfo.substring(0, 150)}...` : medInfo;
-                        })()}
+                        {medicalInfo.length > 150 ? `${medicalInfo.substring(0, 150)}...` : medicalInfo}
                     </p>
                 </div>
-
-                {profile.preferences && (
-                    <div className="detail-section">
-                        <strong>Preferences:</strong>
-                        <p>{profile.preferences}</p>
-                    </div>
-                )}
-            </div>
+            </div> */}
 
             <button
-                className="view-details-button"
-                onClick={() => {
-                    onViewDetails(profile)
-                }}
+                className="view-details-btn"
+                onClick={() => onViewDetails(profile)}
             >
                 View Full Profile
             </button>

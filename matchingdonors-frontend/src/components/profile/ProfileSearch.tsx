@@ -20,11 +20,7 @@ export const ProfileSearch: React.FC<ProfileSearchProps> = ({ onSearch, isSearch
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!searchText.trim()) {
-            alert('Please enter search criteria');
-            return;
-        }
-
+        // Allow empty input
         const request: MatchRequest = {
             profileText: searchText.trim(),
             topN,
@@ -36,9 +32,9 @@ export const ProfileSearch: React.FC<ProfileSearchProps> = ({ onSearch, isSearch
 
     // Example search queries
     const exampleSearches = [
-        "Looking for kidney donor, blood type O+, age 25-40, non-smoker, healthy lifestyle",
-        "I can donate my liver, blood type A+, age 35, excellent health, willing to travel",
-        "Need heart donor urgently, blood type B+, compatible with ages 30-50"
+        "Looking for someone within age 25-40/non-smoker/healthy lifestyle",
+        "My blood type A+, age 35, excellent health, willing to travel",
+        "Need blood type B+, compatible with ages 30-50"
     ];
 
     const handleExampleClick = (example: string) => {
@@ -49,7 +45,7 @@ export const ProfileSearch: React.FC<ProfileSearchProps> = ({ onSearch, isSearch
         <div className="profile-search">
             <h2 className="search-title">🔍 Find Matching Profiles</h2>
             <p className="search-subtitle">
-                Use AI-powered matching to find the best patient/donor matches based on medical criteria
+                Leave the search box blank to find matches based solely on your profile, or add specific preferences.
             </p>
 
             <form onSubmit={handleSubmit} className="search-form">
@@ -80,15 +76,15 @@ export const ProfileSearch: React.FC<ProfileSearchProps> = ({ onSearch, isSearch
                     <textarea
                         id="searchText"
                         className="search-textarea"
-                        placeholder="Example: Looking for kidney donor, blood type O+, age 25-40, non-smoker, healthy lifestyle..."
+                        placeholder="Leave blank for automatic matching, or type specific requirements (e.g., must be in MA)..."
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
                         rows={4}
                         disabled={isSearching || isTranscribing}
                     />
-                    <span className="help-text">
+                    {/* <span className="help-text">
                         Describe medical requirements, preferences, or profile characteristics
-                    </span>
+                    </span> */}
 
                     {/* Example searches */}
                     <div className="example-searches">
@@ -163,16 +159,16 @@ export const ProfileSearch: React.FC<ProfileSearchProps> = ({ onSearch, isSearch
                 <button
                     type="submit"
                     className="search-btn"
-                    disabled={isSearching || !searchText.trim() || isTranscribing}
+                    disabled={isSearching || isTranscribing}
                 >
                     {isSearching ? (
                         <>
                             <span className="spinner-small"></span>
-                            Searching with AI...
+                            Searching now...
                         </>
                     ) : (
                         <>
-                            🤖 Search with Gemini AI
+                            Search with AI agent
                         </>
                     )}
                 </button>

@@ -201,7 +201,8 @@ export const NewsHub: React.FC = () => {
                 </div>
 
                 <div style={{ display: showSearch ? 'block' : 'none' }}>
-                    <ArticleSearchBox onSearch={(res) => console.log(res)} />
+                    {/* <ArticleSearchBox onSearch={(res) => console.log(res)} /> */}
+                    <ArticleSearchBox />
                 </div>
                 <div className="toggle-search-container">
                     <button className="toggle-search-btn" onClick={() => setShowSearch(!showSearch)}>

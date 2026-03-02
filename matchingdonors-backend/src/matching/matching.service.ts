@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import { BaseProfile } from '../models/profile.model'; // Unified Type
+import { BaseProfile } from '../models/profile.model';
 import { MatchResult } from './matching.types';
 
 export class MatchingService {
@@ -16,6 +16,11 @@ export class MatchingService {
 
     // 1. Generate Embedding (Keep as is)
     async generateEmbedding(text: string): Promise<number[]> {
+        // This prevents the Gemini API from crashing on empty "Match Me" searches.
+        if (!text || !text.trim()) {
+            return new Array(100).fill(0);
+        }
+
         try {
             const response = await this.genAI.models.embedContent({
                 model: this.embeddingModel,
@@ -52,6 +57,36 @@ export class MatchingService {
         return denominator === 0 ? 0 : dotProduct / denominator;
     }
 
+    // AI Semantic Intent Parsing (Replaces RegEx!)
+    private async extractQueryIntent(text: string) {
+        if (!text || !text.trim()) {
+            return { organ_type: null, blood_type: null, age: null, location_intent: null, locations: [] };
+        }
+
+        const prompt = `
+            Analyze this medical matching search query: "${text}"
+            Extract the information and return ONLY a valid JSON object. Do not include markdown formatting.
+            Standardize blood types to formats like 'O+', 'AB-'. Standardize organs to Title Case ('Kidney', 'Liver').
+            JSON structure:
+            {
+                "organ_type": "string or null",
+                "blood_type": "string or null",
+                "age": "number or null",
+                "location_intent": "string or null (return 'strict' if they use words like 'must be in', 'only in'. Return 'preferred' if they use words like 'near', 'would be nice', 'in')",
+                "locations": ["array of strings, extracting any city or state names mentioned"]
+            }
+        `;
+        try {
+            const result = await this.genAI.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+            const responseText = result.text || '{}';
+            const match = responseText.match(/\{[\s\S]*\}/);
+            if (match) return JSON.parse(match[0]);
+        } catch (error) {
+            console.error('AI Extraction Error:', error);
+        }
+        return { organ_type: null, blood_type: null, age: null, location_intent: null, locations: [] };
+    }
+
     // 3. Extract Key Info (Helper for text analysis)
     private extractKeyInfo(text: string) {
         const lower = text.toLowerCase();
@@ -81,19 +116,14 @@ export class MatchingService {
     }
 
     // 4. Generate Match Reason (Updated to use BaseProfile snake_case)
-    private generateMatchReason(profile: BaseProfile, queryText: string): string {
+    private generateMatchReason(profile: BaseProfile, aiFilters: any): string {
         const reasons: string[] = [];
-        const queryInfo = this.extractKeyInfo(queryText);
-
-        if (queryInfo.organ_type && profile.organ_type === queryInfo.organ_type) {
+        if (aiFilters.organ_type && profile.organ_type === aiFilters.organ_type)
             reasons.push(`${profile.organ_type} match`);
-        }
-        if (queryInfo.blood_type && profile.blood_type === queryInfo.blood_type) {
+        if (aiFilters.blood_type && profile.blood_type === aiFilters.blood_type)
             reasons.push(`Blood type ${profile.blood_type} compatible`);
-        }
-        if (queryInfo.age && profile.age) {
-            if (Math.abs(queryInfo.age - profile.age) <= 20) reasons.push('Age compatible');
-        }
+        if (aiFilters.age && profile.age && Math.abs(aiFilters.age - profile.age) <= 20)
+            reasons.push('Age compatible');
 
         return reasons.length > 0 ? reasons.slice(0, 3).join(' • ') : 'Medical match';
     }
@@ -107,16 +137,25 @@ export class MatchingService {
         targetType: 'patient' | 'donor',
         excludeUserId?: number,
         maxResults: number = 10,
-        minScore: number = 50
-    ): Promise<MatchResult[]> {
-        // A. Load Profiles (Directly as BaseProfile, no conversion needed!)
+        minScore: number = 50,
+        ignoreConflict: boolean = false
+    ): Promise<{
+        matches?: MatchResult[],
+        conflict?: boolean,
+        queried?: string,
+        actual?: string
+    }> {
         const { ProfileService } = await import('../services/profile.service');
         const profiles = ProfileService.getAllCompleteProfiles(targetType, excludeUserId);
 
-        if (profiles.length === 0) return [];
+        if (profiles.length === 0) return { matches: [] };
 
         // Fetch Searcher's Location for comparison
         let searcherLocation: { country: string, state: string } | undefined;
+        let searcherOrgan: string | null = null;
+        let searcherBlood: string | null = null;
+        let searcherAge: number | null = null;
+
         if (excludeUserId) {
             // Determine the searcher's role (opposite of what they are looking for)
             const searcherRole = targetType === 'patient' ? 'donor' : 'patient';
@@ -126,23 +165,47 @@ export class MatchingService {
                     country: myProfile.country || '',
                     state: myProfile.state || ''
                 };
+                searcherOrgan = myProfile.organ_type;
+                searcherBlood = myProfile.blood_type;
+                searcherAge = myProfile.age;
             }
         }
 
         // B. Generate Embedding for the Search Query
         const queryEmbedding = await this.generateEmbedding(searchCriteria);
 
-        // C. Parse text filters (e.g. "Type O+ Kidney")
-        const textFilters = this.extractKeyInfo(searchCriteria);
+        // Use AI Intent Parser!
+        const aiIntent = await this.extractQueryIntent(searchCriteria);
+
+        //  Organ Conflict Detection
+        if (aiIntent.organ_type && searcherOrgan && !ignoreConflict) {
+            if (aiIntent.organ_type.toLowerCase() !== searcherOrgan.toLowerCase()) {
+                // Instantly halt and ask the user what to do!
+                return { conflict: true, queried: aiIntent.organ_type, actual: searcherOrgan };
+            }
+        }
+
+        const activeFilters = {
+            organ_type: aiIntent.organ_type || searcherOrgan,
+            blood_type: aiIntent.blood_type || searcherBlood,
+            age: aiIntent.age || searcherAge
+        };
 
         const matches: MatchResult[] = [];
 
         // D. Iterate and Score
         for (const profile of profiles) {
             // Hard Filter: Organ Type must match if specified
-            if (textFilters.organ_type && profile.organ_type &&
-                textFilters.organ_type.toLowerCase() !== profile.organ_type.toLowerCase()) {
+            if (activeFilters.organ_type && profile.organ_type &&
+                activeFilters.organ_type.toLowerCase() !== profile.organ_type.toLowerCase()) {
                 continue;
+            }
+
+            // Strict Geographic Requirement
+            if (aiIntent.location_intent === 'strict' && aiIntent.locations.length > 0) {
+                const profileLoc = `${profile.city} ${profile.state} ${profile.country}`.toLowerCase();
+                const matchesLoc = aiIntent.locations.some((loc: string) => profileLoc.includes(loc.toLowerCase()));
+                if (!matchesLoc) continue; // Instantly skip if they aren't in the strict area!
             }
 
             // 1. AI Similarity
@@ -152,7 +215,7 @@ export class MatchingService {
             const aiSimilarity = this.computeSimilarity(queryEmbedding, profileEmbedding);
 
             // 2. Calculate Hybrid Score
-            const { hybridScore, breakdown } = this.calculateHybridScore(profile, textFilters, aiSimilarity, searcherLocation);
+            const { hybridScore, breakdown } = this.calculateHybridScore(profile, activeFilters, aiSimilarity, searcherLocation, aiIntent, targetType);
 
             if ((hybridScore * 100) >= minScore) {
                 matches.push({
@@ -167,10 +230,12 @@ export class MatchingService {
             }
         }
 
-        return matches
-            .sort((a, b) => b.similarity - a.similarity)
-            .slice(0, maxResults)
-            .map((m, i) => ({ ...m, rank: i + 1 }));
+        return {
+            matches: matches
+                .sort((a, b) => b.similarity - a.similarity)
+                .slice(0, maxResults)
+                .map((m, i) => ({ ...m, rank: i + 1 }))
+        }
     }
 
     /**
@@ -181,12 +246,14 @@ export class MatchingService {
         profile: BaseProfile,
         filters: { organ_type: string | null, blood_type: string | null; age: number | null },
         aiSimilarity: number,
-        searcherLocation?: { country: string, state: string }
+        searcherLocation?: { country: string, state: string },
+        aiIntent?: any,
+        targetType?: 'patient' | 'donor'
     ) {
         let score = 0;
 
         // AI Score (0-30 points)
-        score += aiSimilarity * 20;
+        score += Math.min(aiSimilarity * 100 * 0.2, 20);
 
         // Organ match score
         let organScore = 0;
@@ -198,10 +265,22 @@ export class MatchingService {
         // Blood Type Score (0-30 points)
         let bloodScore = 0;
         if (filters.blood_type && profile.blood_type) {
-            if (profile.blood_type === filters.blood_type) bloodScore = 30;
-            else if (this.isBloodCompatible(profile.blood_type, filters.blood_type)) bloodScore = 20;
-        } else {
-            bloodScore = 15;
+            let isComp = false;
+
+            // If the profile we are checking is a DONOR, they are giving to the searcher (PATIENT)
+            if (targetType === 'donor') {
+                isComp = this.isBloodCompatible(profile.blood_type, filters.blood_type);
+            }
+            // If the profile we are checking is a PATIENT, the searcher (DONOR) is giving to them
+            else {
+                isComp = this.isBloodCompatible(filters.blood_type, profile.blood_type);
+            }
+
+            if (profile.blood_type === filters.blood_type) bloodScore = 30; // Exact match
+            else if (isComp) bloodScore = 20; // Compatible match
+            else bloodScore = 5; // Incompatible
+        } else if (profile.blood_type) {
+            bloodScore = 5; // bloodScore = 5 encourage user to complete it's profile even not match
         }
         score += bloodScore;
 
@@ -209,32 +288,33 @@ export class MatchingService {
         let ageScore = 0;
         if (filters.age && profile.age) {
             const diff = Math.abs(profile.age - filters.age);
-            if (diff <= 5) ageScore = 20;
-            else if (diff <= 15) ageScore = 10;
-        } else {
-            ageScore = 10;
+            if (diff <= 5) ageScore = 10;
+            else if (diff <= 15) ageScore = 8;
+            else ageScore = 3;
+        } else if (profile.age) {
+            ageScore = 3;
         }
         score += ageScore;
 
         // Location Score (5 / 10 / 20 points)
-        let locationScore = 10; // Default: Different country / Unknown
+        let locationScore = 0; // Default: Different country / Unknown
 
-        if (searcherLocation && profile.country) {
+        // 🚀 SMART FILTER: Soft Geogrpahic Boost
+        if (aiIntent?.location_intent === 'preferred' && aiIntent.locations.length > 0) {
+            const profileLoc = `${profile.city} ${profile.state} ${profile.country}`.toLowerCase();
+            const matchesLoc = aiIntent.locations.some((loc: string) => profileLoc.includes(loc.toLowerCase()));
+            if (matchesLoc) locationScore = 10; // Extra points for matching the soft preference!
+        } else if (searcherLocation && profile.country) {
+            // Standard location matching fallback
             const pCountry = profile.country.trim().toLowerCase();
             const sCountry = searcherLocation.country.trim().toLowerCase();
-
-            if (pCountry === sCountry) {
-                // Same Country - check State
-                locationScore = 20;
-
-                if (profile.state && searcherLocation.state) {
-                    const pState = profile.state.trim().toLowerCase();
-                    const sState = searcherLocation.state.trim().toLowerCase();
-
-                    if (pState === sState) {
-                        locationScore = 40; // Same Province/State
-                    }
+            if (pCountry && pCountry === sCountry) {
+                locationScore = 7;
+                if (profile.state && searcherLocation.state && profile.state.trim().toLowerCase() === searcherLocation.state.trim().toLowerCase()) {
+                    locationScore = 10;
                 }
+            } else if (pCountry) {
+                locationScore = 3;
             }
         }
         score += locationScore;
@@ -244,7 +324,7 @@ export class MatchingService {
         return {
             hybridScore: total / 100,
             breakdown: {
-                aiSimilarity: aiSimilarity * 100,
+                aiSimilarity: aiSimilarity * 100 * 0.2,
                 bloodTypeScore: bloodScore,
                 ageScore: ageScore,
                 locationScore: locationScore,
@@ -255,10 +335,23 @@ export class MatchingService {
 
     // Helper for blood compatibility
     private isBloodCompatible(donor: string, recipient: string): boolean {
-        // Simplified logic: Exact match or O- donor / AB+ recipient
-        if (donor === 'O-') return true;
-        if (recipient === 'AB+') return true;
-        return donor === recipient;
+        // Strip out any weird spaces and ensure uppercase just in case
+        const d = donor.replace(/\s/g, '').toUpperCase();
+        const r = recipient.replace(/\s/g, '').toUpperCase();
+
+        const compatibilityChart: Record<string, string[]> = {
+            'O-': ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'], // Universal Donor
+            'O+': ['O+', 'A+', 'B+', 'AB+'],
+            'A-': ['A-', 'A+', 'AB-', 'AB+'],
+            'A+': ['A+', 'AB+'],
+            'B-': ['B-', 'B+', 'AB-', 'AB+'],
+            'B+': ['B+', 'AB+'],
+            'AB-': ['AB-', 'AB+'],
+            'AB+': ['AB+'] // Universal Recipient
+        };
+
+        // Check if the recipient is in the donor's "approved to give to" list
+        return compatibilityChart[d]?.includes(r) || false;
     }
 
     // Background Match Scanner (Simplified)
@@ -281,10 +374,11 @@ export class MatchingService {
         // 3. Use my profile description as the search criteria
         const searchCriteria = `Blood type ${myProfile.blood_type} Age ${myProfile.age} Organ ${myProfile.organ_type}. ${myProfile.description}`;
 
-        const matches = await this.searchRealProfiles(searchCriteria, targetType, userId, 5, 80);
+        // Pass true to ignore conflicts during background scans
+        const result = await this.searchRealProfiles(searchCriteria, targetType, userId, 5, 80, true);
+        const matches = result.matches || [];
 
         if (matches.length > 0) {
-            console.log(`✅ [Auto-Match] Found ${matches.length} matches for User ${userId}`);
             // Send real-time system notifications [Restored Logic]
             for (const match of matches) {
                 // Look up the numeric user_id of the matched profile
@@ -302,14 +396,6 @@ export class MatchingService {
                     console.log(`📬 [Auto-Match] Real-time alert sent to matched User ${recipient.user_id}!`);
                 }
             }
-
-            // Also alert the current user (the one who just saved their profile)
-            // NotificationService.createNotification(
-            //     userId,
-            //     '🚨 High Compatibility Match Found!',
-            //     `Great news! We found ${matches.length} highly compatible ${targetType}(s) for you. Check your Match tab!`,
-            //     'system'
-            // );
         } else {
             console.log(`💨 [Auto-Match] Finished: No matches above 80% found right now.`);
         }

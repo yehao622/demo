@@ -9,6 +9,7 @@ import { ProfileCard } from './ProfileCard';
 import { ValidationModal } from '../common/ValidationModal';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ErrorMessage } from '../common/ErrorMessage';
+import { useNavigate } from 'react-router-dom';
 import './ProfileMatchingPage.css';
 
 export const ProfileMatchingPage: React.FC = () => {
@@ -23,6 +24,8 @@ export const ProfileMatchingPage: React.FC = () => {
     const [useRealData, setUseRealData] = useState(false);
     const [dataMode, setDataMode] = useState<'demo' | 'real'>('demo');
     const [searchResults, setSearchResults] = useState<any[]>([]);
+
+    const navigate = useNavigate();
 
     const [validationModal, setValidationModal] = useState<{
         isOpen: boolean;
@@ -51,7 +54,7 @@ export const ProfileMatchingPage: React.FC = () => {
 
     // Reload profiles when data mode changes
     useEffect(() => {
-        console.log('🔄 useRealData changed to:', useRealData);
+        // console.log('🔄 useRealData changed to:', useRealData);
         loadProfiles();
         setDataMode(useRealData ? 'real' : 'demo');
 
@@ -70,14 +73,13 @@ export const ProfileMatchingPage: React.FC = () => {
             const profiles = await profileService.getAllProfiles(useRealData);
             setAllProfiles(profiles);
         } catch (err: any) {
-            console.error('❌ Error loading profiles:', err);
             setError(err.message);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const executeSearch = async (request: MatchRequest) => {
+    const executeSearch = async (request: MatchRequest, ignoreConflict: boolean = false) => {
         try {
             let searcherType = currentUser ? currentUser.role : 'patient';
 
@@ -86,8 +88,22 @@ export const ProfileMatchingPage: React.FC = () => {
                 profileId = `user-${currentUser.role}-${currentUser.id}`;
             }
 
-            const searchRequest = { ...request, searcherType, profileId };
+            const searchRequest = { ...request, searcherType, profileId, ignoreConflict };
             const response = await profileService.findMatches(searchRequest);
+
+            // The backend caught an organ conflict!
+            if (response.conflict) {
+                setValidationModal({
+                    isOpen: true,
+                    message: `Organ Conflict Detected! Your profile states you are involved with a [${response.actual}], but your search mentions a [${response.queried}]. Do you want to ignore your typed text and strictly match based on your registered profile?`,
+                    suggestedAction: 'Proceed with my profile',
+                    onConfirm: () => {
+                        setIsSearching(true);
+                        executeSearch(request, true); // Re-run and ignore the conflict
+                    }
+                });
+                return; // Halt execution until they click the modal button
+            }
 
             if (response.success) {
                 const results = response.matches || [];
@@ -108,43 +124,47 @@ export const ProfileMatchingPage: React.FC = () => {
     };
 
     const handleSearch = async (request: MatchRequest) => {
-        if (!request.profileText || !request.profileText.trim()) {
-            alert('Please enter search criteria');
-            return;
-        }
-
         setIsSearching(true);
         setError(null);
-
         // Reset filters when a new search begins
         setActiveFilters({ bloodType: '', organType: '', ageRange: '', country: '', state: '' });
 
         try {
-            // Check intent via AI
+            // Fetch user profile to check for organ type
+            let userProfile: any = null;
+            try {
+                const profileData = await AuthService.getProfile();
+                userProfile = profileData.profile;
+            } catch (err) {
+                console.log("Could not fetch user profile.");
+            }
+
+            // Incomplete Profile Blocker
+            if (!userProfile || !userProfile.organ_type) {
+                setValidationModal({
+                    isOpen: true,
+                    message: `Action Required: We cannot securely match you without knowing your organ type. Please complete your medical profile first!`,
+                    suggestedAction: 'Go to Profile Fill',
+                    onConfirm: () => {
+                        navigate('/profile-fill'); // Route them to the fill tab!
+                    }
+                });
+                setIsSearching(false);
+                return;
+            }
+
+            // Skip AI intent, go straight to finding matches!
+            if (!request.profileText || !request.profileText.trim()) {
+                await executeSearch(request);
+                return;
+            }
+
+            // Check intent via AI for typed text
             const validation = await AuthService.validateInput(request.profileText, 'profile_match');
 
             // If it's NOT a valid match query (unrelated, news, profile fill, etc.)
             if (!validation.isValid || validation.intent !== 'profile_match') {
                 setIsSearching(false);
-
-                // Fetch user profile to check for organ type
-                let userProfile: any = null;
-                try {
-                    const profileData = await AuthService.getProfile();
-                    userProfile = profileData.profile;
-                } catch (err) {
-                    console.log("Could not fetch user profile.");
-                }
-
-                // If no organ type in profile
-                if (!userProfile || !userProfile.organ_type) {
-                    setValidationModal({
-                        isOpen: true,
-                        message: `Warm Reminder: This tab is for finding medical matches. Please specify what organ you are looking for (or donating) in your query, or update your profile in the "Profile Fill" tab.`,
-                        suggestedAction: 'Got it'
-                    });
-                    return;
-                }
 
                 // If they DO have an organ type, offer to auto-search
                 setValidationModal({
@@ -231,7 +251,7 @@ export const ProfileMatchingPage: React.FC = () => {
 
     const filteredMatches = useMemo(() => {
         return matches.filter(m => {
-            // HYDRATION: Filter based on fresh data
+            // Filter based on fresh data
             const freshProfile = allProfiles.find(p => p.id === m.profile.id);
             const p = freshProfile || m.profile;
 
@@ -259,7 +279,7 @@ export const ProfileMatchingPage: React.FC = () => {
 
             {isSponsor ? (
                 <div className="sponsor-banner">
-                    <strong>👀 Sponsor View Only Mode</strong>
+                    <strong>👀 Not accessible for sponsor role</strong>
                     <p>
                         As a sponsor, medical matching features (Search & AI Match) are disabled for your account type.
                     </p>
@@ -289,7 +309,6 @@ export const ProfileMatchingPage: React.FC = () => {
                     {matches.length > 0 && filterOptions && (
                         <div className="filter-bar" style={{ display: 'flex', gap: '10px', padding: '15px', background: '#f8f9fa', borderRadius: '8px', margin: '20px 0', flexWrap: 'wrap', alignItems: 'center' }}>
                             <span style={{ fontWeight: 600, color: '#555' }}>Filter Results:</span>
-
                             {/* Blood Type */}
                             {filterOptions.bloodTypes.length > 0 && (
                                 <select className="form-select-sm" value={activeFilters.bloodType} onChange={(e) => handleFilterChange('bloodType', e.target.value)}>
@@ -428,12 +447,16 @@ export const ProfileMatchingPage: React.FC = () => {
 
             <ValidationModal
                 isOpen={validationModal.isOpen}
-                onClose={() => setValidationModal({ isOpen: false, message: '' })}
-                type="tab" // Just using this for standard styling
+                onClose={() => {
+                    setValidationModal({ isOpen: false, message: '' });
+                    setIsSearching(false);
+                }}
+                type="tab"
                 message={validationModal.message}
                 suggestedAction={validationModal.suggestedAction || "Got it"}
                 onActionClick={() => {
                     setValidationModal({ isOpen: false, message: '' });
+                    setIsSearching(false);
                     if (validationModal.onConfirm) {
                         validationModal.onConfirm();
                     }
