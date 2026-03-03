@@ -64,7 +64,7 @@ export const UserHeader: React.FC = () => {
         });
 
         socket.on('connect', () => {
-            console.log('✅ Connected to real-time notifications at:', socketUrl);
+            // console.log('✅ Connected to real-time notifications at:', socketUrl);
             socket.emit('join', user.id);
         });
 

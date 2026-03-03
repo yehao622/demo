@@ -3,7 +3,9 @@ import { io, Socket } from 'socket.io-client';
 import { useAuth } from '../../contexts/AuthContext';
 import './RealMessage.css';
 
-// Define our TypeScript interfaces
+// Dynamically set the API Base URL
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
 interface Message {
     id: string;
     room_id: string;
@@ -19,23 +21,23 @@ interface RealMessageProps {
 }
 
 const RealMessage: React.FC<RealMessageProps> = ({ advertiserId, advertiserName }) => {
-    const { user, token } = useAuth(); // Get current user and JWT token
+    const { user, token } = useAuth();
     const [socket, setSocket] = useState<Socket | null>(null);
     const [roomId, setRoomId] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputText, setInputText] = useState('');
-
-    // Ref to automatically scroll to the bottom of the chat
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Initialize Room and Fetch History
     useEffect(() => {
+        // Declare socketInstance outside the async function so React can clean it up
+        let socketInstance: Socket | null = null;
+
         const initializeChat = async () => {
             if (!user || !token) return;
 
             try {
-                // Get or create the room (Updated to port 8080)
-                const roomRes = await fetch('http://localhost:8080/api/chat/room', {
+                // 1. Get Room ID
+                const roomRes = await fetch(`${API_BASE_URL}/api/chat/room`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -47,50 +49,44 @@ const RealMessage: React.FC<RealMessageProps> = ({ advertiserId, advertiserName 
                 const currentRoomId = roomData.roomId;
                 setRoomId(currentRoomId);
 
-                // Fetch message history (Updated to port 8080)
-                const historyRes = await fetch(`http://localhost:8080/api/chat/room/${currentRoomId}/messages`, {
+                // 2. Fetch History
+                const historyRes = await fetch(`${API_BASE_URL}/api/chat/room/${currentRoomId}/messages`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const historyData = await historyRes.json();
                 setMessages(historyData);
 
-                // Setup Socket Connection (Updated to port 8080)
-                const newSocket = io('http://localhost:8080');
-                setSocket(newSocket);
+                // 3. Setup Socket Connection securely
+                socketInstance = io(API_BASE_URL);
+                setSocket(socketInstance);
 
-                // Join the specific room
-                newSocket.emit('join_advertiser_chat', currentRoomId);
+                socketInstance.emit('join_advertiser_chat', currentRoomId);
 
-                // Listen for incoming messages
-                newSocket.on('receive_advertiser_message', (incomingMessage: Message) => {
+                socketInstance.on('receive_advertiser_message', (incomingMessage: Message) => {
                     setMessages((prevMessages) => {
-                        // Deduplication check: If we already have this message, don't add it again
-                        if (prevMessages.some(msg => msg.id === incomingMessage.id)) {
-                            return prevMessages;
-                        }
+                        if (prevMessages.some(msg => msg.id === incomingMessage.id)) return prevMessages;
                         return [...prevMessages, incomingMessage];
                     });
                 });
-
-                // Cleanup on unmount
-                return () => {
-                    newSocket.disconnect();
-                };
-
             } catch (error) {
                 console.error("Failed to initialize chat:", error);
             }
         };
 
         initializeChat();
+
+        // PROPER REACT CLEANUP: This guarantees the socket closes when the user leaves the page
+        return () => {
+            if (socketInstance) {
+                socketInstance.disconnect();
+            }
+        };
     }, [advertiserId, user, token]);
 
-    // Auto-scroll to bottom when messages change
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    // Handle Sending Messages
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
         if (!inputText.trim() || !socket || !roomId || !user) return;
@@ -98,25 +94,20 @@ const RealMessage: React.FC<RealMessageProps> = ({ advertiserId, advertiserName 
         const messageData = {
             roomId,
             senderId: user.id.toString(),
-            senderType: 'user', // Hardcoded as 'user' for the frontend patient/donor
+            senderType: 'user',
             content: inputText.trim()
         };
 
-        // Emit to backend
         socket.emit('send_advertiser_message', messageData);
-
-        // Clear the input
         setInputText('');
     };
 
     return (
         <div className="real-message-container">
-            {/* Chat Header */}
             <div className="real-message-header">
                 <h3>Direct Message with {advertiserName}</h3>
             </div>
 
-            {/* Messages Area */}
             <div className="real-message-area">
                 {messages.map((msg) => {
                     const isMe = msg.sender_type === 'user';
@@ -131,7 +122,6 @@ const RealMessage: React.FC<RealMessageProps> = ({ advertiserId, advertiserName 
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
             <form onSubmit={handleSendMessage} className="real-message-input-area">
                 <input
                     type="text"

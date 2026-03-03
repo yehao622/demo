@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './AdvertiserChat.css';
 
+// Dynamically set the API Base URL
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const ADVERTISER_API = `${API_BASE_URL}/api/advertiser`;
+
 interface Message {
     role: 'user' | 'assistant';
     content: string;
@@ -15,8 +19,6 @@ interface LeadData {
     monthlyBudget?: string;
     campaignGoals?: string;
 }
-
-const API_BASE = 'http://localhost:8080/api/advertiser';
 
 const AdvertiserChat: React.FC = () => {
     const [sessionId, setSessionId] = useState<string | null>(null);
@@ -41,7 +43,7 @@ const AdvertiserChat: React.FC = () => {
 
     const initChat = async () => {
         try {
-            const response = await fetch(`${API_BASE}/chat/start`, {
+            const response = await fetch(`${ADVERTISER_API}/chat/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -86,7 +88,7 @@ const AdvertiserChat: React.FC = () => {
         setIsTyping(true)
 
         try {
-            const response = await fetch(`${API_BASE}/chat/message`, {
+            const response = await fetch(`${ADVERTISER_API}/chat/start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ sessionId, message })
@@ -387,7 +389,7 @@ const LeadFormModal: React.FC<LeadFormModalProps> = ({ sessionId, onClose, onSuc
         setIsSubmitting(true);
 
         try {
-            const response = await fetch(`${API_BASE}/lead`, {
+            const response = await fetch(`${ADVERTISER_API}/lead`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ sessionId, leadData: formData })
