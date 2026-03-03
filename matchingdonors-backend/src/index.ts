@@ -22,27 +22,15 @@ import { initSocket } from './socket';
 const app = express();
 const port = process.env.PORT || 8080;
 
-const server = http.createServer(app);
-initSocket(server);
-
-server.listen(port, () => {
-    console.log(`🚀 Server & Socket.IO running on port ${port}`);
-});
-
+// Middleware MUST come first!
 app.use(cors({
-    origin: ['http://localhost:3000'],
+    origin: [
+        'http://localhost:3000',
+        process.env.FRONTEND_URL || '' // We will set this in Render later!
+    ].filter(Boolean),
     credentials: true
 }));
 app.use(express.json());
-
-// Health check endpoint
-// app.get('/health', (req, res) => {
-//     res.json({
-//         status: 'ok',
-//         geminiKeySet: !!process.env.GEMINI_API_KEY,
-//         timestamp: new Date().toISOString()
-//     });
-// });
 
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
@@ -54,3 +42,14 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/sponsor-profile', sponsorProfileRoutes);
+
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+const server = http.createServer(app);
+initSocket(server);
+
+server.listen(port, () => {
+    console.log(`🚀 Server & Socket.IO running on port ${port}`);
+});
