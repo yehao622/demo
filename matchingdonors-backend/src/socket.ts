@@ -7,12 +7,15 @@ import nodemailer from 'nodemailer';
 let io: Server;
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: '465',
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    }
-});
+    },
+    family: 4,
+} as any);
 
 
 export const initSocket = (httpServer: HttpServer) => {
