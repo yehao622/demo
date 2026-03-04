@@ -88,7 +88,7 @@ const AdvertiserChat: React.FC = () => {
         setIsTyping(true)
 
         try {
-            const response = await fetch(`${ADVERTISER_API}/chat/start`, {
+            const response = await fetch(`${ADVERTISER_API}/chat/message`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ sessionId, message })
