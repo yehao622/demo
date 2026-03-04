@@ -2,21 +2,11 @@ import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
 import crypto from 'crypto';
 import db from './database/init';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 let io: Server;
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: '465',
-    secure: true,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    family: 4,
-} as any);
-
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const initSocket = (httpServer: HttpServer) => {
     io = new Server(httpServer, {
@@ -46,7 +36,7 @@ export const initSocket = (httpServer: HttpServer) => {
         });
 
         // Handle sending and broadcasting a message
-        socket.on('send_advertiser_message', (messageData) => {
+        socket.on('send_advertiser_message', async (messageData) => {
             const { roomId, senderId, senderType, content } = messageData;
             const messageId = crypto.randomUUID();
 
@@ -72,20 +62,18 @@ export const initSocket = (httpServer: HttpServer) => {
 
                 // We only send an email if the 'user' (the sponsor) sent the message
                 if (senderType === 'user') {
-                    const mailOptions = {
-                        from: process.env.EMAIL_USER,
-                        to: process.env.EMAIL_USER, // Sending to yourself for the demo
+                    const { data, error } = await resend.emails.send({
+                        from: 'onboarding@resend.dev', // Resend's required default testing address
+                        to: process.env.EMAIL_USER as string, // Your email address receiving the alert
                         subject: `New Sponsor Message from User ID: ${senderId}`,
                         text: `You have received a new message from a sponsor on the platform.\n\nMessage: "${content}"\n\nChat Room ID: ${roomId}\nLog in to the database to reply.`
-                    };
-
-                    transporter.sendMail(mailOptions, (error, info) => {
-                        if (error) {
-                            console.error("Error sending email notification:", error);
-                        } else {
-                            console.log("Email notification sent successfully:", info.response);
-                        }
                     });
+
+                    if (error) {
+                        console.error("Error sending email notification via Resend:", error);
+                    } else {
+                        console.log("Email notification sent successfully via Resend:", data);
+                    }
                 }
 
             } catch (error) {
