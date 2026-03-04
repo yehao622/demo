@@ -5,8 +5,14 @@ import { advertiserFAQs, faqCategories } from "../data/advertiserFAQs";
 
 const router = Router();
 
-// Initialize chatbot with Gemini API key
-const chatbot = new AdvertiserChatbot(process.env.GEMINI_API_KEY || '');
+// LAZY INITIALIZATION: Wait until the route is actually called to grab the API key!
+let chatbot: AdvertiserChatbot | null = null;
+const getChatbot = () => {
+    if (!chatbot) {
+        chatbot = new AdvertiserChatbot(process.env.GEMINI_API_KEY || '');
+    }
+    return chatbot;
+};
 
 // In-memory storage for leads (replace with database later)
 const leads: AdvertiserLead[] = [];
@@ -17,8 +23,9 @@ const leads: AdvertiserLead[] = [];
  */
 router.post('/chat/start', (req, res) => {
     try {
-        const sessionId = chatbot.createSession();
-        const messages = chatbot.getMessages(sessionId);
+        const bot = getChatbot(); // Grab the initialized bot
+        const sessionId = bot.createSession();
+        const messages = bot.getMessages(sessionId);
 
         res.json({
             success: true,
@@ -49,7 +56,8 @@ router.post('/chat/message', async (req, res) => {
             });
         }
 
-        const response = await chatbot.sendMessage(sessionId, message);
+        const bot = getChatbot();
+        const response = await bot.sendMessage(sessionId, message);
 
         res.json({
             success: true,

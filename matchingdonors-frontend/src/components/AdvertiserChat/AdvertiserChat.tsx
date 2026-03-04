@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './AdvertiserChat.css';
 
 // Dynamically set the API Base URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.REACT_APP_API_URL || (import.meta as any).env?.VITE_API_URL || 'https://matchingdonors-demo.onrender.com' || 'http://localhost:8080';
 const ADVERTISER_API = `${API_BASE_URL}/api/advertiser`;
 
 interface Message {

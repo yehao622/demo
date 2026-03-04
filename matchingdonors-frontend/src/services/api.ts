@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.REACT_APP_API_URL || (import.meta as any).env?.VITE_API_URL || 'https://matchingdonors-demo.onrender.com' || 'http://localhost:8080';
 
 export const api: AxiosInstance = axios.create({
     baseURL: API_BASE_URL,

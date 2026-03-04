@@ -100,18 +100,8 @@ export const NewsHub: React.FC = () => {
         try {
             if (isFav) {
                 await NewsService.removeFavorite(articleId);
-                // setFavoriteIds(prev => {
-                //     const next = new Set(prev);
-                //     next.delete(articleId);
-                //     return next;
-                // });
             } else {
                 await NewsService.addFavorite(articleId);
-                // setFavoriteIds(prev => {
-                //     const next = new Set(prev);
-                //     next.add(articleId);
-                //     return next;
-                // });
             }
 
             // Broadcast event so UI updates locally

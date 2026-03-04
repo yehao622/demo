@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import './RealMessage.css';
 
 // Dynamically set the API Base URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.REACT_APP_API_URL || (import.meta as any).env?.VITE_API_URL || 'https://matchingdonors-demo.onrender.com' || 'http://localhost:8080';
 
 interface Message {
     id: string;
@@ -57,7 +57,9 @@ const RealMessage: React.FC<RealMessageProps> = ({ advertiserId, advertiserName 
                 setMessages(historyData);
 
                 // 3. Setup Socket Connection securely
-                socketInstance = io(API_BASE_URL);
+                socketInstance = io(API_BASE_URL, {
+                    transports: ['websocket', 'polling']
+                });
                 setSocket(socketInstance);
 
                 socketInstance.emit('join_advertiser_chat', currentRoomId);
