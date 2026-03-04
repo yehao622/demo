@@ -1,251 +1,64 @@
-## 🎯 Project Overview
+# MatchingDonors Platform
 
-This full-stack application showcases AI-driven features designed for MatchingDonors.com, a nonprofit dedicated to saving lives through organ donation. The demo implements four core AI-powered modules that enhance user experience and operational efficiency.
-
-**Live Demo:** (Add URL if deployed)
+A full-stack web application built to connect organ donors, patients, and sponsors. This platform features AI-driven article searching, an intelligent virtual assistant, and real-time chat capabilities.
 
 ## ✨ Key Features
 
-### 1. **Profile Fill** - AI-Powered Profile Creation
-- Intelligent questionnaire system powered by Gemini AI
-- Dynamic question generation based on user responses
-- Automated profile completion for donors and patients
-- Context-aware follow-up questions
-
-### 2. **Profile Match** - Smart Donor-Patient Matching
-- AI-driven compatibility analysis
-- Medical criteria evaluation (blood type, tissue match, location)
-- Ranked match results with compatibility scores
-- Detailed match explanations
-
-### 3. **News Hub** - AI Article Search
-- Voice input support (Speech-to-Text)
-- Natural language query processing
-- Real-time medical news aggregation
-- Relevant article recommendations
-
-### 4. **Advertiser Chat** - Business Inquiry Chatbot
-- Conversational AI for advertising inquiries
-- Automated lead capture and qualification
-- Business metrics and audience data delivery
-- Chat history export to html
+* **AI Smart Search:** Uses the Gemini API to search, analyze, and summarize medical articles based on natural language queries.
+* **AI Chatbot Assistant:** A conversational agent that can answer advertiser FAQs, capture leads, and process complex user intents.
+* **Real-Time Messaging:** Powered by Socket.io, allowing instant communication between users and sponsors.
+* **Automated Email Notifications:** Integrates with Resend to send instant alerts for new sponsor messages.
+* **Content Crawler & Labeler:** Automated backend services to scrape trusted medical news sources and categorize them using AI.
+* **Zero-Config Database:** Uses SQLite for a completely portable, self-initializing local database experience.
 
 ## 🛠️ Tech Stack
 
-### Backend
-- **Runtime:** Node.js 18+
-- **Framework:** Express.js
-- **Language:** TypeScript
-- **AI Engine:** Google Gemini 2.5 Flash
-- **Testing:** Jest (To be implemented)
+* **Frontend:** React, TypeScript, CSS
+* **Backend:** Node.js, Express, TypeScript
+* **Database:** SQLite (`better-sqlite3`)
+* **Real-time:** Socket.io
+* **AI Integration:** Google Gemini API
+* **Email Services:** Resend API
 
-### Frontend
-- **Framework:** React 18
-- **Language:** TypeScript
-- **Styling:** Custom CSS
-- **Build Tool:** Create React App
+---
 
-### APIs & Services
-- Google Gemini AI API
-- Web Speech API (voice input)
+## 🚀 Local Setup Instructions
 
-## 📋 Prerequisites
+Follow these steps to run both the frontend and backend servers on your local machine.
 
-Before you begin, ensure you have:
+### Prerequisites
+* [Node.js](https://nodejs.org/) (v16 or higher recommended)
+* API Keys for **Google Gemini** and **Resend**
 
-- **Node.js** >= 18.0.0
-- **npm** >= 9.0.0
-- **Google Gemini API Key** ([Get one here](https://aistudio.google.com/apikey))
+### 1. Backend Setup
 
-## 🚀 Quick Start
+The backend runs on **Port 8080** and will automatically create the SQLite database upon starting.
 
-### 1. Clone the Repository
+1. Open your terminal and navigate to the backend directory:
+   ```bash
+   cd matchingdonors-backend
 
-```bash
-git clone https://github.com/yehao622/demo.git
-cd demo
+2. Install the necessary dependencies:
+   npm install
 
-2. Backend Setup
-# Navigate to backend directory
-cd matchingdonors-backend
+3. Copy the .env.example file in the root of the project to 'matchingdonors-backend' directory and set the variables based on your own selection.
 
-# Install dependencies
-npm install
+4. Start the development server:
+	npm run dev
 
-# Create environment file
-cp .env.example .env
+### 2. Frontend Setup
+The frontend runs on Port 3000 and connects to your local backend.
 
-# Edit .env and add your API keys:
-# GEMINI_API_KEY=your_gemini_api_key_here
-# PORT=8080
+1. Open a new terminal window and navigate to the frontend directory:
+	cd matchingdonors-frontend
 
-# Start the backend server
-npm run dev
-The backend will start at http://localhost:8080
+2. Install the necessary dependencies:
+	npm install
 
-3. Frontend Setup
-# Open a new terminal
-cd matchingdonors-frontend
+3. Create a .env file in the root of the matchingdonors-frontend directory and add your API URL:
+	REACT_APP_API_URL=http://localhost:8080
 
-# Install dependencies
-npm install
+4. Start the React development server:
+	npm start
 
-# Start the frontend development server
-npm start
-The frontend will start at http://localhost:3000
-
-4. Verify Installation
-Open your browser and navigate to:
-
-Frontend: http://localhost:3000
-
-Backend Health Check: http://localhost:8080/health
-
-🔑 Environment Variables in .env
-Backend (.env)
-text
-# Required
-GEMINI_API_KEY=your_gemini_api_key_here
-NEWS_API_KEY=your_news_api_key_here
-
-# Optional
-PORT=8080
-# NODE_ENV=development
-# Frontend (.env)
-# REACT_APP_API_BASE_URL=http://localhost:8080
-
-📁 Project Structure
-text
-demo/
-├── matchingdonors-backend/
-│   ├── src/
-│   │   ├── routes/          # API endpoints
-│   │   ├── services/        # Business logic & AI services
-│   │   ├── models/          # Data models
-│   │   ├── data/            # Static data & FAQs
-│   │   └── index.ts         # Server entry point
-│   ├── tests/               # Unit tests
-│   └── package.json
-│
-├── matchingdonors-frontend/
-│   ├── src/
-│   │   ├── components/      # React components
-│   │   ├── pages/           # Page components
-│   │   ├── services/        # API services
-│   │   ├── types/           # TypeScript types
-│   │   └── App.tsx          # Main app component
-│   └── package.json
-│
-└── README.md
-
-
-🏗️ Building for Production Backend:
-
-cd matchingdonors-backend
-npm run build
-npm start
-
-Frontend:
-cd matchingdonors-frontend
-npm run build
-
-# Serve the build folder with your preferred static server
-📝 API Documentation
-Profile Fill Endpoints
-POST /api/profile/start - Start profile questionnaire
-
-POST /api/profile/answer - Submit answer
-
-POST /api/profile/complete - Complete profile
-
-Profile Match Endpoints
-POST /api/profile/match - Find compatible matches
-
-News Hub Endpoints
-GET /api/content/articles - Search articles
-
-POST /api/content/articles/search - Advanced search
-
-Advertiser Chat Endpoints
-POST /api/advertiser/chat/start - Start chat session
-
-POST /api/advertiser/chat/message - Send message
-
-POST /api/advertiser/lead - Submit lead
-
-For detailed API documentation, see the test script: test-backend-apis.sh
-
-🐛 Troubleshooting
-Common Issues
-Backend won't start:
-
-Verify Node.js version: node --version (should be >= 18)
-Check if port 8080 is available
-Ensure GEMINI_API_KEY is set in .env
-
-Frontend can't connect to backend:
-Verify backend is running on port 8080
-Check CORS settings in backend
-Ensure REACT_APP_API_BASE_URL is correct
-
-AI responses are slow:
-This is expected with Gemini API (can take 2-5 seconds)
-Consider implementing response streaming for better UX
-
-Voice input not working:
-Requires HTTPS or localhost
-Check browser microphone permissions
-Only supported in Chrome, Edge, Safari
-
-🎨 Features Showcase
-AI-Powered Profile Creation
-The questionnaire adapts based on user responses, asking relevant follow-up questions to build comprehensive donor/patient profiles.
-
-Intelligent Matching Algorithm
-Evaluates medical compatibility, geographic proximity, and urgency to rank potential matches with detailed explanations.
-
-Natural Language News Search
-Users can ask questions naturally: "latest kidney donation news" or "heart transplant success rates 2025"
-
-Business Chatbot with Lead Capture
-Handles advertising inquiries, provides metrics, and captures qualified leads with CRM integration readiness.
-
-🔐 Security Notes
-API keys should never be committed to version control
-
-Use .env files (already in .gitignore)
-
-For production, implement proper authentication
-
-Sanitize all user inputs before AI processing
-
-🚀 Deployment Options
-Recommended Platforms
-Possibble Backend:
-	Heroku
-	Railway
-	Render
-	AWS EC2
-
-Possible Frontend:
-	Vercel
-	Netlify
-	GitHub Pages
-	AWS S3 + CloudFront
-
-Environment Variables for Deployment
-Make sure to set all environment variables in your deployment platform's dashboard.
-
-📞 Contact
-Developer: Hao Ye
-Repository: 
-github.com/yehao622/demo
-Organization: MatchingDonors.com
-
-📄 License
-This project is developed as a volunteer contribution to MatchingDonors.com.
-
-🙏 Acknowledgments
-Google Gemini AI for powering the intelligent features
-MatchingDonors.com for the opportunity to contribute
-The open-source community for tools and libraries
+5. Your browser should automatically open to http://localhost:3000

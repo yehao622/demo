@@ -26,7 +26,7 @@ const port = process.env.PORT || 8080;
 app.use(cors({
     origin: [
         'http://localhost:3000',
-        process.env.FRONTEND_URL || '' // We will set this in Render later!
+        process.env.FRONTEND_URL || ''
     ].filter(Boolean),
     credentials: true
 }));
