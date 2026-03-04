@@ -90,7 +90,8 @@ router.post('/chat/message', async (req, res) => {
 router.get('/chat/history/:sessionId', (req, res) => {
     try {
         const { sessionId } = req.params;
-        const messages = chatbot.getMessages(sessionId);
+        const bot = getChatbot();
+        const messages = bot.getMessages(sessionId);
 
         if (!messages || messages.length === 0) {
             return res.status(404).json({
@@ -135,7 +136,8 @@ router.post('/lead', (req, res) => {
             });
         }
 
-        const lead = chatbot.saveLead(sessionId, leadData);
+        const bot = getChatbot();
+        const lead = bot.saveLead(sessionId, leadData);
         leads.push(lead);
 
         console.log(`✅ New advertiser lead captured: ${lead.companyName} (${lead.email})`);
