@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import './ArticleSearchBox.css';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || (import.meta as any).env?.VITE_API_URL || 'https://matchingdonors-demo.onrender.com' || 'http://localhost:8080';
+
 interface ArticleMatch {
     article: {
         id: string;
@@ -56,7 +58,7 @@ export const ArticleSearchBox: React.FC<ArticleSearchBoxProps> = ({ onSearch }) 
         setSearchResult(null);
 
         try {
-            const response = await fetch('http://localhost:8080/api/content/search', {
+            const response = await fetch(`${API_BASE_URL}/api/content/search`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
