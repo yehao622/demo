@@ -108,6 +108,13 @@ const AdvertiserChat: React.FC = () => {
                 if (shouldShowLeadForm(data.response)) {
                     setTimeout(() => setShowLeadForm(true), 1000);
                 }
+            } else {
+                console.error("Backend Error:", data.error);
+                setMessages(prev => [...prev, {
+                    role: 'assistant',
+                    content: `⚠️ API Error: ${data.error || 'The backend failed to reach Gemini.'}`,
+                    timestamp: new Date()
+                }]);
             }
         } catch (error) {
             console.error('Failed to send message:', error);
