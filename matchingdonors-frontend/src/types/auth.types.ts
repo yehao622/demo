@@ -6,6 +6,8 @@ export interface User {
     role: UserRole;
     firstName: string;
     lastName: string;
+    is_admin?: boolean;
+    is_active?: boolean;
 }
 
 export interface AuthResponse {

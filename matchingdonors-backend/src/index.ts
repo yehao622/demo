@@ -14,6 +14,7 @@ import notificationRoutes from './routes/notification.routes';
 import newsRoutes from './routes/news.routes';
 import chatRoutes from './routes/chat.routes';
 import sponsorProfileRoutes from './routes/sponsorProfile.routes';
+import adminRoutes from './routes/admin.routes';
 import './database/init';
 
 import http from 'http';
@@ -42,6 +43,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/sponsor-profile', sponsorProfileRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

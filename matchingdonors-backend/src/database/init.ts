@@ -26,6 +26,8 @@ db.exec(`
         role TEXT NOT NULL CHECK(role IN ('patient', 'donor', 'sponsor')),
         first_name TEXT NOT NULL,
         last_name TEXT NOT NULL,
+        is_admin BOOLEAN DEFAULT 0,
+        is_active BOOLEAN DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(email, role)

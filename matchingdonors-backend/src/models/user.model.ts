@@ -9,6 +9,8 @@ export interface User {
     last_name: string;
     created_at: string;
     updated_at: string;
+    is_admin?: boolean | number;
+    is_active?: boolean | number;
 }
 
 export interface UserResponse {
@@ -17,6 +19,8 @@ export interface UserResponse {
     role: UserRole;
     firstName: string;
     lastName: string;
+    is_admin?: boolean;
+    is_active?: boolean;
 }
 
 export interface RegisterRequest {

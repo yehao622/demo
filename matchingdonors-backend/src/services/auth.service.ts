@@ -17,7 +17,9 @@ export class AuthService {
             email: user.email,
             role: user.role,
             firstName: user.first_name,
-            lastName: user.last_name
+            lastName: user.last_name,
+            is_admin: Boolean(user.is_admin),
+            is_active: user.is_active !== 0
         };
     }
 
@@ -29,7 +31,9 @@ export class AuthService {
                 email: user.email,
                 role: user.role,
                 firstName: user.first_name,
-                lastName: user.last_name
+                lastName: user.last_name,
+                is_admin: Boolean(user.is_admin),
+                is_active: user.is_active !== 0
             },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRES_IN }
@@ -95,6 +99,11 @@ export class AuthService {
             throw new Error('Invalid email or password');
         }
 
+        // Remember, SQLite stores false as 0
+        if (user.is_active === 0) {
+            throw new Error('This account has been suspended by an administrator.');
+        }
+
         // Verify password
         const isPasswordValid = await bcrypt.compare(data.password, user.password_hash);
 
@@ -112,7 +121,15 @@ export class AuthService {
     }
 
     // Verify JWT token
-    static verifyToken(token: string): { id: number; email: string; role: UserRole; firstName: string; lastName: string } {
+    static verifyToken(token: string): {
+        id: number;
+        email: string;
+        role: UserRole;
+        firstName: string;
+        lastName: string;
+        is_admin: boolean;
+        is_active: boolean
+    } {
         try {
             const decoded = jwt.verify(token, JWT_SECRET) as {
                 id: number;
@@ -120,6 +137,8 @@ export class AuthService {
                 role: UserRole;
                 firstName: string;
                 lastName: string;
+                is_admin: boolean;
+                is_active: boolean;
             };
             return decoded;
         } catch (error) {

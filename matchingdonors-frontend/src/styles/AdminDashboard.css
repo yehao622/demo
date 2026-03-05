@@ -1,0 +1,72 @@
+.admin-dashboard-container {
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.top-secret-badge {
+    background-color: #ff4757;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.users-table-wrapper {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.admin-table {
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+}
+
+.admin-table thead tr {
+    border-bottom: 2px solid #eee;
+}
+
+.admin-table tbody tr {
+    border-bottom: 1px solid #eee;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 10px;
+}
+
+.role-badge {
+    text-transform: capitalize;
+}
+
+.status-active {
+    color: green;
+}
+
+.status-suspended {
+    color: red;
+}
+
+.suspend-btn {
+    padding: 5px 10px;
+    background-color: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.suspend-btn:hover {
+    background-color: #ff2b3d;
+}

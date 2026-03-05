@@ -11,6 +11,7 @@ import { NewsHub } from './components/news/NewsHub';
 import { EditProfileModal } from './components/profile/EditProfileModal';
 import { Toast } from './components/common/Toast';
 import AdvertiserChatPage from './pages/AdvertiserChatPage';
+import { AdminDashboard } from './pages/AdminDashboard';
 import './App.css';
 
 // Disclaimer for Demo only
@@ -179,6 +180,7 @@ const AppContent: React.FC = () => {
               </AuthGate>
             }
           />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
         </Routes>
       </div>
 
