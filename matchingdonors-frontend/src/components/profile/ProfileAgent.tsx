@@ -117,8 +117,8 @@ export const ProfileAgent: React.FC = () => {
                         setValidationModal({
                             isOpen: true,
                             type: 'tab', // Reusing modal UI
-                            message: "To speak with a real person, please contact: Paul Dooley (CEO & Founder) at ceo@matchingdonors.com or +1-781-821-2204 (ext. 1).",
-                            suggestedAction: 'Got it'
+                            message: "To speak with a real person, please contact: Paul Dooley (CEO & Founder) at ceo@matchingdonors.com or +1-781-821-2204 (ext. 1)."
+                            // suggestedAction: 'Got it'
                         });
                         return;
                     }
@@ -128,8 +128,8 @@ export const ProfileAgent: React.FC = () => {
                         setValidationModal({
                             isOpen: true,
                             type: 'tab',
-                            message: "The 'Profile Fill' tab is specifically for creating your medical matching biography. Please describe your situation, blood type, and location here.",
-                            suggestedAction: 'Got it'
+                            message: "The 'Profile Fill' tab is specifically for creating your medical matching biography. Please describe your situation, blood type, and location here."
+                            // suggestedAction: 'Got it'
                         });
                         return;
                     }
