@@ -2,6 +2,7 @@ import { Router } from "express";
 import { AdvertiserChatbot } from "../services/chatbot/AdvertiserChatbot";
 import { AdvertiserLead } from "../models/AdvertiserLead";
 import { advertiserFAQs, faqCategories } from "../data/advertiserFAQs";
+import db from '../database/init';
 
 const router = Router();
 
@@ -23,7 +24,7 @@ const leads: AdvertiserLead[] = [];
  */
 router.post('/chat/start', (req, res) => {
     try {
-        const bot = getChatbot(); // Grab the initialized bot
+        const bot = getChatbot();
         const sessionId = bot.createSession();
         const messages = bot.getMessages(sessionId);
 
@@ -138,7 +139,21 @@ router.post('/lead', (req, res) => {
 
         const bot = getChatbot();
         const lead = bot.saveLead(sessionId, leadData);
-        leads.push(lead);
+
+        db.prepare(`
+            INSERT INTO sponsor_leads (id, company_name, contact_name, email, phone, monthly_budget, campaign_goals, status, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+            lead.id,
+            lead.companyName,
+            lead.contactName,
+            lead.email,
+            lead.phone || null,
+            lead.monthlyBudget || null,
+            lead.campaignGoals || null,
+            lead.status || 'new',
+            lead.timestamp instanceof Date ? lead.timestamp.toISOString() : lead.timestamp
+        );
 
         console.log(`✅ New advertiser lead captured: ${lead.companyName} (${lead.email})`);
 
@@ -163,22 +178,33 @@ router.post('/lead', (req, res) => {
 router.get('/leads', (req, res) => {
     try {
         const { status } = req.query;
-
-        let filteredLeads = leads;
+        let query = 'SELECT * FROM sponsor_leads';
+        let params: any[] = [];
 
         if (status) {
-            filteredLeads = leads.filter(lead => lead.status === status);
+            query += ' WHERE status = ?';
+            params.push(status);
         }
+        query += ' ORDER BY timestamp DESC';
 
-        // Sort by timestamp descending (newest first)
-        const sortedLeads = filteredLeads.sort((a, b) =>
-            b.timestamp.getTime() - a.timestamp.getTime()
-        );
+        const dbLeads = db.prepare(query).all(...params) as any[];
+
+        const mappedLeads = dbLeads.map(row => ({
+            id: row.id,
+            companyName: row.company_name,
+            contactName: row.contact_name,
+            email: row.email,
+            phone: row.phone,
+            monthlyBudget: row.monthly_budget,
+            campaignGoals: row.campaign_goals,
+            status: row.status,
+            timestamp: row.timestamp
+        }));
 
         res.json({
             success: true,
-            count: sortedLeads.length,
-            leads: sortedLeads
+            count: mappedLeads.length,
+            leads: mappedLeads
         });
     } catch (error) {
         console.error('Error fetching leads:', error);
@@ -196,14 +222,23 @@ router.get('/leads', (req, res) => {
 router.get('/leads/:id', (req, res) => {
     try {
         const { id } = req.params;
-        const lead = leads.find(l => l.id === id);
+        const row = db.prepare('SELECT * FROM sponsor_leads WHERE id = ?').get(id) as any;
 
-        if (!lead) {
-            return res.status(404).json({
-                success: false,
-                error: 'Lead not found'
-            });
+        if (!row) {
+            return res.status(404).json({ success: false, error: 'Lead not found' });
         }
+
+        const lead = {
+            id: row.id,
+            companyName: row.company_name,
+            contactName: row.contact_name,
+            email: row.email,
+            phone: row.phone,
+            monthlyBudget: row.monthly_budget,
+            campaignGoals: row.campaign_goals,
+            status: row.status,
+            timestamp: row.timestamp
+        };
 
         res.json({
             success: true,
@@ -227,15 +262,6 @@ router.patch('/leads/:id/status', (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
-        const lead = leads.find(l => l.id === id);
-
-        if (!lead) {
-            return res.status(404).json({
-                success: false,
-                error: 'Lead not found'
-            });
-        }
-
         const validStatuses = ['new', 'contacted', 'qualified', 'converted', 'rejected'];
         if (!validStatuses.includes(status)) {
             return res.status(400).json({
@@ -244,12 +270,14 @@ router.patch('/leads/:id/status', (req, res) => {
             });
         }
 
-        lead.status = status;
+        const result = db.prepare('UPDATE sponsor_leads SET status = ? WHERE id = ?').run(status, id);
+        if (result.changes === 0) {
+            return res.status(404).json({ success: false, error: 'Lead not found' });
+        }
 
         res.json({
             success: true,
-            message: 'Lead status updated',
-            lead
+            message: 'Lead status updated successfully'
         });
     } catch (error) {
         console.error('Error updating lead status:', error);

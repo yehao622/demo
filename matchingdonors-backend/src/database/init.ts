@@ -178,6 +178,24 @@ db.exec(`
       CREATE INDEX IF NOT EXISTS idx_sponsor_profiles_user_id ON sponsor_profiles(user_id);
   `);
 
+db.exec(`
+        CREATE TABLE IF NOT EXISTS sponsor_leads (
+            id TEXT PRIMARY KEY,
+            company_name TEXT NOT NULL,
+            contact_name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT,
+            monthly_budget TEXT,
+            campaign_goals TEXT,
+            status TEXT DEFAULT 'new',
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        
+        -- Add an index so the admin dashboard loads leads faster
+        CREATE INDEX IF NOT EXISTS idx_sponsor_leads_status ON sponsor_leads(status);
+        CREATE INDEX IF NOT EXISTS idx_sponsor_leads_created_at ON sponsor_leads(timestamp DESC);
+    `);
+
 if (!isTest) {
     console.log('✅ Database initialized successfully at:', DB_PATH);
     import('./migrations').then(({ runMigrations }) => {

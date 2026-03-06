@@ -11,14 +11,6 @@
     margin-bottom: 30px;
 }
 
-.top-secret-badge {
-    background-color: #ff4757;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-weight: bold;
-}
-
 .users-table-wrapper {
     background-color: white;
     border-radius: 10px;
@@ -69,4 +61,83 @@
 
 .suspend-btn:hover {
     background-color: #ff2b3d;
+}
+
+.admin-tabs {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+.tab-button {
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    color: #666;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 5px;
+    transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+    background-color: #f0f4ff;
+    color: #667eea;
+}
+
+.tab-button.active {
+    background-color: #667eea;
+    color: white;
+}
+
+.status-select {
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.status-new {
+    color: #ff9f43;
+}
+
+.status-contacted {
+    color: #54a0ff;
+}
+
+.status-qualified {
+    color: #1dd1a1;
+}
+
+.status-converted {
+    color: #10ac84;
+}
+
+.status-rejected {
+    color: #ee5253;
+}
+
+.empty-leads-cell {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.lead-date-cell {
+    font-size: 12px;
+    color: #666;
+}
+
+.lead-sub-text {
+    font-size: 14px;
+    color: #555;
+}
+
+.lead-meta-text {
+    font-size: 12px;
+    color: #777;
 }
