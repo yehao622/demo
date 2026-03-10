@@ -6,6 +6,14 @@ import api from '../services/api';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import '../styles/AdminDashboard.css';
 
+interface UnlabeledArticle {
+    id: number | string;
+    title: string;
+    source: string;
+    url: string;
+    published_at: string;
+}
+
 // 1. Define the Lead interface based on your backend model
 interface Lead {
     id: string;
@@ -23,11 +31,13 @@ export const AdminDashboard: React.FC = () => {
     const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState<'users' | 'leads'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'leads' | 'articles'>('users');
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [leads, setLeads] = useState<Lead[]>([]);
+    const [unlabeledArticles, setUnlabeledArticles] = useState<UnlabeledArticle[]>([]);
+    const [isRetrying, setIsRetrying] = useState<string | number | null>(null);
 
     // 1. Secret Door Security Check
     useEffect(() => {
@@ -53,18 +63,34 @@ export const AdminDashboard: React.FC = () => {
     const fetchAllData = async () => {
         try {
             setIsLoading(true);
-            const [usersRes, leadsRes] = await Promise.all([
+            const [usersRes, leadsRes, articlesRes] = await Promise.all([
                 api.get('/api/admin/users'),
-                api.get('/api/advertiser/leads') // Your existing route!
+                api.get('/api/advertiser/leads'),
+                api.get('/api/admin/articles/unlabeled')
             ]);
 
             setUsers(usersRes.data.users);
             setLeads(leadsRes.data.leads);
+            setUnlabeledArticles(articlesRes.data.articles || []);
         } catch (err: any) {
             setError('Failed to fetch dashboard data. Please check your connection.');
             console.error(err);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleRetryLabeling = async (articleId: string | number) => {
+        try {
+            setIsRetrying(articleId);
+            await api.post(`/api/admin/articles/${articleId}/retry`);
+            alert('Success! AI labeled the article.');
+            // Remove the article from the "unlabeled" list
+            setUnlabeledArticles(unlabeledArticles.filter(a => a.id !== articleId));
+        } catch (err) {
+            alert('AI failed to label the article. The content might be too short or complex.');
+        } finally {
+            setIsRetrying(null);
         }
     };
 
@@ -117,10 +143,16 @@ export const AdminDashboard: React.FC = () => {
                 >
                     📈 Sponsor Leads ({leads.length})
                 </button>
+                <button
+                    className={`tab-button ${activeTab === 'articles' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('articles')}
+                >
+                    📰 Unlabeled Articles {unlabeledArticles.length > 0 && <span style={{ color: 'red' }}>({unlabeledArticles.length})</span>}
+                </button>
             </div>
 
             <div className="users-table-wrapper">
-                {activeTab === 'users' ? (
+                {activeTab === 'users' && (
                     <>
                         <h3>Manage Users</h3>
                         <table className="admin-table">
@@ -162,7 +194,9 @@ export const AdminDashboard: React.FC = () => {
                             </tbody>
                         </table>
                     </>
-                ) : (
+                )}
+
+                {activeTab === 'leads' && (
                     <>
                         <h3>AI-Generated Sponsor Leads</h3>
                         <table className="admin-table">
@@ -212,6 +246,56 @@ export const AdminDashboard: React.FC = () => {
                                                     <option value="converted">✅ Converted</option>
                                                     <option value="rejected">❌ Rejected</option>
                                                 </select>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </>
+                )}
+
+
+                {activeTab === 'articles' && (
+                    <>
+                        <h3>⚠️ Articles Missing AI Topics</h3>
+                        <p style={{ color: '#666', marginBottom: '15px' }}>
+                            These articles were scraped but Gemini failed to assign them topics. They will not appear in the News Hub search until they are labeled.
+                        </p>
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Source</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {unlabeledArticles.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="empty-leads-cell">
+                                            🎉 All articles are perfectly labeled!
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    unlabeledArticles.map(article => (
+                                        <tr key={article.id}>
+                                            <td>{article.id}</td>
+                                            <td>
+                                                <strong>{article.title}</strong><br />
+                                                <a href={article.url} target="_blank" rel="noreferrer" className="lead-meta-text">View Original Article</a>
+                                            </td>
+                                            <td>{article.source}</td>
+                                            <td>
+                                                <button
+                                                    className="suspend-btn"
+                                                    style={{ backgroundColor: '#667eea' }}
+                                                    onClick={() => handleRetryLabeling(article.id)}
+                                                    disabled={isRetrying === article.id}
+                                                >
+                                                    {isRetrying === article.id ? '🤖 Thinking...' : '🤖 Retry Gemini'}
+                                                </button>
                                             </td>
                                         </tr>
                                     ))

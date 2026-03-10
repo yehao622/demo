@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { verifyAdmin } from '../middleware/auth.middleware';
+import { GoogleGenAI } from '@google/genai';
 import db from '../database/init';
 
 const router = Router();
@@ -78,6 +79,91 @@ router.patch('/users/:id/status', (req: Request, res: Response) => {
     } catch (error) {
         console.error('Error updating user status:', error);
         res.status(500).json({ success: false, error: 'Failed to update user status' });
+    }
+});
+
+/**
+ * GET /api/admin/articles/unlabeled
+ * Find all articles where Gemini failed to assign topics
+ */
+router.get('/articles/unlabeled', (req: Request, res: Response) => {
+    try {
+        // Hunt for articles where the topics column is empty, null, or an empty JSON array
+        const unlabeledArticles = db.prepare(`
+            SELECT id, title, source, url, publish_date 
+            FROM articles 
+            WHERE topics IS NULL 
+               OR topics = '' 
+               OR topics = '[]'
+            ORDER BY publish_date DESC
+        `).all();
+
+        res.json({
+            success: true,
+            count: unlabeledArticles.length,
+            articles: unlabeledArticles
+        });
+    } catch (error) {
+        console.error('Error fetching unlabeled articles:', error);
+        res.status(500).json({ success: false, error: 'Failed to fetch articles' });
+    }
+});
+
+/**
+ * POST /api/admin/articles/:id/retry
+ * Force Gemini to retry labeling a specific article
+ */
+router.post('/articles/:id/retry', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        // 1. Fetch the full article content
+        const article = db.prepare('SELECT title, summary FROM articles WHERE id = ?').get(id) as any;
+
+        if (!article) {
+            return res.status(404).json({ success: false, error: 'Article not found' });
+        }
+
+        // 2. Initialize Gemini
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            throw new Error('GEMINI_API_KEY not found in environment variables');
+        }
+        const genAI = new GoogleGenAI({ apiKey });
+
+        // 3. Ask Gemini to extract topics
+        const prompt = `
+            Analyze this medical article and provide a JSON array of 3 to 5 relevant medical topics or keywords.
+            Only return the JSON array, nothing else. Example: ["kidney transplant", "dialysis", "donor matching"]
+            
+            Title: ${article.title}
+            Content: ${article.summary}
+        `;
+
+        const result = await genAI.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt
+        });
+        let topicsText = result.text?.trim() || '';
+
+        // Clean up markdown formatting if Gemini includes it
+        if (topicsText.startsWith('```json')) {
+            topicsText = topicsText.replace(/```json/g, '').replace(/```/g, '').trim();
+        }
+
+        // 4. Verify it's valid JSON and update the database
+        JSON.parse(topicsText); // This will throw an error if Gemini gave a bad response
+
+        db.prepare('UPDATE articles SET topics = ? WHERE id = ?').run(topicsText, id);
+
+        res.json({
+            success: true,
+            message: 'Article successfully labeled!',
+            topics: JSON.parse(topicsText)
+        });
+    } catch (error) {
+        console.error('Error retrying AI labeler:', error);
+        res.status(500).json({ success: false, error: 'Gemini failed to label this article. Please try again.' });
     }
 });
 
