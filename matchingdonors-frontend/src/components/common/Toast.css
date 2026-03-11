@@ -4,7 +4,7 @@
     right: 20px;
     background: white;
     padding: 1rem 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
@@ -31,7 +31,7 @@
 }
 
 .toast-error {
-    border-left: 4px solid #e53e3e;
+    border-left: 4px solid var(--error);
 }
 
 .toast-info {
@@ -45,7 +45,7 @@
 
 .toast-message {
     flex: 1;
-    color: #2d3748;
+    color: var(--text-main);
     font-weight: 500;
     font-size: 0.95rem;
 }
@@ -55,21 +55,21 @@
     border: none;
     font-size: 1.25rem;
     cursor: pointer;
-    color: #718096;
+    color: var(--text-muted);
     padding: 0;
     width: 24px;
     height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition: all 0.2s;
     flex-shrink: 0;
 }
 
 .toast-close:hover {
     background: #f7fafc;
-    color: #2d3748;
+    color: var(--text-main);
 }
 
 /* Mobile responsive */

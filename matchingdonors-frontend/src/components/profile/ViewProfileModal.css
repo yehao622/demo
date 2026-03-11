@@ -16,7 +16,7 @@
 .view-profile-modal .modal-header h2 {
     margin: 0;
     font-size: 1.5rem;
-    color: #2d3748;
+    color: var(--text-main);
 }
 
 .close-btn {
@@ -24,20 +24,20 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #718096;
+    color: var(--text-muted);
     padding: 0.25rem;
     width: 32px;
     height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition: all 0.2s;
 }
 
 .close-btn:hover {
     background: #f7fafc;
-    color: #e53e3e;
+    color: var(--error);
 }
 
 .view-profile-modal .modal-body {
@@ -53,7 +53,7 @@
 
 .spinner {
     border: 3px solid #f3f3f3;
-    border-top: 3px solid #667eea;
+    border-top: 3px solid var(--primary);
     border-radius: 50%;
     width: 40px;
     height: 40px;
@@ -72,7 +72,7 @@
 }
 
 .error-message {
-    color: #e53e3e;
+    color: var(--error);
     font-weight: 500;
 }
 
@@ -85,15 +85,15 @@
 .profile-section {
     background: #f7fafc;
     padding: 1.25rem;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 1px solid #e2e8f0;
 }
 
 .profile-section h3 {
     margin: 0 0 1rem 0;
     font-size: 1.1rem;
-    color: #2d3748;
-    border-bottom: 2px solid #667eea;
+    color: var(--text-main);
+    border-bottom: 2px solid var(--primary);
     padding-bottom: 0.5rem;
 }
 
@@ -116,14 +116,14 @@
 }
 
 .profile-field span {
-    color: #2d3748;
+    color: var(--text-main);
     font-size: 1rem;
 }
 
 .role-badge {
     display: inline-block;
     padding: 0.25rem 0.75rem;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     font-weight: 600;
     font-size: 0.9rem;
     width: fit-content;
@@ -140,7 +140,7 @@
 }
 
 .profile-text {
-    color: #2d3748;
+    color: var(--text-main);
     line-height: 1.6;
     margin: 0;
     white-space: pre-wrap;
@@ -170,7 +170,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     border-radius: 20px;
     margin-bottom: 1.5rem;
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
@@ -189,7 +189,7 @@
 /* Edit Button */
 .btn-primary {
     padding: 0.75rem 1.5rem;
-    background-color: #667eea;
+    background-color: var(--primary);
     color: white;
     border: none;
     border-radius: 6px;

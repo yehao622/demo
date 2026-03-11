@@ -6,7 +6,7 @@
     padding: 2rem;
     background-color: #fff3f3;
     border: 2px solid #ffcccb;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     margin: 2rem auto;
     max-width: 500px;
 }

@@ -44,7 +44,7 @@
     margin-top: 10px;
     background-color: #f8fafc;
     padding: 16px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 1px solid #e2e8f0;
 }
 
@@ -57,7 +57,7 @@
     font-size: 0.95rem;
     color: #444;
     padding: 4px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 .interest-item:hover {
@@ -80,7 +80,7 @@
 .notes-textarea {
     width: 100%;
     padding: 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 2px solid #e0e0e0;
     font-size: 1rem;
     resize: vertical;
@@ -89,6 +89,6 @@
 }
 
 .notes-textarea:focus {
-    border-color: #667eea;
+    border-color: var(--primary);
     outline: none;
 }

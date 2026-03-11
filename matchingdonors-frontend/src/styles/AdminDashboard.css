@@ -84,12 +84,12 @@
 }
 
 .tab-button:hover {
-    background-color: #f0f4ff;
-    color: #667eea;
+    background-color: var(--bg-hover);
+    color: var(--primary);
 }
 
 .tab-button.active {
-    background-color: #667eea;
+    background-color: var(--primary);
     color: white;
 }
 
@@ -102,11 +102,11 @@
 }
 
 .status-new {
-    color: #ff9f43;
+    color: var(--warning);
 }
 
 .status-contacted {
-    color: #54a0ff;
+    color: var(--info);
 }
 
 .status-qualified {

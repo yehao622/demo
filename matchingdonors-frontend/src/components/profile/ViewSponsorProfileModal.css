@@ -18,7 +18,7 @@
 .interests-box {
     background-color: #f8fafc;
     padding: 15px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border: 1px solid #e2e8f0;
 }
 
@@ -31,7 +31,7 @@
 .notes-box {
     background-color: #f5f5f5;
     padding: 12px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     margin-top: 5px;
     color: #444;
     font-size: 0.95rem;

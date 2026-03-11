@@ -8,7 +8,7 @@
 
 .audio-button {
     padding: 8px 16px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     color: white;
     border: none;
     border-radius: 20px;
@@ -74,7 +74,7 @@
     background: #e8f5e9;
     color: #2e7d32;
     padding: 12px 16px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     border-left: 4px solid #4caf50;
     font-size: 14px;
     animation: fadeIn 0.3s ease-in;
@@ -86,7 +86,7 @@
     background: #e3f2fd;
     color: #1976d2;
     padding: 12px 16px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     border-left: 4px solid #2196f3;
     font-size: 14px;
     animation: fadeIn 0.3s ease-in;

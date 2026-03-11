@@ -22,7 +22,7 @@
     margin-bottom: 1.5rem;
     padding: 1rem;
     background: white;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     flex-wrap: wrap;
     gap: 1rem;
@@ -45,7 +45,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     padding: 0.5rem 1rem;
     border-radius: 20px;
     color: white;
@@ -101,7 +101,7 @@
     text-align: center;
     padding: 4rem 2rem;
     background: white;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     margin-top: 2rem;
 }

@@ -37,12 +37,16 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, requiredRoles = ['
 
     // Check if user is authenticated and has required role
     if (isAuthenticated && user) {
+        if (user.is_admin) {
+            return <>{children}</>;
+        }
+
         if (requiredRoles.includes(user.role)) {
             return <>{children}</>;
         } else {
             // Bounce them to their proper home page instead of trapping them!
             if (user.role === 'sponsor') {
-                return <Navigate to="/advertiser-chat" replace />;
+                return <Navigate to="/news-hub" replace />;
             } else {
                 return <Navigate to="/profile-fill" replace />;
             }

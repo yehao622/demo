@@ -111,14 +111,14 @@
 .form-group input {
     padding: 0.75rem;
     border: 2px solid #e0e0e0;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 1rem;
     transition: border-color 0.2s;
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--primary);
 }
 
 .form-group input:disabled {
@@ -129,10 +129,10 @@
 /* Buttons */
 .btn-primary {
     padding: 0.875rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
@@ -152,9 +152,9 @@
 .btn-secondary {
     padding: 0.875rem;
     background: white;
-    color: #667eea;
-    border: 2px solid #667eea;
-    border-radius: 8px;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    border-radius: var(--radius-md);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
@@ -162,7 +162,7 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background: #667eea;
+    background: var(--primary);
     color: white;
 }
 
@@ -174,7 +174,7 @@
 .forgot-password-link {
     background: none;
     border: none;
-    color: #667eea;
+    color: var(--primary);
     font-size: 0.9rem;
     cursor: pointer;
     text-align: left;
@@ -191,7 +191,7 @@
     background: #fee;
     color: #c33;
     padding: 0.75rem;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     border-left: 4px solid #c33;
     font-size: 0.9rem;
 }
@@ -212,7 +212,7 @@
 .link-button {
     background: none;
     border: none;
-    color: #667eea;
+    color: var(--primary);
     font-weight: 600;
     cursor: pointer;
     padding: 0;

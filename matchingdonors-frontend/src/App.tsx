@@ -137,30 +137,43 @@ const AppContent: React.FC = () => {
           <p>Powered by Gemini AI</p>
         </div>
         <div className="nav-links">
-          <NavLink
-            to="/profile-fill"
-            className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
-          >
-            📝 Profile Fill
-          </NavLink>
-          <NavLink
-            to="/profile-match"
-            className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
-          >
-            🔍 Profile Match
-          </NavLink>
+          {(user?.role === 'patient' || user?.role === 'donor' || user?.is_admin) && (
+            <>
+              <NavLink
+                to="/profile-fill"
+                className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+              >
+                📝 Profile Fill
+              </NavLink>
+              <NavLink
+                to="/profile-match"
+                className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+              >
+                🔍 Profile Match
+              </NavLink>
+            </>
+          )}
+
           <NavLink
             to="/news-hub"
             className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
           >
             📰 News Hub
           </NavLink>
-          {user?.role === 'sponsor' && (
+
+
+          {(user?.role === 'sponsor' || user?.is_admin) && (
             <NavLink
               to="/advertiser-chat"
               className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
             >
               💬 Advertiser Chat
+            </NavLink>
+          )}
+
+          {user?.is_admin && (
+            <NavLink to="/admin-dashboard" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'} style={{ color: '#e53e3e', fontWeight: 'bold' }}>
+              🛡️ Admin
             </NavLink>
           )}
         </div>
@@ -169,16 +182,27 @@ const AppContent: React.FC = () => {
 
       <div className="app-content">
         <Routes>
-          <Route path="/" element={<ProfileAgent />} />
-          <Route path="/profile-fill" element={<ProfileAgent />} />
-          <Route path="/profile-match" element={<ProfileMatchingPage />} />
+          <Route path="/"
+            element={
+              <AuthGate requiredRoles={['patient', 'donor']}><ProfileAgent />
+              </AuthGate>}
+          />
+          <Route path="/profile-fill"
+            element={
+              <AuthGate requiredRoles={['patient', 'donor']}><ProfileAgent />
+              </AuthGate>}
+          />
+          <Route path="/profile-match"
+            element={
+              <AuthGate requiredRoles={['patient', 'donor']}><ProfileMatchingPage />
+              </AuthGate>}
+          />
           <Route path="/news-hub" element={<NewsHub />} />
           <Route path="/advertiser-chat"
             element={
-              <AuthGate requiredRoles={['sponsor']}>
-                <AdvertiserChatPage />
-              </AuthGate>
-            }
+              <AuthGate
+                requiredRoles={['sponsor']}><AdvertiserChatPage />
+              </AuthGate>}
           />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
         </Routes>

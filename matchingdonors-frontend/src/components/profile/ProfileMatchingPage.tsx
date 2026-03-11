@@ -279,164 +279,154 @@ export const ProfileMatchingPage: React.FC = () => {
                 <p className="page-description">AI-powered patient and donor matching.</p>
             </div>
 
-            {isSponsor ? (
-                <div className="sponsor-banner">
-                    <strong>👀 Not accessible for sponsor role</strong>
-                    <p>
-                        As a sponsor, medical matching features (Search & AI Match) are disabled for your account type.
-                    </p>
+
+            <div className="data-mode-section">
+                <div className="toggle-container">
+                    <label className="toggle-label">
+                        <input
+                            type="checkbox"
+                            className="toggle-checkbox"
+                            checked={useRealData}
+                            onChange={(e) => setUseRealData(e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                        <span className="toggle-text">{useRealData ? '🔴 Real Matches Mode' : '🟢 Demo Mode'}</span>
+                    </label>
                 </div>
-            ) : (
-                <>
-                    <div className="data-mode-section">
-                        <div className="toggle-container">
-                            <label className="toggle-label">
-                                <input
-                                    type="checkbox"
-                                    className="toggle-checkbox"
-                                    checked={useRealData}
-                                    onChange={(e) => setUseRealData(e.target.checked)}
-                                />
-                                <span className="toggle-slider"></span>
-                                <span className="toggle-text">{useRealData ? '🔴 Real Matches Mode' : '🟢 Demo Mode'}</span>
-                            </label>
-                        </div>
-                    </div>
+            </div>
 
-                    <ProfileSearch onSearch={handleSearch} isSearching={isSearching} />
+            <ProfileSearch onSearch={handleSearch} isSearching={isSearching} />
 
-                    {error && <ErrorMessage message={error} onRetry={loadProfiles} />}
+            {error && <ErrorMessage message={error} onRetry={loadProfiles} />}
 
-                    {/* --- Dynamic Filter Bar --- */}
-                    {matches.length > 0 && filterOptions && (
-                        <div className="filter-bar" style={{ display: 'flex', gap: '10px', padding: '15px', background: '#f8f9fa', borderRadius: '8px', margin: '20px 0', flexWrap: 'wrap', alignItems: 'center' }}>
-                            <span style={{ fontWeight: 600, color: '#555' }}>Filter Results:</span>
-                            {/* Blood Type */}
-                            {filterOptions.bloodTypes.length > 0 && (
-                                <select className="form-select-sm" value={activeFilters.bloodType} onChange={(e) => handleFilterChange('bloodType', e.target.value)}>
-                                    <option value="">All Blood Types</option>
-                                    {filterOptions.bloodTypes.map(bt => <option key={bt} value={bt}>{bt}</option>)}
-                                </select>
-                            )}
-
-                            {/* Organ Type */}
-                            {filterOptions.organTypes.length > 0 && (
-                                <select className="form-select-sm" value={activeFilters.organType} onChange={(e) => handleFilterChange('organType', e.target.value)}>
-                                    <option value="">All Organs</option>
-                                    {filterOptions.organTypes.map(ot => <option key={ot} value={ot}>{ot}</option>)}
-                                </select>
-                            )}
-
-                            {/* Age Range */}
-                            {filterOptions.ageRanges.length > 0 && (
-                                <select className="form-select-sm" value={activeFilters.ageRange} onChange={(e) => handleFilterChange('ageRange', e.target.value)}>
-                                    <option value="">All Ages</option>
-                                    {filterOptions.ageRanges.map(ar => <option key={ar} value={ar}>{ar}</option>)}
-                                </select>
-                            )}
-
-                            {/* Country Filter */}
-                            {filterOptions.countries.length > 0 && (
-                                <select className="form-select-sm" value={activeFilters.country} onChange={(e) => handleFilterChange('country', e.target.value)}>
-                                    <option value="">All Countries</option>
-                                    {filterOptions.countries.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                            )}
-
-                            {/* State Filter */}
-                            {filterOptions.states.length > 0 && (
-                                <select className="form-select-sm" value={activeFilters.state} onChange={(e) => handleFilterChange('state', e.target.value)}>
-                                    <option value="">All States</option>
-                                    {filterOptions.states.map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                            )}
-
-                            <button
-                                onClick={() => setActiveFilters({ bloodType: '', organType: '', ageRange: '', country: '', state: '' })}
-                                style={{ marginLeft: 'auto', fontSize: '0.85rem', padding: '5px 10px', background: 'transparent', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer' }}
-                            >
-                                Clear Filters
-                            </button>
-                        </div>
+            {/* --- Dynamic Filter Bar --- */}
+            {matches.length > 0 && filterOptions && (
+                <div className="filter-bar" style={{ display: 'flex', gap: '10px', padding: '15px', background: '#f8f9fa', borderRadius: '8px', margin: '20px 0', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 600, color: '#555' }}>Filter Results:</span>
+                    {/* Blood Type */}
+                    {filterOptions.bloodTypes.length > 0 && (
+                        <select className="form-select-sm" value={activeFilters.bloodType} onChange={(e) => handleFilterChange('bloodType', e.target.value)}>
+                            <option value="">All Blood Types</option>
+                            {filterOptions.bloodTypes.map(bt => <option key={bt} value={bt}>{bt}</option>)}
+                        </select>
                     )}
 
-                    {/* Filtered Match Results */}
-                    {matches.length > 0 && (
-                        <div className="browse-section">
-                            <div className="browse-header">
-                                <h2>✨ Match Results ({filteredMatches.length})</h2>
-                                <span className={`mode-badge ${dataMode}`}>{dataMode === 'real' ? '🔴 Real Users' : '🟢 Demo Data'}</span>
-                            </div>
-
-                            <div className="profiles-grid">
-                                {filteredMatches.length > 0 ? (
-                                    filteredMatches.map((match) => {
-                                        // Try to find the FRESH profile from allProfiles (Source of Truth)
-                                        // If found, use it. If not (e.g. vector match not in current view), fallback to match.profile
-                                        const freshProfile = allProfiles.find(p => p.id === match.profile.id);
-                                        const profile = freshProfile || match.profile;
-                                        // --------------------------------
-
-                                        // const score = Math.round(match.similarity * 100);
-                                        return (
-                                            <ProfileCard
-                                                key={profile.id}
-                                                profile={profile}
-                                                matchScore={match.similarity}
-                                                rank={match.rank}
-                                                reason={match.reason}
-                                                scoreBreakdown={match.scoreBreakdown}
-                                                // Pass match.similarity to maintain your existing modal logic
-                                                onViewDetails={() => handleViewDetails(profile, match.similarity)}
-                                            />
-                                        );
-                                    })
-                                ) : (
-                                    <div style={{ width: '100%', textAlign: 'center', padding: '40px', color: '#666' }}>
-                                        <p>No profiles match your selected filters.</p>
-                                        <button onClick={() => setActiveFilters({ bloodType: '', organType: '', ageRange: '', country: '', state: '' })} style={{ color: '#007bff', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}>
-                                            Clear filters
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                    {/* Organ Type */}
+                    {filterOptions.organTypes.length > 0 && (
+                        <select className="form-select-sm" value={activeFilters.organType} onChange={(e) => handleFilterChange('organType', e.target.value)}>
+                            <option value="">All Organs</option>
+                            {filterOptions.organTypes.map(ot => <option key={ot} value={ot}>{ot}</option>)}
+                        </select>
                     )}
 
-                    {/* Browse All Profiles Section */}
-                    <div className="browse-section">
-                        <div className="browse-header">
-                            <h2 className="browse-title">
-                                {useRealData ? `📋 Available ${currentUser?.role === 'patient' ? 'Donors' : 'Patients'}` : '📋 Browse All Profiles'}
-                            </h2>
-                            {!useRealData && (
-                                <div className="filter-tabs">
-                                    <button className={`filter-tab ${filterType === 'all' ? 'active' : ''}`} onClick={() => setFilterType('all')}>All ({allProfiles.length})</button>
-                                    <button className={`filter-tab ${filterType === 'patient' ? 'active' : ''}`} onClick={() => setFilterType('patient')}>Patients</button>
-                                    <button className={`filter-tab ${filterType === 'donor' ? 'active' : ''}`} onClick={() => setFilterType('donor')}>Donors</button>
-                                </div>
-                            )}
-                        </div>
+                    {/* Age Range */}
+                    {filterOptions.ageRanges.length > 0 && (
+                        <select className="form-select-sm" value={activeFilters.ageRange} onChange={(e) => handleFilterChange('ageRange', e.target.value)}>
+                            <option value="">All Ages</option>
+                            {filterOptions.ageRanges.map(ar => <option key={ar} value={ar}>{ar}</option>)}
+                        </select>
+                    )}
 
-                        <div className="profiles-grid">
-                            {filteredProfiles.map((profile) => (
-                                <div key={profile.id} className="profile-card-wrapper">
-                                    <div className="profile-card-simple">
-                                        <div className="profile-header-simple">
-                                            <h3>{profile.name}</h3>
-                                            <span className={`badge-simple ${profile.type}`}>{profile.type}</span>
-                                        </div>
-                                        <p className="description-simple">{profile.description}</p>
-                                        <button className="view-btn-simple" onClick={() => handleViewDetails(profile)}>
-                                            View Details
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </>
+                    {/* Country Filter */}
+                    {filterOptions.countries.length > 0 && (
+                        <select className="form-select-sm" value={activeFilters.country} onChange={(e) => handleFilterChange('country', e.target.value)}>
+                            <option value="">All Countries</option>
+                            {filterOptions.countries.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    )}
+
+                    {/* State Filter */}
+                    {filterOptions.states.length > 0 && (
+                        <select className="form-select-sm" value={activeFilters.state} onChange={(e) => handleFilterChange('state', e.target.value)}>
+                            <option value="">All States</option>
+                            {filterOptions.states.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                    )}
+
+                    <button
+                        onClick={() => setActiveFilters({ bloodType: '', organType: '', ageRange: '', country: '', state: '' })}
+                        style={{ marginLeft: 'auto', fontSize: '0.85rem', padding: '5px 10px', background: 'transparent', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer' }}
+                    >
+                        Clear Filters
+                    </button>
+                </div>
             )}
+
+            {/* Filtered Match Results */}
+            {matches.length > 0 && (
+                <div className="browse-section">
+                    <div className="browse-header">
+                        <h2>✨ Match Results ({filteredMatches.length})</h2>
+                        <span className={`mode-badge ${dataMode}`}>{dataMode === 'real' ? '🔴 Real Users' : '🟢 Demo Data'}</span>
+                    </div>
+
+                    <div className="profiles-grid">
+                        {filteredMatches.length > 0 ? (
+                            filteredMatches.map((match) => {
+                                // Try to find the FRESH profile from allProfiles (Source of Truth)
+                                // If found, use it. If not (e.g. vector match not in current view), fallback to match.profile
+                                const freshProfile = allProfiles.find(p => p.id === match.profile.id);
+                                const profile = freshProfile || match.profile;
+                                // --------------------------------
+
+                                // const score = Math.round(match.similarity * 100);
+                                return (
+                                    <ProfileCard
+                                        key={profile.id}
+                                        profile={profile}
+                                        matchScore={match.similarity}
+                                        rank={match.rank}
+                                        reason={match.reason}
+                                        scoreBreakdown={match.scoreBreakdown}
+                                        // Pass match.similarity to maintain your existing modal logic
+                                        onViewDetails={() => handleViewDetails(profile, match.similarity)}
+                                    />
+                                );
+                            })
+                        ) : (
+                            <div style={{ width: '100%', textAlign: 'center', padding: '40px', color: '#666' }}>
+                                <p>No profiles match your selected filters.</p>
+                                <button onClick={() => setActiveFilters({ bloodType: '', organType: '', ageRange: '', country: '', state: '' })} style={{ color: '#007bff', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }}>
+                                    Clear filters
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Browse All Profiles Section */}
+            <div className="browse-section">
+                <div className="browse-header">
+                    <h2 className="browse-title">
+                        {useRealData ? `📋 Available ${currentUser?.role === 'patient' ? 'Donors' : 'Patients'}` : '📋 Browse All Profiles'}
+                    </h2>
+                    {!useRealData && (
+                        <div className="filter-tabs">
+                            <button className={`filter-tab ${filterType === 'all' ? 'active' : ''}`} onClick={() => setFilterType('all')}>All ({allProfiles.length})</button>
+                            <button className={`filter-tab ${filterType === 'patient' ? 'active' : ''}`} onClick={() => setFilterType('patient')}>Patients</button>
+                            <button className={`filter-tab ${filterType === 'donor' ? 'active' : ''}`} onClick={() => setFilterType('donor')}>Donors</button>
+                        </div>
+                    )}
+                </div>
+
+                <div className="profiles-grid">
+                    {filteredProfiles.map((profile) => (
+                        <div key={profile.id} className="profile-card-wrapper">
+                            <div className="profile-card-simple">
+                                <div className="profile-header-simple">
+                                    <h3>{profile.name}</h3>
+                                    <span className={`badge-simple ${profile.type}`}>{profile.type}</span>
+                                </div>
+                                <p className="description-simple">{profile.description}</p>
+                                <button className="view-btn-simple" onClick={() => handleViewDetails(profile)}>
+                                    View Details
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
 
             <ProfileDetailModal
                 profile={selectedProfile}
