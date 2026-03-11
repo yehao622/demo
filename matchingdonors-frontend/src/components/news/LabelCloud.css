@@ -20,7 +20,7 @@
 .cloud-title {
     margin: 0;
     font-size: 1.75rem;
-    color: #333;
+    color: var(--text-main);
     font-weight: 700;
 }
 
@@ -45,7 +45,7 @@
 
 .stat-label {
     font-size: 0.8rem;
-    color: #666;
+    color: var(--text-muted);
     margin-top: 0.25rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -84,7 +84,7 @@
 .label-section-title {
     margin: 0 0 1.25rem 0;
     font-size: 1.25rem;
-    color: #333;
+    color: var(--text-main);
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -121,7 +121,7 @@
 }
 
 .label-chip-large.selected {
-    border-color: #333;
+    border-color: var(--text-main);
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
     transform: scale(1.05);
 }

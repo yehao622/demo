@@ -57,8 +57,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({ role, onClose, onSwitchT
                 <button className="modal-close" onClick={onClose}>×</button>
 
                 <div className="modal-header">
-                    <h2>Welcome Back, {role === 'patient' ? 'Patient' : (role === 'donor' ? 'Donor' : 'Sponsor')}! 👋</h2>
-                    <p>Sign in to continue</p>
+                    <h2>Secure {role.charAt(0).toUpperCase() + role.slice(1)} Access </h2>
+                    <p style={{ color: 'rgba(255, 255, 255, 0.95)', marginTop: '8px' }}>
+                        Please sign in with your credentials to continue.
+                    </p>
                 </div>
 
                 {error && <div className="error-message">{error}</div>}

@@ -319,7 +319,7 @@
     border: none;
     font-size: 28px;
     cursor: pointer;
-    color: #666;
+    color: var(--text-muted);
     width: 36px;
     /* Slightly larger */
     height: 36px;
@@ -332,7 +332,7 @@
 
 .modal-close:hover {
     background: #e0e0e0;
-    color: #333;
+    color: var(--text-main);
     transform: rotate(90deg);
 }
 
@@ -439,7 +439,7 @@
 
 .error-message {
     background: #fee;
-    color: #c33;
+    color: var(--error);
     padding: 14px;
     /* Increased padding */
     border-radius: 10px;

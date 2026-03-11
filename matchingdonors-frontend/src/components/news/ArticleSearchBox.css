@@ -14,12 +14,12 @@
 .search-title {
     margin: 0 0 0.5rem 0;
     font-size: 1.75rem;
-    color: #333;
+    color: var(--text-main);
 }
 
 .search-description {
     margin: 0;
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.95rem;
 }
 
@@ -166,7 +166,7 @@
 .query-analysis h4 {
     margin: 0 0 1rem 0;
     font-size: 1rem;
-    color: #333;
+    color: var(--text-main);
 }
 
 .analysis-content {
@@ -183,7 +183,7 @@
 
 .analysis-label {
     font-weight: 600;
-    color: #666;
+    color: var(--text-muted);
     min-width: 70px;
     font-size: 0.9rem;
 }
@@ -214,14 +214,14 @@
 .summary-text {
     margin: 0;
     line-height: 1.7;
-    color: #333;
+    color: var(--text-main);
     font-size: 1rem;
 }
 
 .search-matches h3 {
     margin: 0 0 1.5rem 0;
     font-size: 1.25rem;
-    color: #333;
+    color: var(--text-main);
 }
 
 .matches-list {
@@ -268,7 +268,7 @@
 .match-title {
     margin: 0 0 0.5rem 0;
     font-size: 1.1rem;
-    color: #333;
+    color: var(--text-main);
     transition: color 0.3s;
 }
 
@@ -313,17 +313,17 @@
 
 .source-default {
     background-color: #f5f5f5;
-    color: #666;
+    color: var(--text-muted);
 }
 
 .match-similarity {
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.85rem;
     font-weight: 600;
 }
 
 .match-excerpt {
-    color: #666;
+    color: var(--text-muted);
     line-height: 1.6;
     margin-bottom: 0.75rem;
     font-size: 0.95rem;
@@ -341,7 +341,7 @@
 
 .relevance-label {
     font-weight: 600;
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.85rem;
 }
 
@@ -395,7 +395,7 @@
 .no-matches {
     text-align: center;
     padding: 2rem;
-    color: #666;
+    color: var(--text-muted);
     background: #f8f9fa;
     border-radius: var(--radius-md);
 }

@@ -31,7 +31,7 @@
 .profile-name {
     margin: 0 0 0.5rem 0;
     font-size: 1.25rem;
-    color: #333;
+    color: var(--text-main);
     font-weight: 600;
 }
 
@@ -87,7 +87,7 @@
 
 .score-label {
     font-size: 0.7rem;
-    color: #666;
+    color: var(--text-muted);
     margin-top: 0.25rem;
 }
 
@@ -128,7 +128,7 @@
 
 .section-content {
     margin: 0;
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.95rem;
     line-height: 1.5;
 }
@@ -211,7 +211,7 @@
 
 .breakdown-label {
     font-size: 0.7rem;
-    color: #666;
+    color: var(--text-muted);
     text-transform: uppercase;
     font-weight: 600;
     margin-bottom: 2px;
@@ -220,7 +220,7 @@
 .breakdown-value {
     font-size: 0.9rem;
     font-weight: bold;
-    color: #333;
+    color: var(--text-main);
 }
 
 .breakdown-value {

@@ -10,12 +10,12 @@
 .results-title {
     margin: 0 0 0.5rem 0;
     font-size: 2rem;
-    color: #333;
+    color: var(--text-main);
 }
 
 .results-subtitle {
     margin: 0;
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.95rem;
 }
 
@@ -30,7 +30,7 @@
     margin-bottom: 1rem;
     font-size: 1.25rem;
     font-weight: 600;
-    color: #333;
+    color: var(--text-main);
 }
 
 .trophy-icon {
@@ -43,7 +43,7 @@
 
 .section-heading {
     font-size: 1.5rem;
-    color: #333;
+    color: var(--text-main);
     margin-bottom: 1.5rem;
     padding-bottom: 0.75rem;
     border-bottom: 2px solid #e0e0e0;
@@ -72,12 +72,12 @@
 .no-results h3 {
     margin: 0 0 0.5rem 0;
     font-size: 1.5rem;
-    color: #333;
+    color: var(--text-main);
 }
 
 .no-results p {
     margin: 0;
-    color: #666;
+    color: var(--text-muted);
     font-size: 1rem;
 }
 

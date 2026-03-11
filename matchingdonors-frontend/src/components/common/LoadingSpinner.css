@@ -43,6 +43,6 @@
 
 .loading-message {
     margin-top: 1rem;
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.95rem;
 }

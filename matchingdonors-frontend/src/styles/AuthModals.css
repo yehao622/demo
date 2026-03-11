@@ -54,7 +54,7 @@
 }
 
 .modal-close:hover {
-    color: #333;
+    color: var(--text-main);
 }
 
 /* Modal Header */
@@ -65,12 +65,12 @@
 
 .modal-header h2 {
     font-size: 1.8rem;
-    color: #333;
+    color: var(--text-main);
     margin-bottom: 0.5rem;
 }
 
 .modal-header p {
-    color: #666;
+    color: var(--text-muted);
     font-size: 1rem;
 }
 
@@ -104,7 +104,7 @@
 
 .form-group label {
     font-weight: 600;
-    color: #333;
+    color: var(--text-main);
     font-size: 0.9rem;
 }
 
@@ -189,10 +189,10 @@
 /* Error Message */
 .error-message {
     background: #fee;
-    color: #c33;
+    color: var(--error);
     padding: 0.75rem;
     border-radius: var(--radius-md);
-    border-left: 4px solid #c33;
+    border-left: 4px solid var(--error);
     font-size: 0.9rem;
 }
 
@@ -205,7 +205,7 @@
 }
 
 .modal-footer p {
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.95rem;
 }
 

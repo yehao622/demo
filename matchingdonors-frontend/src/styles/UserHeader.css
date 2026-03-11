@@ -181,7 +181,7 @@
 
 .inbox-header h4 {
     margin: 0;
-    color: #333;
+    color: var(--text-main);
     font-size: 1rem;
 }
 
@@ -234,7 +234,7 @@
 .notif-title {
     display: block;
     font-size: 0.9rem;
-    color: #333;
+    color: var(--text-main);
     margin-bottom: 4px;
 }
 
@@ -281,7 +281,7 @@
 .favorites-empty {
     text-align: center;
     padding: 30px;
-    color: #666;
+    color: var(--text-muted);
 }
 
 .favorites-empty-sub {
@@ -318,7 +318,7 @@
 
 .favorite-item-summary {
     font-size: 0.85rem;
-    color: #666;
+    color: var(--text-muted);
     margin: 0 0 10px 0;
 }
 

@@ -36,7 +36,7 @@
 }
 
 .filter-label {
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.95rem;
     font-weight: 600;
 }
@@ -82,7 +82,7 @@
 }
 
 .article-count {
-    color: #666;
+    color: var(--text-muted);
     font-weight: 600;
     font-size: 0.95rem;
     padding: 0.5rem 1rem;
@@ -117,13 +117,13 @@
 .article-list-empty h3 {
     margin: 0 0 0.5rem 0;
     font-size: 1.5rem;
-    color: #333;
+    color: var(--text-main);
 }
 
 .article-list-placeholder p,
 .article-list-empty p {
     margin: 0;
-    color: #666;
+    color: var(--text-muted);
     font-size: 1rem;
 }
 

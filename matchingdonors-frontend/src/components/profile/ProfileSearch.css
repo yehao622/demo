@@ -9,12 +9,12 @@
 .search-title {
     margin: 0 0 0.5rem 0;
     font-size: 1.75rem;
-    color: #333;
+    color: var(--text-main);
 }
 
 .search-subtitle {
     margin: 0 0 1.5rem 0;
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.95rem;
 }
 
@@ -152,7 +152,7 @@
 
 .example-label {
     font-size: 0.85rem;
-    color: #666;
+    color: var(--text-muted);
     font-weight: 500;
     display: block;
     margin-bottom: 0.5rem;

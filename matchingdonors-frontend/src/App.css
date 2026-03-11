@@ -3,32 +3,32 @@
    ========================================= */
 :root {
   /* Brand Colors - Based on your current theme */
-  --primary: var(--primary);
-  --primary-hover: var(--primary-hover);
-  --secondary: var(--secondary);
+  --primary: #667eea;
+  --primary-hover: #5a6cd6;
+  --secondary: #764ba2;
 
   /* Backgrounds & Surfaces */
-  --bg-main: var(--bg-main);
+  --bg-main: #f4f7f6;
   --bg-card: #ffffff;
-  --bg-hover: var(--bg-hover);
+  --bg-hover: #f0f4ff;
 
   /* Text Colors */
-  --text-main: var(--text-main);
-  --text-muted: var(--text-muted);
+  --text-main: #2d3748;
+  --text-muted: #718096;
 
   /* System Status Colors */
-  --error: var(--error);
-  --success: var(--success);
-  --warning: var(--warning);
-  --info: var(--info);
+  --error: #e53e3e;
+  --success: #38a169;
+  --warning: #ff9f43;
+  --info: #54a0ff;
 
   /* Shadows & Borders */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
-  --shadow-sm: var(--shadow-sm);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* Base Body Styling for a cleaner look */
@@ -301,6 +301,29 @@ textarea:focus {
   animation: spin 1s linear infinite;
 }
 
+/* Shrink Massive Page Headers & Titles */
+.page-header {
+  padding: 10px 5px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.page-title {
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-size: 1.25rem;
+  /* Shrinks the giant text */
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.page-description {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  font-size: 0.85rem;
+  margin-bottom: 0;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .header-content {
@@ -361,26 +384,7 @@ textarea:focus {
     font-size: 0.85rem;
   }
 
-  /* 2. Shrink Massive Page Headers & Titles */
-  .page-header {
-    padding: 10px 5px;
-    margin-bottom: 10px;
-    text-align: center;
-  }
-
-  .page-title {
-    font-size: 1.25rem;
-    /* Shrinks the giant text */
-    line-height: 1.2;
-    margin-bottom: 4px;
-  }
-
-  .page-description {
-    font-size: 0.85rem;
-    margin-bottom: 0;
-  }
-
-  /* 3. Stack Search Boxes and Forms */
+  /* Stack Search Boxes and Forms */
   .search-form {
     flex-direction: column;
     padding: 10px;

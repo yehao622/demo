@@ -55,7 +55,7 @@
 .form-label {
   font-size: 15px;
   font-weight: 600;
-  color: #333;
+  color: var(--text-main);
 }
 
 .profile-textarea {
@@ -87,7 +87,7 @@
 .character-count {
   text-align: right;
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
   margin-top: -8px;
 }
 
@@ -154,7 +154,7 @@
 
 .loading-text {
   font-size: 15px;
-  color: #666;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -191,7 +191,7 @@
 /* Error Message */
 .error-message {
   background: #fee;
-  color: #c33;
+  color: var(--error);
   padding: 16px;
   border-radius: var(--radius-lg);
   border-left: 4px solid #f44336;
@@ -228,7 +228,7 @@
 
 .suggestion-header h3 {
   font-size: 22px;
-  color: #333;
+  color: var(--text-main);
   margin: 0;
   font-weight: 700;
   display: flex;
@@ -238,7 +238,7 @@
 
 .edit-hint {
   font-size: 14px;
-  color: #666;
+  color: var(--text-muted);
   margin: 0;
   font-weight: 400;
 }
@@ -336,7 +336,7 @@
 
 .info-value {
   flex: 1;
-  color: #333;
+  color: var(--text-main);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -362,7 +362,7 @@
 }
 
 .story-text {
-  color: #333;
+  color: var(--text-main);
   font-size: 14px;
   line-height: 1.8;
   white-space: pre-wrap;
@@ -730,7 +730,7 @@
 
 .sponsor-notice-title {
   margin-bottom: 10px;
-  color: #333;
+  color: var(--text-main);
   font-weight: 700;
   font-size: 1.5rem;
 }

@@ -54,7 +54,7 @@
 .article-title {
     margin: 0 0 0.75rem 0;
     font-size: 1.25rem;
-    color: #333;
+    color: var(--text-main);
     line-height: 1.4;
     transition: color 0.3s;
 }
@@ -100,7 +100,7 @@
 
 .source-default {
     background-color: #f5f5f5;
-    color: #666;
+    color: var(--text-muted);
 }
 
 .article-date {
@@ -109,7 +109,7 @@
 }
 
 .article-excerpt {
-    color: #666;
+    color: var(--text-muted);
     line-height: 1.6;
     margin-bottom: 1.25rem;
     flex: 1;
@@ -134,7 +134,7 @@
 .label-group-title {
     font-size: 0.8rem;
     font-weight: 600;
-    color: #666;
+    color: var(--text-muted);
     min-width: 80px;
     padding-top: 0.25rem;
 }

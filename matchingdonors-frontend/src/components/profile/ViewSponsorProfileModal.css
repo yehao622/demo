@@ -24,7 +24,7 @@
 
 .interests-box p {
     margin: 5px 0 0 0;
-    color: #333;
+    color: var(--text-main);
     font-weight: 500;
 }
 
