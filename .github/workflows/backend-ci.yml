@@ -1,0 +1,37 @@
+name: Backend QA Pipeline
+
+# 1. When should this pipeline run?
+on:
+  push:
+    branches: [ "feature/admin", "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+# 2. What should the pipeline do?
+jobs:
+  build-and-test:
+    name: Run Automated Tests
+    runs-on: ubuntu-latest # This rents a free Ubuntu server from GitHub!
+
+    steps:
+    # Step A: Download your code onto the Ubuntu server
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    # Step B: Install Node.js
+    - name: Setup Node.js Environment
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x' # Use the version of Node you have been developing with
+        cache: 'npm'
+        cache-dependency-path: './matchingdonors-backend/package-lock.json'
+
+    # Step C: Install your backend dependencies
+    - name: Install Dependencies
+      working-directory: ./matchingdonors-backend
+      run: npm install
+
+    # Step D: Run the QA Suite!
+    - name: Run Supertest API Tests
+      working-directory: ./matchingdonors-backend
+      run: npm test -- health.test.ts admin.security.test.ts rbac.integration.test.ts
