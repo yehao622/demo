@@ -7,7 +7,7 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: "node",
   transform: {
-    ...tsJestTransformCfg,
+    // ...tsJestTransformCfg,
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.json' }],
   },
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
