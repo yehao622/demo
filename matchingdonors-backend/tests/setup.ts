@@ -2,6 +2,7 @@
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-secret-key-for-testing-only';
 process.env.GEMINI_API_KEY = 'dummy_key_just_to_pass_the_error_check';
+process.env.RESEND_API_KEY = 'dummy_key_just_to_pass_the_error_check';
 
 import { TextEncoder, TextDecoder } from 'util';
 
