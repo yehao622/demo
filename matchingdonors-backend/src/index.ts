@@ -52,24 +52,29 @@ app.get('/health', (req, res) => {
 const server = http.createServer(app);
 initSocket(server);
 
-// This runs every 60,000 milliseconds (1 minute)
-setInterval(() => {
-    try {
-        // Find and delete any user suspended more than 5 minutes ago
-        const result = db.prepare(`
+if (process.env.NODE_ENV !== 'test') {
+    // This runs every 60,000 milliseconds (1 minute)
+    setInterval(() => {
+        try {
+            // Find and delete any user suspended more than 5 minutes ago
+            const result = db.prepare(`
             DELETE FROM users 
             WHERE is_active = 0 
             AND updated_at <= datetime('now', '-30 days')
         `).run();
 
-        if (result.changes > 0) {
-            console.log(`🧹 Auto-Cleanup: Permanently hard-deleted ${result.changes} suspended user(s) and all their associated data.`);
+            if (result.changes > 0) {
+                console.log(`🧹 Auto-Cleanup: Permanently hard-deleted ${result.changes} suspended user(s) and all their associated data.`);
+            }
+        } catch (error) {
+            console.error('Error during auto-hard-delete cron job:', error);
         }
-    } catch (error) {
-        console.error('Error during auto-hard-delete cron job:', error);
-    }
-}, 3600000);
+    }, 3600000);
 
-server.listen(port, () => {
-    console.log(`🚀 Server & Socket.IO running on port ${port}`);
-});
+    // Only listen on the port if we are NOT running automated tests
+    server.listen(port, () => {
+        console.log(`🚀 Server & Socket.IO running on port ${port}`);
+    });
+}
+
+export { app, server };

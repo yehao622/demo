@@ -533,6 +533,18 @@ export const AuthGate: React.FC<AuthGateProps> = ({ children, requiredRoles = ['
                     }}
                 />
             )}
+
+            <footer className="landing-footer">
+                <p>
+                    Please direct questions, suggestions or concerns to the <a href="mailto:contactus@matchingdonors.com">WebMaster</a>.
+                </p>
+                <p>
+                    MatchingDonors is a 501(c)3 nonprofit organization supported by memberships, advertisements and donations.
+                </p>
+                <p>
+                    Copyright &copy; 2003- 2026 - MatchingDonors.com
+                </p>
+            </footer>
         </div>
     );
 };

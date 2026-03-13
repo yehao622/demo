@@ -138,7 +138,9 @@ const initializeSearchIndex = async () => {
 };
 
 // Run initialization (delayed slightly to ensure DB connection is ready)
-setTimeout(initializeSearchIndex, 1000);
+if (process.env.NODE_ENV !== 'test') {
+    setTimeout(initializeSearchIndex, 1000);
+}
 
 /**
  * 2. Scheduled Task: Automated Crawling & Labeling
@@ -178,7 +180,9 @@ const runAutomatedCrawl = async () => {
 
 // Schedule: Run every 2 hours
 const CRAWL_INTERVAL = 12 * 60 * 60 * 1000;
-setInterval(runAutomatedCrawl, CRAWL_INTERVAL);
+if (process.env.NODE_ENV !== 'test') {
+    setInterval(runAutomatedCrawl, CRAWL_INTERVAL);
+}
 console.log(`[System] Auto-crawler scheduled (Interval: 2 hours)`);
 
 
