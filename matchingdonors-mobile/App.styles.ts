@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
+    // --- Existing Shared Styles ---
     container: {
         flex: 1,
         backgroundColor: '#0f172a',
@@ -71,7 +72,6 @@ export const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
-
     card: {
         backgroundColor: '#1e293b',
         padding: 20,
@@ -91,4 +91,90 @@ export const styles = StyleSheet.create({
         color: '#94a3b8',
         marginBottom: 2,
     },
+
+    // --- New Home Dashboard Styles ---
+    scrollContent: {
+        paddingBottom: 40,
+    },
+    centerContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#0f172a'
+    },
+    loadingText: {
+        marginTop: 12,
+        color: '#94a3b8',
+        fontSize: 16,
+    },
+    homeHeader: {
+        padding: 24,
+        paddingTop: 48,
+        backgroundColor: '#0f172a',
+        borderBottomWidth: 1,
+        borderBottomColor: '#334155'
+    },
+    statsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 12
+    },
+    statBox: {
+        flex: 1,
+        alignItems: 'center'
+    },
+    divider: {
+        width: 1,
+        height: '80%',
+        backgroundColor: '#334155',
+        marginHorizontal: 10,
+    },
+    statNumber: {
+        fontSize: 36,
+        fontWeight: 'bold',
+        color: '#38bdf8'
+    },
+    statLabel: {
+        fontSize: 13,
+        color: '#94a3b8',
+        marginTop: 6,
+        fontWeight: '500'
+    },
+    actionSection: {
+        padding: 16,
+        marginTop: 8
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 16,
+        color: '#f8fafc',
+        marginLeft: 4
+    },
+    primaryButton: {
+        backgroundColor: '#38bdf8',
+        padding: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    primaryButtonText: {
+        color: '#0f172a',
+        fontSize: 16,
+        fontWeight: 'bold'
+    },
+    secondaryButton: {
+        backgroundColor: '#1e293b',
+        padding: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#334155'
+    },
+    secondaryButtonText: {
+        color: '#f8fafc',
+        fontSize: 16,
+        fontWeight: 'bold'
+    }
 });
