@@ -71,4 +71,24 @@ export const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
+
+    card: {
+        backgroundColor: '#1e293b',
+        padding: 20,
+        borderRadius: 12,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#334155',
+    },
+    cardTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#f8fafc',
+        marginBottom: 4,
+    },
+    cardText: {
+        fontSize: 16,
+        color: '#94a3b8',
+        marginBottom: 2,
+    },
 });
