@@ -20,6 +20,8 @@ import db from './database/init';
 import http from 'http';
 import { initSocket } from './socket';
 
+import mobileRoutes from './mobile/mobile.route';
+
 const app = express();
 const port = process.env.PORT || 8080;
 
@@ -45,21 +47,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/sponsor-profile', sponsorProfileRoutes);
 app.use("/api/admin", adminRoutes);
 
-app.get('/api/matches', (req, res) => {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
-    }
-
-    const dummyMatches = [
-        { id: 1, name: 'John Doe', bloodType: 'O+', location: 'Boston, MA' },
-        { id: 2, name: 'Sarah Smith', bloodType: 'A-', location: 'Worcester, MA' },
-        { id: 3, name: 'Michael Chen', bloodType: 'O-', location: 'Providence, RI' }
-    ];
-
-    res.status(200).json({ matches: dummyMatches });
-});
+// Mobile AI mathcing route
+app.use('/api', mobileRoutes);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

@@ -176,5 +176,111 @@ export const styles = StyleSheet.create({
         color: '#f8fafc',
         fontSize: 16,
         fontWeight: 'bold'
+    },
+
+    // --- Matches Screen Specific Styles ---
+    matchCardWrapper: {
+        marginHorizontal: 16,
+        marginBottom: 12
+    },
+    matchCardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 8
+    },
+    matchCardTitle: {
+        flex: 1
+    },
+    badgeContainer: {
+        flexDirection: 'row',
+        gap: 6
+    },
+    primaryBadge: {
+        backgroundColor: '#0284C7',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12
+    },
+    successBadge: {
+        backgroundColor: '#10b981',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12
+    },
+    badgeText: {
+        color: '#ffffff',
+        fontWeight: 'bold',
+        fontSize: 13
+    },
+    matchLocationText: {
+        marginBottom: 12
+    },
+    matchButton: {
+        padding: 12,
+        marginBottom: 0
+    },
+
+    topTabContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#1e293b',
+        borderRadius: 8,
+        padding: 4,
+        marginHorizontal: 16,
+        marginBottom: 16,
+    },
+    topTabButton: {
+        flex: 1,
+        paddingVertical: 10,
+        alignItems: 'center',
+        borderRadius: 6,
+    },
+    topTabActive: {
+        backgroundColor: '#38bdf8',
+    },
+    topTabText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#94a3b8',
+    },
+    topTabTextActive: {
+        color: '#0f172a',
+    },
+
+    // --- Unread Badge & News Styles ---
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    unreadDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+        backgroundColor: '#ef4444', // Red alert color
+        marginLeft: 8,
+        // Glowing effect
+        shadowColor: '#ef4444',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.8,
+        shadowRadius: 4,
+        elevation: 4,
+    },
+    newsKeywordsRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+        marginBottom: 12,
+        marginTop: 4,
+    },
+    newsKeywordBadge: {
+        backgroundColor: '#334155',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+    },
+    newsKeywordText: {
+        color: '#94a3b8',
+        fontSize: 12,
     }
 });

@@ -173,12 +173,12 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                                             required
                                         >
                                             <option value="">Select organ</option>
-                                            <option value="kidney">Kidney</option>
-                                            <option value="liver">Liver</option>
-                                            <option value="heart">Heart</option>
-                                            <option value="lung">Lung</option>
-                                            <option value="pancreas">Pancreas</option>
-                                            <option value="bone-marrow">Bone Marrow</option>
+                                            <option value="Kidney">Kidney</option>
+                                            <option value="Liver">Liver</option>
+                                            <option value="Heart">Heart</option>
+                                            <option value="Lung">Lung</option>
+                                            <option value="Pancreas">Pancreas</option>
+                                            <option value="Bone Marrow">Bone Marrow</option>
                                         </select>
                                     </div>
                                 </div>
