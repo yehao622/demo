@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import db from '../database';
 import { User, UserResponse, RegisterRequest, LoginRequest, AuthResponse, UserRole } from '../models/user.model';
+import { Resend } from 'resend';
 
 const SALT_ROUNDS = 10;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-fallback-secret-change-in-production';
@@ -187,6 +188,31 @@ export class AuthService {
             INSERT INTO password_reset_codes (user_id, code, expires_at)
             VALUES (?, ?, ?)
         `).run(user.id, code, expiresAt.toISOString());
+
+        // 🚀 REAL EMAIL SENDING VIA RESEND
+        try {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            await resend.emails.send({
+                from: 'MatchingDonors Security <onboarding@resend.dev>',
+                to: email,
+                subject: 'Your Password Reset Code',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+                        <h2 style="color: #0f172a;">Password Reset Request</h2>
+                        <p style="color: #475569; font-size: 16px;">You recently requested to reset your password. Here is your 6-digit verification code:</p>
+                        
+                        <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-radius: 8px; margin: 24px 0;">
+                            <h1 style="color: #0284C7; letter-spacing: 8px; margin: 0; font-size: 36px;">${code}</h1>
+                        </div>
+                        
+                        <p style="color: #ef4444; font-size: 14px;"><strong>Note:</strong> This code will expire in ${RESET_CODE_EXPIRY_MINUTES} minutes.</p>
+                    </div>
+                `
+            });
+            console.log(`✅ Reset email successfully sent to ${email} via Resend.`);
+        } catch (error) {
+            console.error('❌ Failed to send reset email:', error);
+        }
 
         return { code, expiresAt };
     }
