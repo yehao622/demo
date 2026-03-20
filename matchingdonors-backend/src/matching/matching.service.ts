@@ -18,7 +18,7 @@ export class MatchingService {
     async generateEmbedding(text: string): Promise<number[]> {
         // This prevents the Gemini API from crashing on empty "Match Me" searches.
         if (!text || !text.trim()) {
-            return new Array(100).fill(0);
+            return new Array(768).fill(0);
         }
 
         try {
@@ -155,11 +155,12 @@ export class MatchingService {
         let searcherOrgan: string | null = null;
         let searcherBlood: string | null = null;
         let searcherAge: number | null = null;
+        let myProfile: any = null;
 
         if (excludeUserId) {
             // Determine the searcher's role (opposite of what they are looking for)
             const searcherRole = targetType === 'patient' ? 'donor' : 'patient';
-            const myProfile = ProfileService.getUserProfile(excludeUserId, searcherRole);
+            myProfile = ProfileService.getUserProfile(excludeUserId, searcherRole);
             if (myProfile) {
                 searcherLocation = {
                     country: myProfile.country || '',
@@ -172,7 +173,21 @@ export class MatchingService {
         }
 
         // B. Generate Embedding for the Search Query
-        const queryEmbedding = await this.generateEmbedding(searchCriteria);
+        let queryEmbedding: number[];
+
+        if (!searchCriteria || !searchCriteria.trim()) {
+            //  If the search bar is empty, use the searcher's own saved DB embedding!
+            if (myProfile && myProfile.embedding) {
+                queryEmbedding = typeof myProfile.embedding === 'string'
+                    ? JSON.parse(myProfile.embedding)
+                    : myProfile.embedding;
+            } else {
+                queryEmbedding = new Array(768).fill(0);
+            }
+        } else {
+            // If they typed a custom search, embed that text!
+            queryEmbedding = await this.generateEmbedding(searchCriteria);
+        }
 
         // Use AI Intent Parser!
         const aiIntent = await this.extractQueryIntent(searchCriteria);
@@ -209,9 +224,25 @@ export class MatchingService {
             }
 
             // 1. AI Similarity
-            // Note: In production, profile embeddings should be cached in DB
-            const profileText = `${profile.description} ${profile.medical_info} ${profile.organ_type} ${profile.preferences}`;
-            const profileEmbedding = await this.generateEmbedding(profileText);
+            // Read the embedding directly from the SQLite database!
+            let profileEmbedding: number[] = new Array(768).fill(0);
+            // Bypass strict typing by casting to 'any'
+            const rawEmbedding = (profile as any).embedding;
+
+            if (rawEmbedding) {
+                try {
+                    profileEmbedding = typeof rawEmbedding === 'string'
+                        ? JSON.parse(rawEmbedding)
+                        : rawEmbedding;
+                } catch (e) {
+                    console.error('Failed to parse profile embedding');
+                }
+            } else {
+                // Emergency fallback only if the DB is missing it
+                const profileText = `${profile.description} ${profile.medical_info} ${profile.organ_type} ${profile.preferences}`;
+                profileEmbedding = await this.generateEmbedding(profileText);
+            }
+
             const aiSimilarity = this.computeSimilarity(queryEmbedding, profileEmbedding);
 
             // 2. Calculate Hybrid Score
