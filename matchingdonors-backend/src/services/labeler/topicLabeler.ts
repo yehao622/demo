@@ -10,7 +10,7 @@ interface LabelingResult {
 
 export class TopicLabeler {
     private genAI: GoogleGenAI;
-    // private model: any;
+    private embeddingModel: string = 'gemini-embedding-001';
 
     private readonly VALID_TOPICS = [
         'diabetes',
@@ -50,7 +50,27 @@ export class TopicLabeler {
 
     constructor(apiKey: string) {
         this.genAI = new GoogleGenAI({ apiKey: apiKey });
-        // this.model = this.genAI.models.get({ model: 'gemini-2.5-flash' });
+    }
+
+    // Dedicated function to generate the math vector
+    private async generateEmbedding(text: string): Promise<number[]> {
+        if (!text || !text.trim()) {
+            return new Array(768).fill(0);
+        }
+
+        try {
+            const response = await this.genAI.models.embedContent({
+                model: this.embeddingModel,
+                contents: text,
+            });
+            if (!response.embeddings || !response.embeddings[0]?.values) {
+                return new Array(768).fill(0);
+            }
+            return response.embeddings[0].values;
+        } catch (error) {
+            console.error('Error generating embedding in labeler:', error);
+            return new Array(768).fill(0);
+        }
     }
 
     /**
@@ -66,7 +86,7 @@ export class TopicLabeler {
                 contents: prompt
             });
 
-            const text = response.text;
+            const text = response.text || '{}';
             if (!text) {
                 throw new Error('Empty response from Gemini API');
             }
@@ -78,6 +98,12 @@ export class TopicLabeler {
             article.organTypes = labels.organTypes;
             article.categories = labels.categories;
 
+            // We combine the title and excerpt so Gemini understands the context
+            const textToEmbed = `${article.title}. ${article.excerpt || ''}`;
+            const embedding = await this.generateEmbedding(textToEmbed);
+            // Attach it to the article object (using 'any' bypass in case Article model lacks the property)
+            (article as any).embedding = embedding;
+
             return article;
         } catch (error) {
             console.error(`Error labeling article ${article.id}:`, error);
@@ -85,6 +111,8 @@ export class TopicLabeler {
             article.topics = article.topics || [];
             article.organTypes = article.organTypes || [];
             article.categories = article.categories || [];
+            // Safe fallback for embedding if it fails
+            (article as any).embedding = (article as any).embedding || new Array(768).fill(0);
             return article;
         }
     }
@@ -165,7 +193,7 @@ export class TopicLabeler {
                 topics: this.validateLabels(parsed.topics || [], this.VALID_TOPICS),
                 organTypes: this.validateLabels(parsed.organTypes || [], this.VALID_ORGANS),
                 categories: this.validateLabels(parsed.categories || [], this.VALID_CATEGORIES),
-                confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.5
+                confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0.1
             };
         } catch (error) {
             console.error('Error parsing labels:', error);
@@ -200,7 +228,7 @@ export class TopicLabeler {
             topics,
             organTypes,
             categories,
-            confidence: 0.3 // Low confidence for fallback parsing
+            confidence: 0.2 // Low confidence for fallback parsing
         };
     }
 

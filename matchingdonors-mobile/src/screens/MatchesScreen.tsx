@@ -20,7 +20,6 @@ export default function MatchesScreen({ navigation }: any) {
     const [readNews, setReadNews] = useState<Set<string>>(new Set());
 
     useEffect(() => {
-        // Refresh the match list every time the user opens this tab
         const unsubscribe = navigation.addListener('focus', () => {
             loadMatches();
             loadNews();
@@ -36,8 +35,7 @@ export default function MatchesScreen({ navigation }: any) {
             const token = await SecureStore.getItemAsync('user_token');
             const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080';
 
-            // Fetching from your current dummy route in index.ts
-            const response = await fetch(`${apiUrl}/api/matches`, {
+            const response = await fetch(`${apiUrl}/api/mobile/matches`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -59,51 +57,58 @@ export default function MatchesScreen({ navigation }: any) {
     };
 
     const loadNews = async () => {
-        // Mocking AI-Matched News. We will replace this with a real fetch later!
-        const dummyNews = [
-            {
-                id: 'n1',
-                title: 'Breakthrough in Anti-Rejection Medication Trials',
-                keywords: ['Medication', 'Research', 'Post-Op'],
-                url: 'https://www.webmd.com/'
-            },
-            {
-                id: 'n2',
-                title: 'Dietary Guidelines for Kidney Health',
-                keywords: ['Diet', 'Kidney', 'Wellness'],
-                url: 'https://www.kidney.org/'
+        try {
+            const token = await SecureStore.getItemAsync('user_token');
+            const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080';
+
+            const response = await fetch(`${apiUrl}/api/mobile/news`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    setNews(data);
+                } else if (data && Array.isArray(data.news)) {
+                    setNews(data.news);
+                } else {
+                    console.warn("News data was not an array:", data);
+                    setNews([]);
+                }
+            } else {
+                console.error("Failed to fetch news. Status:", response.status);
             }
-        ];
-        setNews(dummyNews);
+        } catch (error) {
+            console.error("Error loading news:", error);
+        }
     };
 
     // --- Interactions ---
     const handleMatchPress = (item: any) => {
-        // Mark as read to remove the red dot
         setReadMatches(prev => new Set(prev).add(item.id.toString()));
         Alert.alert("Coming Soon", `View full medical profile for ${item.name}`);
     };
 
     const handleNewsPress = (item: any) => {
-        // Mark as read
         setReadNews(prev => new Set(prev).add(item.id.toString()));
-        // Open device's default web browser!
         Linking.openURL(item.url).catch(err => console.error("Couldn't load page", err));
     };
 
-    // This function designs how a single match card looks
+    // --- Renderers ---
     const renderMatchCard = ({ item }: { item: any }) => {
         const isRead = readMatches.has(item.id.toString());
 
         return (
             <View style={[styles.card, styles.matchCardWrapper]}>
                 <View style={styles.matchCardHeader}>
-
                     <View style={styles.titleRow}>
                         <Text style={[styles.cardTitle, styles.matchCardTitle]} numberOfLines={1}>
                             {item.name}
                         </Text>
-                        {/* UNREAD RED DOT */}
                         {!isRead && <View style={styles.unreadDot} />}
                     </View>
 
@@ -132,30 +137,31 @@ export default function MatchesScreen({ navigation }: any) {
     };
 
     const renderNewsCard = ({ item }: { item: any }) => {
-        const isRead = readNews.has(item.id.toString());
+        const itemId = item?.id ? item.id.toString() : Math.random().toString();
+        const isRead = readNews.has(item.id);
 
         return (
             <View style={[styles.card, styles.matchCardWrapper]}>
                 <View style={styles.titleRow}>
-                    <Text style={[styles.cardTitle, { flex: 1 }]} numberOfLines={2}>
-                        {item.title}
+                    {/* Extracted inline styles to styles.newsCardTitleFlex */}
+                    <Text style={[styles.cardTitle, styles.newsCardTitleFlex]} numberOfLines={2}>
+                        {item?.title || 'Untitled Article'}
                     </Text>
-                    {/* UNREAD RED DOT */}
                     {!isRead && <View style={styles.unreadDot} />}
                 </View>
 
-                {/* Tags/Keywords */}
-                <View style={styles.newsKeywordsRow}>
-                    {item.keywords.map((kw: string, idx: number) => (
-                        <View key={idx} style={styles.newsKeywordBadge}>
-                            <Text style={styles.newsKeywordText}>#{kw}</Text>
-                        </View>
-                    ))}
-                </View>
+                {/* Extracted inline styles to App.styles.ts */}
+                <Text style={styles.newsCardSummary} numberOfLines={3}>
+                    {item?.summary || 'No summary available.'}
+                </Text>
+
+                <Text style={styles.newsCardSource}>
+                    Source: {item?.source || 'Unknown Publisher'}
+                </Text>
 
                 <TouchableOpacity
                     style={[styles.secondaryButton, styles.matchButton]}
-                    onPress={() => handleNewsPress(item)}
+                    onPress={() => item?.url && handleNewsPress(item)}
                 >
                     <Text style={styles.secondaryButtonText}>Read Article</Text>
                 </TouchableOpacity>
@@ -173,9 +179,11 @@ export default function MatchesScreen({ navigation }: any) {
     }
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#0f172a' }}>
+        // 🚀 FIXED: Extracted background color inline style
+        <View style={styles.matchesScreenContainer}>
 
-            <View style={[styles.homeHeader, { paddingBottom: 16 }]}>
+            {/* 🚀 FIXED: Extracted paddingBottom inline style */}
+            <View style={[styles.homeHeader, styles.matchesHeaderPadding]}>
                 <Text style={styles.title}>Your Feed</Text>
                 <Text style={styles.subtitle}>Compatible profiles and tailored news</Text>
             </View>
@@ -215,12 +223,18 @@ export default function MatchesScreen({ navigation }: any) {
                     />
                 )
             ) : (
-                <FlatList
-                    data={news}
-                    keyExtractor={(item) => item.id}
-                    renderItem={renderNewsCard}
-                    showsVerticalScrollIndicator={false}
-                />
+                news.length === 0 ? (
+                    <View style={styles.centerContainer}>
+                        <Text style={styles.cardText}>No news articles available.</Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        data={news}
+                        keyExtractor={(item, index) => item?.id ? item.id.toString() : index.toString()}
+                        renderItem={renderNewsCard}
+                        showsVerticalScrollIndicator={false}
+                    />
+                )
             )}
         </View>
     );

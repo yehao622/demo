@@ -282,5 +282,30 @@ export const styles = StyleSheet.create({
     newsKeywordText: {
         color: '#94a3b8',
         fontSize: 12,
+    },
+
+    // --- Matches & News Screen Styles ---
+    matchesScreenContainer: {
+        flex: 1,
+        backgroundColor: '#0f172a'
+    },
+    matchesHeaderPadding: {
+        paddingBottom: 16
+    },
+    newsCardTitleFlex: {
+        flex: 1,
+        marginBottom: 6
+    },
+    newsCardSummary: {
+        color: '#94a3b8',
+        fontSize: 14,
+        marginBottom: 8,
+        lineHeight: 20
+    },
+    newsCardSource: {
+        color: '#64748b',
+        fontSize: 12,
+        marginBottom: 16,
+        fontStyle: 'italic'
     }
 });

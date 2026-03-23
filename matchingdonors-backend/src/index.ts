@@ -48,7 +48,7 @@ app.use('/api/sponsor-profile', sponsorProfileRoutes);
 app.use("/api/admin", adminRoutes);
 
 // Mobile AI mathcing route
-app.use('/api', mobileRoutes);
+app.use('/api/mobile', mobileRoutes);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

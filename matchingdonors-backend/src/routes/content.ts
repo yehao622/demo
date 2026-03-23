@@ -47,9 +47,9 @@ const saveArticleToDb = (article: Article): boolean => {
         const insertStmt = db.prepare(`
             INSERT INTO articles (
                 id, title, url, summary, source, publish_date, 
-                topics, organs, categories, created_at
+                topics, organs, categories, created_at, embedding
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         // Helper to ensure 'undefined' becomes 'null' for SQLite
@@ -75,7 +75,8 @@ const saveArticleToDb = (article: Article): boolean => {
             JSON.stringify(article.topics || []),
             JSON.stringify(article.organTypes || []), // Matches 'organs'
             JSON.stringify(article.categories || []),
-            toDateString(article.crawledAt) || new Date().toISOString() // Matches 'created_at'
+            toDateString(article.crawledAt) || new Date().toISOString(), // Matches 'created_at'
+            (article as any).embedding ? JSON.stringify((article as any).embedding) : null
         );
         return true;
     } catch (error) {
@@ -89,14 +90,15 @@ const updateArticleLabelsInDb = (article: Article) => {
     try {
         const updateStmt = db.prepare(`
             UPDATE articles 
-            SET topics = ?, organs = ?, categories = ? 
+            SET topics = ?, organs = ?, categories = ?, embedding = ? 
             WHERE id = ?
         `);
 
         updateStmt.run(
             JSON.stringify(article.topics || []),
-            JSON.stringify(article.organTypes || []), // Matches 'organs'
+            JSON.stringify(article.organTypes || []),
             JSON.stringify(article.categories || []),
+            (article as any).embedding ? JSON.stringify((article as any).embedding) : null,
             article.id
         );
     } catch (error) {
